@@ -5,7 +5,8 @@ use merge_and_split::run;
 
 mod sort;
 mod introduction;
-mod particle2;
+mod particle;
+mod particle_system;
 
 fn main() {
     //run().unwrap();

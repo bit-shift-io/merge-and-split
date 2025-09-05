@@ -1,7 +1,6 @@
 
-
-#[derive(Debug, Copy, Clone)]
-pub struct Particle2 {
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct Particle {
     pub pos: cgmath::Vector2<f32>,
     pub pos_prev: cgmath::Vector2<f32>,
     pub radius: f32,
@@ -82,7 +81,7 @@ pub struct Particle2 {
 
 // }
 
-impl Default for Particle2 {
+impl Default for Particle {
     fn default() -> Self {
         Self {
             pos: cgmath::Vector2::new(0.0, 0.0),
@@ -103,7 +102,7 @@ mod tests {
 
     #[test]
     fn default() {
-        let p = Particle2::default();
+        let p = Particle::default();
 
         assert_eq!(p.pos, cgmath::Vector2::new(0.0, 0.0));
     }
