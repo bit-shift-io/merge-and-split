@@ -1,45 +1,65 @@
 
+use crate::math::Vec2;
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Particle {
-    pub pos: cgmath::Vector2<f32>,
-    pub pos_prev: cgmath::Vector2<f32>,
+    pub pos: Vec2,
+    pub vel: Vec2,
+
+    pub delta_e: Vec2, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
+
+    //pub pos_prev: Vec2,
     pub radius: f32,
-    // pub mass: f32,
+    pub mass: f32,
     // pub is_static: bool,
     // //pub color: Color,
     // pub is_enabled: bool,
 
-    // pub force: cgmath::Vector2<f32>, // should this be here? when we apply a force can we not just move the pos?
+    // pub force: Vec2, // should this be here? when we apply a force can we not just move the pos?
 }
 
-// impl Particle {
-//     pub fn new(pos: Vec2, radius: f32, mass: f32, is_static: bool, color: Color) -> Self {
-//         debug_assert!(!pos.x.is_nan());
-//         debug_assert!(!pos.y.is_nan());
-        
-//         Self { pos, pos_prev: pos, radius, mass, is_static, color, is_enabled: true, force: vec2(0.0, 0.0) }
-//     }
+impl Particle {
+    // pub fn new(pos: Vec2, vel: Vec2, radius: f32, mass: f32) -> Self {
+    //     debug_assert!(!pos.x.is_nan());
+    //     debug_assert!(!pos.y.is_nan());
+    //     Self { pos, vel, radius, mass }
+    // }
 
-//     pub fn set_radius(&mut self, radius: f32) -> &mut Self {
-//         debug_assert!(!radius.is_nan());
-//         debug_assert!(radius > 0.0);
-//         self.radius = radius;
-//         self
-//     }
+    pub fn set_radius(&mut self, radius: f32) -> &mut Self {
+        debug_assert!(!radius.is_nan());
+        debug_assert!(radius > 0.0);
+        self.radius = radius;
+        self
+    }
 
-//     pub fn set_mass(&mut self, mass: f32) -> &mut Self {
-//         debug_assert!(!mass.is_nan());
-//         self.mass = mass;
-//         self
-//     }
+    pub fn set_mass(&mut self, mass: f32) -> &mut Self {
+        debug_assert!(!mass.is_nan());
+        self.mass = mass;
+        self
+    }
 
-//     pub fn set_position(&mut self, pos: Vec2) -> &mut Self {
-//         debug_assert!(!pos.x.is_nan());
-//         debug_assert!(!pos.y.is_nan());
-//         self.pos = pos;
-//         self.pos_prev = pos;
-//         self
-//     }
+    pub fn set_pos(&mut self, pos: Vec2) -> &mut Self {
+        debug_assert!(!pos.x.is_nan());
+        debug_assert!(!pos.y.is_nan());
+        self.pos = pos;
+        //self.pos_prev = pos;
+        self
+    }
+
+    pub fn set_vel(&mut self, vel: Vec2) -> &mut Self {
+        debug_assert!(!vel.x.is_nan());
+        debug_assert!(!vel.y.is_nan());
+        self.vel = vel;
+        //self.pos_prev = pos;
+        self
+    }
+
+    pub fn set_delta_e(&mut self, delta_e: Vec2) -> &mut Self {
+        debug_assert!(!delta_e.x.is_nan());
+        debug_assert!(!delta_e.y.is_nan());
+        self.delta_e = delta_e;
+        self
+    }
 
 //     pub fn set_static(&mut self, is_static: bool) -> &mut Self {
 //         self.is_static = is_static;
@@ -79,15 +99,19 @@ pub struct Particle {
 //         self
 //     }
 
-// }
+}
 
 impl Default for Particle {
     fn default() -> Self {
         Self {
-            pos: cgmath::Vector2::new(0.0, 0.0),
-            pos_prev: cgmath::Vector2::new(0.0, 0.0),
+            pos: Vec2::new(0.0, 0.0),
+            vel: Vec2::new(0.0, 0.0),
+
+            delta_e: Vec2::new(0.0, 0.0),
+
+            //pos_prev: cgmath::Vector2::new(0.0, 0.0),
             radius: 0.5,
-            // mass: 1.0,
+            mass: 1.0,
             // is_static: false,
             // color: Color::WHITE,
             // is_enabled: true,
@@ -103,9 +127,6 @@ mod tests {
     #[test]
     fn default() {
         let p = Particle::default();
-
-        assert_eq!(p.pos, cgmath::Vector2::new(0.0, 0.0));
+        assert_eq!(p.pos, Vec2::new(0.0, 0.0));
     }
-
-
 }

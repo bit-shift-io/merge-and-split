@@ -2,11 +2,13 @@
 #![feature(test)]
 
 use merge_and_split::run;
-
 mod sort;
 mod introduction;
-mod particle;
-mod particle_system;
+
+pub mod math;
+pub mod particle;
+pub mod particle_system;
+pub mod particle_system_merge;
 
 fn main() {
     //run().unwrap();

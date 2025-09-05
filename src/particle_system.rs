@@ -8,7 +8,9 @@ pub struct ParticleSystem {
 }
 
 impl ParticleSystem {
-
+    pub fn len(&self) -> usize {
+        self.particles.len()
+    }
 }
 
 impl Default for ParticleSystem {
@@ -22,6 +24,7 @@ impl Default for ParticleSystem {
 
 #[cfg(test)]
 mod tests {
+    use crate::math::Vec2;
     use super::*;
 
     #[test]
@@ -29,6 +32,4 @@ mod tests {
         let ps = ParticleSystem::default();
         assert_eq!(ps.particles, vec![]);
     }
-
-
 }
