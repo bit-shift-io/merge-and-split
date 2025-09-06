@@ -6,11 +6,14 @@ pub struct Particle {
     pub pos: Vec2,
     pub vel: Vec2,
 
-    pub energy_delta: Vec2, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
+    pub energy_delta: f32, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
 
     //pub pos_prev: Vec2,
     pub radius: f32,
     pub mass: f32,
+
+    pub merge_count: usize, // How many other particle are merged into this particle? 0 = No particles
+    pub merge_index: usize, // Index of the particle this is currently merged with.
     // pub is_static: bool,
     // //pub color: Color,
     // pub is_enabled: bool,
@@ -54,9 +57,9 @@ impl Particle {
         self
     }
 
-    pub fn set_energy_delta(&mut self, energy_delta: Vec2) -> &mut Self {
-        debug_assert!(!energy_delta.x.is_nan());
-        debug_assert!(!energy_delta.y.is_nan());
+    pub fn set_energy_delta(&mut self, energy_delta: f32) -> &mut Self {
+        debug_assert!(!energy_delta.is_nan());
+        debug_assert!(!energy_delta.is_nan());
         self.energy_delta = energy_delta;
         self
     }
@@ -107,7 +110,10 @@ impl Default for Particle {
             pos: Vec2::new(0.0, 0.0),
             vel: Vec2::new(0.0, 0.0),
 
-            energy_delta: Vec2::new(0.0, 0.0),
+            energy_delta: 0.0,
+
+            merge_count: 0,
+            merge_index: 0,
 
             //pos_prev: cgmath::Vector2::new(0.0, 0.0),
             radius: 0.5,
