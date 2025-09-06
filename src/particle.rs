@@ -6,7 +6,7 @@ pub struct Particle {
     pub pos: Vec2,
     pub vel: Vec2,
 
-    pub delta_e: Vec2, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
+    pub energy_delta: Vec2, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
 
     //pub pos_prev: Vec2,
     pub radius: f32,
@@ -54,10 +54,10 @@ impl Particle {
         self
     }
 
-    pub fn set_delta_e(&mut self, delta_e: Vec2) -> &mut Self {
-        debug_assert!(!delta_e.x.is_nan());
-        debug_assert!(!delta_e.y.is_nan());
-        self.delta_e = delta_e;
+    pub fn set_energy_delta(&mut self, energy_delta: Vec2) -> &mut Self {
+        debug_assert!(!energy_delta.x.is_nan());
+        debug_assert!(!energy_delta.y.is_nan());
+        self.energy_delta = energy_delta;
         self
     }
 
@@ -107,7 +107,7 @@ impl Default for Particle {
             pos: Vec2::new(0.0, 0.0),
             vel: Vec2::new(0.0, 0.0),
 
-            delta_e: Vec2::new(0.0, 0.0),
+            energy_delta: Vec2::new(0.0, 0.0),
 
             //pos_prev: cgmath::Vector2::new(0.0, 0.0),
             radius: 0.5,
