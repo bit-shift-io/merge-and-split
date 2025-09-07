@@ -13,7 +13,7 @@ pub struct Particle {
     pub mass: f32,
 
     pub merge_count: usize, // How many other particle are merged into this particle? 0 = No particles
-    pub merge_index: usize, // Index of the particle this is currently merged with.
+    pub merge_index: usize, // Index of the particle this is currently merged with. usize::MAX if not merged
     // pub is_static: bool,
     // //pub color: Color,
     // pub is_enabled: bool,
@@ -62,6 +62,10 @@ impl Particle {
         debug_assert!(!energy_delta.is_nan());
         self.energy_delta = energy_delta;
         self
+    }
+
+    pub fn is_enabled(&self) -> bool {
+        return self.merge_index == usize::MAX;
     }
 
 //     pub fn set_static(&mut self, is_static: bool) -> &mut Self {
@@ -113,7 +117,7 @@ impl Default for Particle {
             energy_delta: 0.0,
 
             merge_count: 0,
-            merge_index: 0,
+            merge_index: usize::MAX,
 
             //pos_prev: cgmath::Vector2::new(0.0, 0.0),
             radius: 0.5,

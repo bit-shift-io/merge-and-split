@@ -11,9 +11,16 @@ impl Operation for OperationMerge {
     fn execute(&self, ps: &mut ParticleSystem) {
         let particle_count: usize = ps.len();
         for ai in 0..particle_count {
+            if !ps.particles[ai].is_enabled() {
+                continue;
+            }
+
             for bi in (&ai+1)..particle_count {
                 let p1 = &ps.particles[ai];
                 let p2 = &ps.particles[bi];
+                if !p2.is_enabled() {
+                    continue;
+                }
 
                 // See if two particles will collide. Continue if they do not collide.
                 let dist_sqrd = (p1.pos - p2.pos).magnitude2();
@@ -82,20 +89,20 @@ mod tests {
         ps.particles.push(p1);
         ps.particles.push(p2);
 
-        assert_eq!(ps.particles[0].merge_count, 0);
-        assert_eq!(ps.particles[0].merge_index, 0);
+        assert_eq!(ps.particles[0].is_enabled(), true);
+        assert_eq!(ps.particles[0].merge_index, usize::MAX);
 
-        assert_eq!(ps.particles[1].merge_count, 0);
-        assert_eq!(ps.particles[1].merge_index, 0);
+        assert_eq!(ps.particles[1].is_enabled(), true);
+        assert_eq!(ps.particles[1].merge_index, usize::MAX);
 
         // This should merge p2 into p1 as they intersect.
         let psm = OperationMerge::default();
         psm.execute(&mut ps);
 
-        assert_eq!(ps.particles[0].merge_count, 1);
-        assert_eq!(ps.particles[0].merge_index, 0);
+        assert_eq!(ps.particles[0].is_enabled(), true);
+        assert_eq!(ps.particles[0].merge_index, usize::MAX);
 
-        assert_eq!(ps.particles[1].merge_count, 0);
+        assert_eq!(ps.particles[1].is_enabled(), false); // Disabled because it has been merged.
         assert_eq!(ps.particles[1].merge_index, 0);
     }
 
@@ -108,20 +115,20 @@ mod tests {
         ps.particles.push(p1);
         ps.particles.push(p2);
 
-        assert_eq!(ps.particles[0].merge_count, 0);
-        assert_eq!(ps.particles[0].merge_index, 0);
+        assert_eq!(ps.particles[0].is_enabled(), true);
+        assert_eq!(ps.particles[0].merge_index, usize::MAX);
 
-        assert_eq!(ps.particles[1].merge_count, 0);
-        assert_eq!(ps.particles[1].merge_index, 0);
+        assert_eq!(ps.particles[1].is_enabled(), true);
+        assert_eq!(ps.particles[1].merge_index, usize::MAX);
 
         // This should NOT merge p1 and p2, as they are not close enough.
         let psm = OperationMerge::default();
         psm.execute(&mut ps);
 
-        assert_eq!(ps.particles[0].merge_count, 0);
-        assert_eq!(ps.particles[0].merge_index, 0);
+        assert_eq!(ps.particles[0].is_enabled(), true);
+        assert_eq!(ps.particles[0].merge_index, usize::MAX);
 
-        assert_eq!(ps.particles[1].merge_count, 0);
-        assert_eq!(ps.particles[1].merge_index, 0);
+        assert_eq!(ps.particles[1].is_enabled(), true);
+        assert_eq!(ps.particles[1].merge_index, usize::MAX);
     }
 }
