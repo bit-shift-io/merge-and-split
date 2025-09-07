@@ -22,6 +22,7 @@ impl Operation for OperationMerge {
                     continue;
                 }
 
+                // Collision Rule 1: |x2 − x1| < r1 + r2 (page 5).
                 // See if two particles will collide. Continue if they do not collide.
                 let dist_sqrd = (p1.pos - p2.pos).magnitude2();
                 let r1_plus_r2 = p1.radius + p2.radius;
@@ -29,6 +30,9 @@ impl Operation for OperationMerge {
                 if dist_sqrd >= r12_sqrd {
                     continue;
                 }
+
+                // Collision Rule 2: n · (v2 − v1) < 0 (page 5).
+                // todo:
 
 
                 // https://www.cemyuksel.com/research/papers/particle_merging-and-splitting_tvcg2021.pdf
