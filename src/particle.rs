@@ -1,28 +1,30 @@
 
 use crate::math::Vec2;
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ParticleType {
+    Particle,
+    MetaParticle,
+    MergedParticle, // i.e. this particle is hidden from the system as the meta particle is acting on its behalf.
+}
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Particle {
     pub pos: Vec2,
     pub vel: Vec2,
-
-    pub energy_delta: f32, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
-
-    //pub pos_prev: Vec2,
     pub radius: f32,
     pub mass: f32,
 
-    pub merge_count: usize, // How many other particle are merged into this particle? 0 = No particles
-    pub merge_index: usize, // Index of the particle this is currently merged with. usize::MAX if not merged
-    // pub is_static: bool,
-    // //pub color: Color,
-    // pub is_enabled: bool,
+    pub particle_type: ParticleType,
 
-    // pub force: Vec2, // should this be here? when we apply a force can we not just move the pos?
+    pub energy_delta: f32, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
+    pub n: Vec2,
+    pub left_index: usize, // How many other particle are merged into this particle? 0 = No particles
+    pub right_index: usize, // Index of the particle this is currently merged with. usize::MAX if not merged
 }
 
 impl Particle {
-    // pub fn new(pos: Vec2, vel: Vec2, radius: f32, mass: f32) -> Self {
+    // pub fn from_meta_particle(pos: Vec2, vel: Vec2, radius: f32, mass: f32) -> Self {
     //     debug_assert!(!pos.x.is_nan());
     //     debug_assert!(!pos.y.is_nan());
     //     Self { pos, vel, radius, mass }
@@ -64,48 +66,27 @@ impl Particle {
         self
     }
 
-    pub fn is_enabled(&self) -> bool {
-        return self.merge_index == usize::MAX;
+    pub fn set_n(&mut self, n: Vec2) -> &mut Self {
+        debug_assert!(!n.x.is_nan());
+        debug_assert!(!n.y.is_nan());
+        self.n = n;
+        self
     }
 
-//     pub fn set_static(&mut self, is_static: bool) -> &mut Self {
-//         self.is_static = is_static;
-//         self
-//     }
+    pub fn set_particle_type(&mut self, particle_type: ParticleType) -> &mut Self {
+        self.particle_type = particle_type;
+        self
+    }
 
-//     pub fn set_color(&mut self, color: Color) -> &mut Self {
-//         self.color = color;
-//         self
-//     }
+    pub fn set_left_index(&mut self, left_index: usize) -> &mut Self {
+        self.left_index = left_index;
+        self
+    }
 
-//     pub fn get_aabb(&self) -> Aabb2d {
-//         debug_assert!(!self.pos.x.is_nan());
-//         debug_assert!(!self.pos.y.is_nan());
-//         debug_assert!(!self.radius.is_nan());
-//         debug_assert!(self.radius > 0.0);
-
-//         let aabb = Aabb2d {
-//             min: self.pos - vec2(self.radius, self.radius),
-//             max: self.pos + vec2(self.radius, self.radius),
-//         };
-//         debug_assert!(aabb.min.x <= aabb.max.x && aabb.min.y <= aabb.max.y);
-//         aabb
-//     }
-
-//     pub fn acceleration_to_force(acc: Vec2, mass: f32) -> Vec2 {
-//         acc * mass
-//     }
-
-//     pub fn set_force_based_on_acceleration(&mut self, acceleration: Vec2) -> &mut Self {
-//         self.force = acceleration * self.mass;
-//         self
-//     }
-
-//     pub fn add_force(&mut self, force: Vec2) -> &mut Self {
-//         self.force += force;
-//         self
-//     }
-
+    pub fn set_right_index(&mut self, right_index: usize) -> &mut Self {
+        self.right_index = right_index;
+        self
+    }
 }
 
 impl Default for Particle {
@@ -113,19 +94,15 @@ impl Default for Particle {
         Self {
             pos: Vec2::new(0.0, 0.0),
             vel: Vec2::new(0.0, 0.0),
-
-            energy_delta: 0.0,
-
-            merge_count: 0,
-            merge_index: usize::MAX,
-
-            //pos_prev: cgmath::Vector2::new(0.0, 0.0),
             radius: 0.5,
             mass: 1.0,
-            // is_static: false,
-            // color: Color::WHITE,
-            // is_enabled: true,
-            // force: vec2(0.0, 0.0),
+
+            particle_type: ParticleType::Particle,
+
+            energy_delta: 0.0,
+            n: Vec2::new(0.0, 0.0),
+            left_index: usize::MAX,
+            right_index: usize::MAX,
         }
     }
 }

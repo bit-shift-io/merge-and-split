@@ -8,10 +8,10 @@ mod introduction;
 pub mod math;
 pub mod particle;
 pub mod particle_system;
-pub mod operation;
-pub mod operation_merge;
-pub mod operation_move;
-pub mod operation_split;
+
+mod operations;
+
+use operations::*;
 
 fn main() {
     //run().unwrap();

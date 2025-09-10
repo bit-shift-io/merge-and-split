@@ -8,6 +8,7 @@ pub struct OperationMove {
     pub time_delta: f32 // really we should get this from an OperationContext?
 }
 
+// This is also known as "integration". Move and apply any gravity/force.
 impl OperationMove {
     pub fn set_time_delta(&mut self, time_delta: f32) -> &mut Self {
         debug_assert!(!time_delta.is_nan());
@@ -22,6 +23,7 @@ impl Operation for OperationMove {
         let particle_count: usize = ps.len();
         for ai in 0..particle_count {
             let p1 = &mut ps.particles[ai];
+            // todo: update p1.vel adding in any gravity/force component. OR make that a seperate operation?
             p1.pos += p1.vel * self.time_delta;
         }
     }
