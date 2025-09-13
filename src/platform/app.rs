@@ -14,7 +14,7 @@ use crate::platform::{camera::{Camera, CameraController, CameraUniform}, plugin:
 pub struct App {
     #[cfg(target_arch = "wasm32")]
     proxy: Option<winit::event_loop::EventLoopProxy<State>>,
-    state: Option<State>,
+    pub state: Option<State>,
     event_loop: Option<EventLoop<State>>,
     plugins: Vec<Box<dyn Plugin>>,
 }
@@ -66,6 +66,22 @@ impl App {
         let mut plugins = std::mem::take(&mut self.plugins);
         for plugin in plugins.iter_mut() {
             plugin.init(self);
+        }
+        self.plugins = plugins;
+    }
+
+    pub fn handle_key(&mut self, event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
+        // todo: remove this!
+        let state = match &mut self.state {
+            Some(s) => s,
+            None => return,
+        };
+        state.handle_key(event_loop, key, pressed);
+
+        // Take the plugins out temporarily to avoid double mutable borrow
+        let mut plugins = std::mem::take(&mut self.plugins);
+        for plugin in plugins.iter_mut() {
+            plugin.handle_key(self, key, pressed);
         }
         self.plugins = plugins;
     }
@@ -137,7 +153,7 @@ impl ApplicationHandler<State> for App {
         event: WindowEvent,
     ) {
         let state = match &mut self.state {
-            Some(canvas) => canvas,
+            Some(s) => s,
             None => return,
         };
 
@@ -145,7 +161,21 @@ impl ApplicationHandler<State> for App {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => state.resize(size.width, size.height),
             WindowEvent::RedrawRequested => {
+                {
+                    // Take the plugins out temporarily to avoid double mutable borrow
+                    let mut plugins = std::mem::take(&mut self.plugins);
+                    for plugin in plugins.iter_mut() {
+                        plugin.update(self);
+                    }
+                    self.plugins = plugins;
+                }
+
+                let state = match &mut self.state {
+                    Some(s) => s,
+                    None => return,
+                };
                 state.update();
+
                 match state.render() {
                     Ok(_) => {}
                     // Reconfigure the surface if it's lost or outdated
@@ -171,7 +201,7 @@ impl ApplicationHandler<State> for App {
                         ..
                     },
                 ..
-            } => state.handle_key(event_loop, code, key_state.is_pressed()),
+            } => self.handle_key(event_loop, code, key_state.is_pressed()),
             _ => {}
         }
     }

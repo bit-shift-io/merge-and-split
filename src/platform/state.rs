@@ -146,7 +146,7 @@ pub struct State {
     #[allow(dead_code)]
     diffuse_texture: texture::Texture,
     diffuse_bind_group: wgpu::BindGroup,
-    camera: Camera,
+    pub camera: Camera,
     camera_controller: CameraController,
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
@@ -465,12 +465,12 @@ impl State {
         if key == KeyCode::Escape && pressed {
             event_loop.exit();
         } else {
-            self.camera_controller.handle_key(key, pressed);
+            //self.camera_controller.handle_key(key, pressed);
         }
     }
 
     pub fn update(&mut self) {
-        self.camera_controller.update_camera(&mut self.camera);
+        //self.camera_controller.update_camera(&mut self.camera);
         self.camera_uniform.update_view_proj(&self.camera);
         self.queue.write_buffer(
             &self.camera_buffer,
