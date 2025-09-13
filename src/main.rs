@@ -5,13 +5,10 @@ use merge_and_split::run;
 mod sort;
 mod introduction;
 
+pub mod particles;
+
 pub mod math;
-pub mod particle;
-pub mod particle_system;
 
-mod operations;
-
-use operations::*;
 
 fn main() {
     //run().unwrap();

@@ -1,14 +1,15 @@
-use cgmath::InnerSpace;
+use cgmath::{InnerSpace, Vector2};
 
-use crate::{math::Vec2, operation::Operation, particle::{Particle, ParticleType}, particle_system::ParticleSystem};
+use crate::{math::Vec2, particles::{operations::operation::Operation, particle::ParticleType, particle_vec::ParticleVec}};
 
 
 
-pub struct OperationSplit {
+
+pub struct Split {
 }
 
-impl Operation for OperationSplit {
-    fn execute(&self, ps: &mut ParticleSystem) {
+impl Operation for Split {
+    fn execute(&self, ps: &mut ParticleVec) {
         let particle_count: usize = ps.len();
 
         // Meta Particles are always at the end of the Particle System.
@@ -16,7 +17,7 @@ impl Operation for OperationSplit {
         let mut first_meta_particle_index = 0;
         for i in 0..particle_count {
             // We are only interested in splitting MetaParticles.
-            if ps.particles[i].particle_type != ParticleType::MetaParticle {
+            if ps[i].particle_type != ParticleType::MetaParticle {
                 continue;
             }
 
@@ -25,7 +26,7 @@ impl Operation for OperationSplit {
         }
 
         for i in first_meta_particle_index..particle_count {
-            debug_assert!(ps.particles[i].particle_type == ParticleType::MetaParticle);
+            debug_assert!(ps[i].particle_type == ParticleType::MetaParticle);
 
             // Split the meta-particle back into two particles.
             // p1_mass, p2_mass: masses of original particles
@@ -38,13 +39,13 @@ impl Operation for OperationSplit {
             let alpha = 1.0; // todo: User tweakable.
             let epsilon = 1e-10; // todo: User tweakable.
 
-            let meta_particle = &ps.particles[i];
+            let meta_particle = &ps[i];
 
             let ai = meta_particle.left_index;
             let bi = meta_particle.right_index;
 
-            let p1 = &ps.particles[ai];
-            let p2 = &ps.particles[bi];
+            let p1 = &ps[ai];
+            let p2 = &ps[bi];
 
             let m12 = meta_particle.mass;
             let x12_prime = meta_particle.pos;
@@ -78,8 +79,8 @@ impl Operation for OperationSplit {
             let a = 1.0;
             let discriminant = b.powi(2) - 4.0 * a * c; //b**2 - 4*a*c;
 
-            let mut epsilon_vec = Vec2::new(0.0, 0.0);
-            let mut mu = 0.0;
+            let epsilon_vec: Vector2<f32>;// = Vec2::new(0.0, 0.0);
+            let mu: f32;// = 0.0;
             if discriminant >= 0.0 {
                 // Two roots, take smaller (Eq 14)
                 let mu1 = (-b + discriminant.sqrt()) / (2.0 * a);
@@ -107,16 +108,15 @@ impl Operation for OperationSplit {
             // Verify separation (Eq 14)
             debug_assert!((v2_prime - v1_prime).dot(n_hat) >= -epsilon, "Particles not separating");
 
-
             {
-                let p1_mut = &mut ps.particles[ai];
+                let p1_mut = &mut ps[ai];
                 p1_mut.set_particle_type(ParticleType::Particle)
                     .set_pos(x1_prime)
                     .set_vel(v1_prime);
             }
 
             {
-                let p2_mut = &mut ps.particles[bi];
+                let p2_mut = &mut ps[bi];
                 p2_mut.set_particle_type(ParticleType::Particle)
                     .set_pos(x2_prime)
                     .set_vel(v2_prime);
@@ -124,11 +124,11 @@ impl Operation for OperationSplit {
         }
 
         // Remove Meta Particles
-        ps.particles.truncate(first_meta_particle_index);
+        ps.truncate(first_meta_particle_index);
     }
 }
 
-impl Default for OperationSplit {
+impl Default for Split {
     fn default() -> Self {
         Self {
         }
@@ -138,37 +138,38 @@ impl Default for OperationSplit {
 
 #[cfg(test)]
 mod tests {
-    use crate::{math::Vec2, operation_merge::OperationMerge, particle_system::ParticleSystem};
+    use crate::particles::{operations::merge::Merge, particle::Particle};
+
     use super::*;
 
     #[test]
     fn marge_then_split() {
-        let mut ps = ParticleSystem::default();
+        let mut ps = ParticleVec::default();
         let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
 
-        ps.particles.push(p1);
-        ps.particles.push(p2);
+        ps.push(p1);
+        ps.push(p2);
 
-        assert_eq!(ps.particles[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps.particles[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
 
         // This should merge p2 and p1 as they intersect.
-        let psm = OperationMerge::default();
+        let psm = Merge::default();
         psm.execute(&mut ps);
 
-        assert_eq!(ps.particles[0].particle_type, ParticleType::MergedParticle);
-        assert_eq!(ps.particles[1].particle_type, ParticleType::MergedParticle);
+        assert_eq!(ps[0].particle_type, ParticleType::MergedParticle);
+        assert_eq!(ps[1].particle_type, ParticleType::MergedParticle);
         assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
 
-        assert_eq!(ps.particles[2].particle_type, ParticleType::MetaParticle);
+        assert_eq!(ps[2].particle_type, ParticleType::MetaParticle);
 
         // This should split particle.
-        let pss = OperationSplit::default();
+        let pss = Split::default();
         pss.execute(&mut ps);
 
-        assert_eq!(ps.particles[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps.particles[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
         assert_eq!(ps.len(), 2);
     }
 }

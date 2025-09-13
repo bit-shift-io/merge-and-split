@@ -1,29 +1,28 @@
 use cgmath::InnerSpace;
 
-use crate::{operation::Operation, particle::{Particle, ParticleType}, particle_system::ParticleSystem};
+use crate::particles::{operations::operation::Operation, particle::{Particle, ParticleType}, particle_vec::ParticleVec};
 
 
-
-pub struct OperationMerge {
+pub struct Merge {
 }
 
-impl Operation for OperationMerge {
-    fn execute(&self, ps: &mut ParticleSystem) {
+impl Operation for Merge {
+    fn execute(&self, ps: &mut ParticleVec) {
         let mut particle_count: usize = ps.len();
         for ai in 0..particle_count {
             // Skip "merged" particles, they are handled by the meta particle.
-            if ps.particles[ai].particle_type == ParticleType::MergedParticle {
+            if ps[ai].particle_type == ParticleType::MergedParticle {
                 continue;
             }
 
             for bi in (&ai+1)..particle_count {
                 // Skip "merged" particles, they are handled by the meta particle.
-                if ps.particles[bi].particle_type == ParticleType::MergedParticle {
+                if ps[bi].particle_type == ParticleType::MergedParticle {
                     continue;
                 }
 
-                let p1 = &ps.particles[ai];
-                let p2 = &ps.particles[bi];
+                let p1 = &ps[ai];
+                let p2 = &ps[bi];
                 
                 // Collision Rule 1: |x2 − x1| < r1 + r2 (page 5).
                 // See if two particles will collide. Continue if they do not collide.
@@ -62,12 +61,12 @@ impl Operation for OperationMerge {
                 let energy_delta = ((p1.mass * p2.mass) / (2.0 * m12)) * (p1.vel - p2.vel).magnitude2();
 
                 {
-                    let p1_mut = &mut ps.particles[ai];
+                    let p1_mut = &mut ps[ai];
                     p1_mut.set_particle_type(ParticleType::MergedParticle);
                 }
 
                 {
-                    let p2_mut = &mut ps.particles[bi];
+                    let p2_mut = &mut ps[bi];
                     p2_mut.set_particle_type(ParticleType::MergedParticle);
                 }
 
@@ -82,7 +81,7 @@ impl Operation for OperationMerge {
                         .set_n(n)
                         .set_left_index(ai)
                         .set_right_index(bi);
-                    ps.particles.push(meta_particle);
+                    ps.push(meta_particle);
                     particle_count = ps.len(); // Update particle_count based on new length of ps.particles array.
                 }
             }
@@ -90,7 +89,7 @@ impl Operation for OperationMerge {
     }
 }
 
-impl Default for OperationMerge {
+impl Default for Merge {
     fn default() -> Self {
         Self {
         }
@@ -100,50 +99,51 @@ impl Default for OperationMerge {
 
 #[cfg(test)]
 mod tests {
-    use crate::{math::Vec2, particle_system::ParticleSystem};
+    use crate::math::Vec2;
+
     use super::*;
 
     #[test]
     fn merge_intersecting() {
-        let mut ps = ParticleSystem::default();
+        let mut ps = ParticleVec::default();
         let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
 
-        ps.particles.push(p1);
-        ps.particles.push(p2);
+        ps.push(p1);
+        ps.push(p2);
 
-        assert_eq!(ps.particles[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps.particles[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
 
         // This should merge p2 and p1 as they intersect.
-        let psm = OperationMerge::default();
+        let psm = Merge::default();
         psm.execute(&mut ps);
 
-        assert_eq!(ps.particles[0].particle_type, ParticleType::MergedParticle);
-        assert_eq!(ps.particles[1].particle_type, ParticleType::MergedParticle);
+        assert_eq!(ps[0].particle_type, ParticleType::MergedParticle);
+        assert_eq!(ps[1].particle_type, ParticleType::MergedParticle);
         assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
 
-        assert_eq!(ps.particles[2].particle_type, ParticleType::MetaParticle);
+        assert_eq!(ps[2].particle_type, ParticleType::MetaParticle);
     }
 
     #[test]
     fn ignore_non_intersecting() {
-        let mut ps = ParticleSystem::default();
+        let mut ps = ParticleVec::default();
         let p1 = Particle::default();
         let p2 = *Particle::default().set_pos(Vec2::new(1.1, 0.0));
 
-        ps.particles.push(p1);
-        ps.particles.push(p2);
+        ps.push(p1);
+        ps.push(p2);
 
-        assert_eq!(ps.particles[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps.particles[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
 
         // This should NOT merge p1 and p2, as they are not close enough.
-        let psm = OperationMerge::default();
+        let psm = Merge::default();
         psm.execute(&mut ps);
 
-        assert_eq!(ps.particles[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps.particles[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
         assert_eq!(ps.len(), 2);
     }
 }
