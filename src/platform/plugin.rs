@@ -1,4 +1,4 @@
-use crate::platform::app::App;
+use crate::platform::app::App; // Adjust the path if App is defined elsewhere
 
 pub trait Plugin {
     fn init(&self, app: &mut App);
