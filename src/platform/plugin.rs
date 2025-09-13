@@ -1,6 +1,4 @@
-pub struct Plugin {
-
-}
+use crate::platform::app::App;
 
 pub trait Plugin {
     fn init(&self, app: &mut App);

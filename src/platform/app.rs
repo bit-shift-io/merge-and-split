@@ -1,12 +1,13 @@
 use winit::event_loop::EventLoop;
 
-use crate::platform::app_inner::{AppInner, State};
+use crate::platform::{app_inner::AppInner, plugin::Plugin, state::State};
 
 
 
 pub struct App {
     app_inner: Option<AppInner>,
     event_loop: Option<EventLoop<State>>,
+    plugins: Vec<Box<dyn Plugin>>,
 }
 
 impl App {
@@ -14,7 +15,13 @@ impl App {
         Self {
             app_inner: None,
             event_loop: None,
+            plugins: vec![],
         }
+    }
+
+    pub fn add_plugin(&mut self, plugin: Box<dyn Plugin>) -> &mut Self {
+        self.plugins.push(plugin);
+        self
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
@@ -27,6 +34,7 @@ impl App {
             console_log::init_with_level(log::Level::Info).unwrap_throw();
         }
 
+        // "with_user_event" lets us manually send events, or WASM send events to our event handler (https://yutani.rbind.io/post/winit-and-r/).
         self.event_loop = Some(EventLoop::with_user_event().build()?);
         self.app_inner = Some(AppInner::new(
             #[cfg(target_arch = "wasm32")]
