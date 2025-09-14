@@ -1,7 +1,7 @@
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{math::Vec2, particles::{particle::Particle, particle_vec::ParticleVec}, platform::{app::App, camera::CameraController, instance_renderer::{Instance, InstanceRenderer}, plugin::Plugin}};
+use crate::{math::Vec2, particles::{operations::{merge::Merge, r#move::Move, operation::Operation, split::Split}, particle::Particle, particle_vec::ParticleVec}, platform::{app::App, camera::CameraController, instance_renderer::{Instance, InstanceRenderer}, plugin::Plugin}};
 
 
 pub struct BasicParticles {
@@ -73,6 +73,20 @@ impl Plugin for BasicParticles {
     }
 
     fn update(&mut self, app: &mut App) {
+        // Update particle system
+        // todo: Need a ParticlePipeline to apply any number of Operations.
+        {
+            //let m = Merge::default();
+            //m.execute(&mut self.particle_vec);
+
+            let o = *Move::default().set_time_delta(0.1);
+            o.execute(&mut self.particle_vec);
+
+            // This should split particle.
+            //let s = Split::default();
+            //s.execute(&mut self.particle_vec);
+        }
+
         // Update camera, then apply the camera matrix to the particle instance renderer.
         let state = match &mut app.state {
             Some(s) => s,
