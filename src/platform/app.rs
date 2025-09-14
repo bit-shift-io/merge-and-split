@@ -85,6 +85,34 @@ impl App {
         }
         self.plugins = plugins;
     }
+
+    pub fn render(&mut self) {
+
+        // Take the plugins out temporarily to avoid double mutable borrow
+        let mut plugins = std::mem::take(&mut self.plugins);
+        for plugin in plugins.iter_mut() {
+            plugin.render(self);
+        }
+        self.plugins = plugins;
+
+
+        // match self.render_internal() /*state.render()*/ {
+        //     Ok(_) => {}
+        //     // Reconfigure the surface if it's lost or outdated
+        //     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+        //         let state = match &mut self.state {
+        //             Some(s) => s,
+        //             None => return,
+        //         };
+
+        //         let size = state.window.inner_size();
+        //         state.resize(size.width, size.height);
+        //     }
+        //     Err(e) => {
+        //         log::error!("Unable to render {}", e);
+        //     }
+        // }
+    }
 }
 
 impl ApplicationHandler<State> for App {
@@ -170,23 +198,25 @@ impl ApplicationHandler<State> for App {
                     self.plugins = plugins;
                 }
 
-                let state = match &mut self.state {
-                    Some(s) => s,
-                    None => return,
-                };
-                state.update();
+                // let state = match &mut self.state {
+                //     Some(s) => s,
+                //     None => return,
+                // };
+                // state.update();
 
-                match state.render() {
-                    Ok(_) => {}
-                    // Reconfigure the surface if it's lost or outdated
-                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                        let size = state.window.inner_size();
-                        state.resize(size.width, size.height);
-                    }
-                    Err(e) => {
-                        log::error!("Unable to render {}", e);
-                    }
-                }
+                self.render();
+
+                // match state.render() {
+                //     Ok(_) => {}
+                //     // Reconfigure the surface if it's lost or outdated
+                //     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                //         let size = state.window.inner_size();
+                //         state.resize(size.width, size.height);
+                //     }
+                //     Err(e) => {
+                //         log::error!("Unable to render {}", e);
+                //     }
+                // }
             }
             WindowEvent::MouseInput { state, button, .. } => match (button, state.is_pressed()) {
                 (MouseButton::Left, true) => {}
