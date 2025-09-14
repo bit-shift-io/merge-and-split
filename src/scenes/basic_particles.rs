@@ -27,7 +27,7 @@ impl BasicParticles {
         }
     }
 
-    fn update_particle_instances(&mut self, queue: &wgpu::Queue) {
+    fn update_particle_instances(&mut self, queue: &wgpu::Queue, device: &wgpu::Device) {
         let particle_instance_renderer = match &mut self.particle_instance_renderer {
             Some(s) => s,
             None => return,
@@ -53,7 +53,7 @@ impl BasicParticles {
 
             instances.push(Instance { position, rotation });
         }
-        particle_instance_renderer.update_instances(&instances, &queue);
+        particle_instance_renderer.update_instances(&instances, &queue, &device);
     }
 }
 
@@ -65,7 +65,7 @@ impl Plugin for BasicParticles {
         };
 
         self.particle_instance_renderer = Some(InstanceRenderer::new(&state.device, &state.queue, &state.config));
-        self.update_particle_instances(&state.queue);
+        self.update_particle_instances(&state.queue, &state.device);
     }
 
     fn handle_key(&mut self, app: &mut App, key: KeyCode, pressed: bool) {
@@ -87,9 +87,9 @@ impl Plugin for BasicParticles {
         };
         particle_instance_renderer.update_camera_uniform(&state.camera, &state.queue);
 
-        
+
         // Update particles
-        self.update_particle_instances(&state.queue);
+        self.update_particle_instances(&state.queue, &state.device);
     }
 
     fn render(&self, app: &mut App) {

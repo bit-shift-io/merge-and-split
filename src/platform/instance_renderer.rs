@@ -163,7 +163,8 @@ pub struct InstanceRenderer {
     #[allow(dead_code)]
     diffuse_texture: texture::Texture,
     diffuse_bind_group: wgpu::BindGroup,
-    instances: Vec<Instance>,
+    
+    num_instances: usize,
     #[allow(dead_code)]
     instance_buffer: wgpu::Buffer,
 
@@ -225,44 +226,12 @@ impl InstanceRenderer {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
-        let instances = (0..NUM_INSTANCES_PER_ROW)
-            .flat_map(|z| {
-                (0..NUM_INSTANCES_PER_ROW).map(move |x| {
-                    let position = cgmath::Vector3 {
-                        x: x as f32,
-                        y: 0.0,
-                        z: z as f32,
-                    } - INSTANCE_DISPLACEMENT;
-
-                    // let rotation = if position.is_zero() {
-                    //     // this is needed so an object at (0, 0, 0) won't get scaled to zero
-                    //     // as Quaternions can effect scale if they're not created correctly
-                    //     cgmath::Quaternion::from_axis_angle(
-                    //         cgmath::Vector3::unit_z(),
-                    //         cgmath::Deg(0.0),
-                    //     )
-                    // } else {
-                    //     cgmath::Quaternion::from_axis_angle(position.normalize(), cgmath::Deg(45.0))
-                    // };
-
-                    let rotation =
-                        // this is needed so an object at (0, 0, 0) won't get scaled to zero
-                        // as Quaternions can effect scale if they're not created correctly
-                        cgmath::Quaternion::from_axis_angle(
-                            cgmath::Vector3::unit_z(),
-                            cgmath::Deg(0.0),
-                        );
-
-                    Instance { position, rotation }
-                })
-            })
-            .collect::<Vec<_>>();
-
+        let instances = vec![];
         let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
         let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Instance Buffer"),
             contents: bytemuck::cast_slice(&instance_data),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
 
         let camera_bind_group_layout =
@@ -377,7 +346,8 @@ impl InstanceRenderer {
             num_indices,
             diffuse_texture,
             diffuse_bind_group,
-            instances,
+            
+            num_instances: instances.len(),
             instance_buffer,
 
             camera_uniform,
@@ -386,16 +356,25 @@ impl InstanceRenderer {
         }
     }
 
-    pub fn update_instances(&mut self, instances: &Vec<Instance>, queue: &wgpu::Queue) {
-        // todo: failing here, do we need to resize the or make a new instance buffer?
-        // self.instances = instances.clone(); // Is this really needed?
-        // let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+    pub fn update_instances(&mut self, instances: &Vec<Instance>, queue: &wgpu::Queue, device: &wgpu::Device) {
+        let instance_data = instances.iter().map(Instance::to_raw).collect::<Vec<_>>();
+        
+        let instance_data_size = instance_data.len() * std::mem::size_of::<InstanceRaw>();
+        let instance_buffer_size = self.instance_buffer.size() as usize;
 
-        // queue.write_buffer(
-        //     &self.instance_buffer,
-        //     0,
-        //     bytemuck::cast_slice(&instance_data),
-        // );
+        if instance_data_size <= instance_buffer_size {
+            // Write directly to the existing buffer
+            queue.write_buffer(&self.instance_buffer, 0, bytemuck::cast_slice(&instance_data));
+        } else {
+            // We need a new instance buffer
+            self.instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Instance Buffer"),
+                contents: bytemuck::cast_slice(&instance_data),
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            });
+        }
+
+        self.num_instances = instances.len();
     }
 
     pub fn update_camera_uniform(&mut self, camera: &Camera, queue: &wgpu::Queue) {
@@ -414,6 +393,6 @@ impl InstanceRenderer {
         render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
         render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as u32);
+        render_pass.draw_indexed(0..self.num_indices, 0, 0..self.num_instances as u32);
     }
 }
