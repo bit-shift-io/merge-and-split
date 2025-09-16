@@ -14,7 +14,8 @@ impl Operation for Split {
 
         // Meta Particles are always at the end of the Particle System.
         // We are only interested in splitting MetaParticles.
-        let mut first_meta_particle_index = 0;
+        // todo: Keep meta particles in a seperate list?
+        let mut first_meta_particle_index = usize::MAX;
         for i in 0..particle_count {
             // We are only interested in splitting MetaParticles.
             if ps[i].particle_type != ParticleType::MetaParticle {
@@ -23,6 +24,11 @@ impl Operation for Split {
 
             first_meta_particle_index = i;
             break;
+        }
+
+        if first_meta_particle_index == usize::MAX {
+            // No MetaParticles to split.
+            return;
         }
 
         for i in first_meta_particle_index..particle_count {

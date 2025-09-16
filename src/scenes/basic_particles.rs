@@ -16,7 +16,7 @@ impl BasicParticles {
 
         let mut particle_vec = ParticleVec::default();
         let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
-        let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
+        let p2 = *Particle::default().set_pos(Vec2::new(2.0, 0.0));
         particle_vec.push(p1);
         particle_vec.push(p2);
 
@@ -76,15 +76,15 @@ impl Plugin for BasicParticles {
         // Update particle system
         // todo: Need a ParticlePipeline to apply any number of Operations.
         {
-            //let m = Merge::default();
-            //m.execute(&mut self.particle_vec);
+            let m = Merge::default();
+            m.execute(&mut self.particle_vec);
 
             let o = *Move::default().set_time_delta(0.1);
             o.execute(&mut self.particle_vec);
 
             // This should split particle.
-            //let s = Split::default();
-            //s.execute(&mut self.particle_vec);
+            let s = Split::default();
+            s.execute(&mut self.particle_vec);
         }
 
         // Update camera, then apply the camera matrix to the particle instance renderer.
