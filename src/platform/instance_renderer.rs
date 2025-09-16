@@ -9,7 +9,7 @@ use crate::platform::{camera::Camera, texture};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
+pub struct Vertex {
     position: [f32; 3],
     tex_coords: [f32; 2],
 }
@@ -37,7 +37,7 @@ impl Vertex {
 }
 
 // Quad on the XY plane. Clockwise. Made up of 2 triangles.
-const VERTICES: &[Vertex] = &[
+pub const QUAD_VERTICES: &[Vertex] = &[
     Vertex {
         position: [-0.5, 0.5, 0.0],
         tex_coords: [0.0, 0.0],
@@ -56,7 +56,7 @@ const VERTICES: &[Vertex] = &[
     },
 ];
 
-const INDICES: &[u16] = &[0, 1, 3, 1, 2, 3];
+pub const QUAD_INDICES: &[u16] = &[0, 1, 3, 1, 2, 3];
 
 const NUM_INSTANCES_PER_ROW: u32 = 5;
 const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
@@ -175,7 +175,7 @@ pub struct InstanceRenderer {
 
 impl InstanceRenderer {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, config: &wgpu::SurfaceConfiguration) -> Self {
-        let diffuse_bytes = include_bytes!("happy-tree.png");
+        let diffuse_bytes = include_bytes!("../../res/happy-tree.png");
         let diffuse_texture =
             texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
 
@@ -260,7 +260,7 @@ impl InstanceRenderer {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(include_str!("particle_shader.wgsl").into()),
         });
 
         // let depth_texture =
@@ -329,15 +329,15 @@ impl InstanceRenderer {
 
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
+            contents: bytemuck::cast_slice(QUAD_VERTICES),
             usage: wgpu::BufferUsages::VERTEX,
         });
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
+            contents: bytemuck::cast_slice(QUAD_INDICES),
             usage: wgpu::BufferUsages::INDEX,
         });
-        let num_indices = INDICES.len() as u32;
+        let num_indices = QUAD_INDICES.len() as u32;
 
         Self {
             render_pipeline,

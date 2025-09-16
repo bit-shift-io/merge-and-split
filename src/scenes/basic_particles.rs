@@ -1,13 +1,15 @@
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{math::Vec2, particles::{operations::{merge::Merge, r#move::Move, operation::Operation, split::Split}, particle::Particle, particle_vec::ParticleVec}, platform::{app::App, camera::CameraController, instance_renderer::{Instance, InstanceRenderer}, plugin::Plugin}};
+use crate::{math::Vec2, particles::{operations::{merge::Merge, r#move::Move, operation::Operation, split::Split}, particle::Particle, particle_vec::ParticleVec}, platform::{app::App, camera::CameraController, instance_renderer::{Instance, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin}};
 
 
 pub struct BasicParticles {
     camera_controller: CameraController,
     particle_vec: ParticleVec,
     particle_instance_renderer: Option<InstanceRenderer>,
+    quad_mesh: Option<Mesh>,
+    material: Option<Material>,
 }
 
 impl BasicParticles {
@@ -24,6 +26,8 @@ impl BasicParticles {
             camera_controller,
             particle_vec,
             particle_instance_renderer: None,
+            quad_mesh: None,
+            material: None,
         }
     }
 
@@ -66,6 +70,9 @@ impl Plugin for BasicParticles {
 
         self.particle_instance_renderer = Some(InstanceRenderer::new(&state.device, &state.queue, &state.config));
         self.update_particle_instances(&state.queue, &state.device);
+
+        self.quad_mesh = Some(Mesh::from_verticies_and_indicies("Quad".to_owned(), &state.device, QUAD_VERTICES, QUAD_INDICES));
+        self.material = Some(Material::from_file("happy-tree.png".to_owned(), &state.device, &state.queue));
     }
 
     fn handle_key(&mut self, app: &mut App, key: KeyCode, pressed: bool) {
@@ -113,11 +120,28 @@ impl Plugin for BasicParticles {
         };
 
         let render_context = state.render(|render_pass| {
-            let particle_instance_renderer = match &self.particle_instance_renderer {
-                Some(p) => p,
+            let material = match &self.material {
+                Some(m) => m,
                 None => return,
             };
-            particle_instance_renderer.render(render_pass);
+            material.bind(render_pass, 0);
+
+            {
+                let particle_instance_renderer = match &self.particle_instance_renderer {
+                    Some(p) => p,
+                    None => return,
+                };
+                particle_instance_renderer.render(render_pass);
+            }
+
+            // Trying to drawn an axis so we know which way is up and down
+            {
+                let quad_mesh = match &self.quad_mesh {
+                    Some(m) => m,
+                    None => return,
+                };
+                quad_mesh.render(render_pass, 0..1);
+            }
         });
     }
 }
