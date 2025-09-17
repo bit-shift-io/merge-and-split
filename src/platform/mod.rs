@@ -7,3 +7,4 @@ pub mod state;
 pub mod plugin;
 pub mod instance_renderer;
 pub mod model;
+pub mod shader;

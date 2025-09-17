@@ -187,7 +187,18 @@ impl ApplicationHandler<State> for App {
 
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
-            WindowEvent::Resized(size) => state.resize(size.width, size.height),
+            WindowEvent::Resized(size) => {
+                state.resize(size.width, size.height);
+
+                {
+                    // Take the plugins out temporarily to avoid double mutable borrow
+                    let mut plugins = std::mem::take(&mut self.plugins);
+                    for plugin in plugins.iter_mut() {
+                        plugin.resize(self, size.width, size.height);
+                    }
+                    self.plugins = plugins;
+                }
+            },
             WindowEvent::RedrawRequested => {
                 {
                     // Take the plugins out temporarily to avoid double mutable borrow

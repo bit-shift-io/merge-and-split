@@ -1,6 +1,6 @@
 use cgmath::prelude::*;
 use winit::keyboard::KeyCode;
-
+use wgpu::util::DeviceExt;
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::from_cols(
@@ -18,13 +18,66 @@ pub struct Camera {
     pub fovy: f32,
     pub znear: f32,
     pub zfar: f32,
+
+    // For now we only have 1 camera, so we can store the uniform and buffer here.
+    pub camera_uniform: Option<CameraUniform>,
+    pub camera_buffer: Option<wgpu::Buffer>,
 }
 
 impl Camera {
+    pub fn new(device: &wgpu::Device, aspect: f32) -> Self {
+        let mut camera = Self {
+            eye: (0.0, 5.0, -10.0).into(),
+            target: (0.0, 0.0, 0.0).into(),
+            up: cgmath::Vector3::unit_y(),
+            aspect: aspect, //config.width as f32 / config.height as f32,
+            fovy: 45.0,
+            znear: 0.1,
+            zfar: 100.0,
+
+            camera_uniform: None,
+            camera_buffer: None,
+        };
+
+        let mut camera_uniform = CameraUniform::new();
+        camera_uniform.update_view_proj(&camera.build_view_projection_matrix());
+
+        let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Buffer"),
+            contents: bytemuck::cast_slice(&[camera_uniform]),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+
+        camera.camera_uniform = Some(camera_uniform);
+        camera.camera_buffer = Some(camera_buffer);
+
+        camera
+    }
     pub fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
         let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
         let proj = cgmath::perspective(cgmath::Deg(self.fovy), self.aspect, self.znear, self.zfar);
         proj * view
+    }
+
+    pub fn update_camera_uniform(&mut self, queue: &wgpu::Queue) {
+        let projection_matrix = self.build_view_projection_matrix();
+
+        let camera_uniform = match &mut self.camera_uniform {
+            Some(c) => c,
+            None => return,
+        };
+
+        let camera_buffer = match &self.camera_buffer {
+            Some(c) => c,
+            None => return,
+        };
+        
+        camera_uniform.update_view_proj(&projection_matrix);
+        queue.write_buffer(
+            &camera_buffer,
+            0,
+            bytemuck::cast_slice(&[*camera_uniform]),
+        );
     }
 }
 
@@ -41,8 +94,8 @@ impl CameraUniform {
         }
     }
 
-    pub fn update_view_proj(&mut self, camera: &Camera) {
-        self.view_proj = (OPENGL_TO_WGPU_MATRIX * camera.build_view_projection_matrix()).into();
+    pub fn update_view_proj(&mut self, projection_matrix: &cgmath::Matrix4<f32>) {
+        self.view_proj = (OPENGL_TO_WGPU_MATRIX * projection_matrix).into();
     }
 }
 

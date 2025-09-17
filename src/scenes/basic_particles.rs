@@ -1,15 +1,17 @@
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{math::Vec2, particles::{operations::{merge::Merge, r#move::Move, operation::Operation, split::Split}, particle::Particle, particle_vec::ParticleVec}, platform::{app::App, camera::CameraController, instance_renderer::{Instance, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin}};
+use crate::{math::Vec2, particles::{operations::{merge::Merge, r#move::Move, operation::Operation, split::Split}, particle::Particle, particle_vec::ParticleVec}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
+    camera: Option<Camera>,
     camera_controller: CameraController,
     particle_vec: ParticleVec,
     particle_instance_renderer: Option<InstanceRenderer>,
     quad_mesh: Option<Mesh>,
     material: Option<Material>,
+    shader: Option<Shader>,
 }
 
 impl BasicParticles {
@@ -23,11 +25,13 @@ impl BasicParticles {
         particle_vec.push(p2);
 
         Self {
+            camera: None,
             camera_controller,
             particle_vec,
             particle_instance_renderer: None,
             quad_mesh: None,
             material: None,
+            shader: None,
         }
     }
 
@@ -73,6 +77,40 @@ impl Plugin for BasicParticles {
 
         self.quad_mesh = Some(Mesh::from_verticies_and_indicies("Quad".to_owned(), &state.device, QUAD_VERTICES, QUAD_INDICES));
         self.material = Some(Material::from_file("happy-tree.png".to_owned(), &state.device, &state.queue));
+
+        self.camera = Some(Camera::new(&state.device, state.config.width as f32 / state.config.height as f32));
+        
+        let camera = match &self.camera {
+            Some(c) => c,
+            None => return,
+        };
+
+        let diffuse_texture = match &self.material {
+            Some(m) => &m.diffuse_texture,
+            None => return,
+        };
+
+        self.shader = Some(Shader::new(&state.device, 
+            camera,
+            diffuse_texture,
+            &[Vertex::desc(), InstanceRaw::desc()],
+            state.config.format,
+        ));
+    }
+
+
+    fn resize(&mut self, app: &mut App, width: u32, height: u32) {
+        if width > 0 && height > 0 {
+            let state = match &mut app.state {
+                Some(s) => s,
+                None => return,
+            };
+            let camera = match &mut self.camera {
+                Some(c) => c,
+                None => return,
+            };
+            camera.aspect = state.config.width as f32 / state.config.height as f32;
+        }
     }
 
     fn handle_key(&mut self, app: &mut App, key: KeyCode, pressed: bool) {
@@ -100,13 +138,17 @@ impl Plugin for BasicParticles {
             None => return,
         };
 
-        self.camera_controller.update_camera(&mut state.camera);
+        let camera = match &mut self.camera {
+            Some(c) => c,
+            None => return,
+        };
+        self.camera_controller.update_camera(camera);
 
         let particle_instance_renderer = match &mut self.particle_instance_renderer {
             Some(p) => p,
             None => return,
         };
-        particle_instance_renderer.update_camera_uniform(&state.camera, &state.queue);
+        particle_instance_renderer.update_camera_uniform(&camera, &state.queue);
 
 
         // Update particles
@@ -120,6 +162,12 @@ impl Plugin for BasicParticles {
         };
 
         let render_context = state.render(|render_pass| {
+            let shader = match &self.shader {
+                Some(s) => s,
+                None => return,
+            };
+            shader.bind(render_pass);
+
             let material = match &self.material {
                 Some(m) => m,
                 None => return,
