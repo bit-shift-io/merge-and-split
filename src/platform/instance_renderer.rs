@@ -56,7 +56,8 @@ pub const QUAD_VERTICES: &[Vertex] = &[
     },
 ];
 
-pub const QUAD_INDICES: &[u16] = &[0, 1, 3, 1, 2, 3];
+// WGPU, CCW is front face by default.
+pub const QUAD_INDICES: &[u16] = &[3, 1, 0, 3, 2, 1];
 
 const NUM_INSTANCES_PER_ROW: u32 = 5;
 const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(

@@ -26,8 +26,11 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(device: &wgpu::Device, aspect: f32) -> Self {
+        // We are using the RHS coordinate system.
+        // Use your right hand and point the thumb along the x-axis, index fingers up along the Y Axis,
+        // so Z is middle finger points towards you.
         let mut camera = Self {
-            eye: (0.0, 5.0, -10.0).into(),
+            eye: (0.0, 5.0, 10.0).into(), // the position of the camera
             target: (0.0, 0.0, 0.0).into(),
             up: cgmath::Vector3::unit_y(),
             aspect: aspect, //config.width as f32 / config.height as f32,
