@@ -53,5 +53,13 @@ var s_diffuse: sampler;
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     //return vec4<f32>(in.dist_to_centre, 0, 0, 1); //textureSample(t_diffuse, s_diffuse, in.tex_coords);
-    return vec4<f32>(in.position, 1);
+
+    // particle has radius of 0.5!
+    var l = length(in.position);
+    if (l > 0.5) {
+        discard;
+    }
+    //return vec4<f32>(l, 0, 0, 1);
+    //return vec4<f32>(in.position, 1);
+    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
 }
