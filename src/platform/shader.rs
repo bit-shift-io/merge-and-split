@@ -3,13 +3,23 @@ use crate::platform::{camera::Camera, texture::{self, Texture}};
 
 pub struct Shader {
     render_pipeline: wgpu::RenderPipeline,
+    camera_bind_group: wgpu::BindGroup,
 }
 
 impl Shader {
-    pub fn new<'a>(device: &wgpu::Device, camera: &Camera, diffuse_texture: &Texture, buffers: &'a [wgpu::VertexBufferLayout<'a>], format: wgpu::TextureFormat) -> Self {
+    pub fn new<'a>(file_name: String, device: &wgpu::Device, camera: &Camera, diffuse_texture: &Texture, buffers: &'a [wgpu::VertexBufferLayout<'a>], format: wgpu::TextureFormat) -> Self {
+        use std::fs;
+        use std::path::Path;
+
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("res")
+            .join(file_name.clone());
+
+        let shader_source = fs::read_to_string(path)
+            .expect("Failed to read shader file");
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shader.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(shader_source.into()),
         });
 
 
@@ -146,10 +156,12 @@ impl Shader {
         Self {
             //shader,
             render_pipeline,
+            camera_bind_group,
         }
     }
 
     pub fn bind(&self, render_pass: &mut wgpu::RenderPass) {
         render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
     }
 }

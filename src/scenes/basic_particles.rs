@@ -90,7 +90,7 @@ impl Plugin for BasicParticles {
             None => return,
         };
 
-        self.shader = Some(Shader::new(&state.device, 
+        self.shader = Some(Shader::new("particle_shader.wgsl".to_owned(), &state.device, 
             camera,
             diffuse_texture,
             &[Vertex::desc(), InstanceRaw::desc()],
@@ -148,7 +148,9 @@ impl Plugin for BasicParticles {
             Some(p) => p,
             None => return,
         };
-        particle_instance_renderer.update_camera_uniform(&camera, &state.queue);
+
+        camera.update_camera_uniform(&state.queue);
+        //particle_instance_renderer.update_camera_uniform(&camera, &state.queue);
 
 
         // Update particles
