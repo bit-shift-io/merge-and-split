@@ -24,6 +24,11 @@ impl BasicParticles {
         particle_vec.push(p1);
         particle_vec.push(p2);
 
+        // this is breaking!
+        let p3 = *Particle::default().set_pos(Vec2::new(2.0, 2.0)).set_vel(Vec2::new(-0.0, -0.1));
+        particle_vec.push(p3);
+
+
         Self {
             camera: None,
             camera_controller,
