@@ -11,124 +11,124 @@ use wasm_bindgen::prelude::*;
 
 use crate::platform::{camera::{Camera, CameraController, CameraUniform}, texture};
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 3],
-    tex_coords: [f32; 2],
-}
+// #[repr(C)]
+// #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+// struct Vertex {
+//     position: [f32; 3],
+//     tex_coords: [f32; 2],
+// }
 
-impl Vertex {
-    fn desc() -> wgpu::VertexBufferLayout<'static> {
-        use std::mem;
-        wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    shader_location: 0,
-                    format: wgpu::VertexFormat::Float32x3,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
-                    shader_location: 1,
-                    format: wgpu::VertexFormat::Float32x2,
-                },
-            ],
-        }
-    }
-}
+// impl Vertex {
+//     fn desc() -> wgpu::VertexBufferLayout<'static> {
+//         use std::mem;
+//         wgpu::VertexBufferLayout {
+//             array_stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
+//             step_mode: wgpu::VertexStepMode::Vertex,
+//             attributes: &[
+//                 wgpu::VertexAttribute {
+//                     offset: 0,
+//                     shader_location: 0,
+//                     format: wgpu::VertexFormat::Float32x3,
+//                 },
+//                 wgpu::VertexAttribute {
+//                     offset: mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+//                     shader_location: 1,
+//                     format: wgpu::VertexFormat::Float32x2,
+//                 },
+//             ],
+//         }
+//     }
+// }
 
-// Quad on the XY plane. Clockwise. Made up of 2 triangles.
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-0.5, 0.5, 0.0],
-        tex_coords: [0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.0],
-        tex_coords: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.0],
-        tex_coords: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.0],
-        tex_coords: [0.0, 1.0],
-    },
-];
+// // Quad on the XY plane. Clockwise. Made up of 2 triangles.
+// const VERTICES: &[Vertex] = &[
+//     Vertex {
+//         position: [-0.5, 0.5, 0.0],
+//         tex_coords: [0.0, 0.0],
+//     },
+//     Vertex {
+//         position: [0.5, 0.5, 0.0],
+//         tex_coords: [1.0, 0.0],
+//     },
+//     Vertex {
+//         position: [0.5, -0.5, 0.0],
+//         tex_coords: [1.0, 1.0],
+//     },
+//     Vertex {
+//         position: [-0.5, -0.5, 0.0],
+//         tex_coords: [0.0, 1.0],
+//     },
+// ];
 
-const INDICES: &[u16] = &[0, 1, 3, 1, 2, 3];
+// const INDICES: &[u16] = &[0, 1, 3, 1, 2, 3];
 
-const NUM_INSTANCES_PER_ROW: u32 = 5;
-const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
-    NUM_INSTANCES_PER_ROW as f32 * 0.5,
-    0.0,
-    NUM_INSTANCES_PER_ROW as f32 * 0.5,
-);
+// const NUM_INSTANCES_PER_ROW: u32 = 5;
+// const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
+//     NUM_INSTANCES_PER_ROW as f32 * 0.5,
+//     0.0,
+//     NUM_INSTANCES_PER_ROW as f32 * 0.5,
+// );
 
-struct Instance {
-    position: cgmath::Vector3<f32>,
-    rotation: cgmath::Quaternion<f32>,
-}
+// struct Instance {
+//     position: cgmath::Vector3<f32>,
+//     rotation: cgmath::Quaternion<f32>,
+// }
 
-impl Instance {
-    fn to_raw(&self) -> InstanceRaw {
-        InstanceRaw {
-            model: (cgmath::Matrix4::from_translation(self.position)
-                * cgmath::Matrix4::from(self.rotation))
-            .into(),
-        }
-    }
-}
+// impl Instance {
+//     fn to_raw(&self) -> InstanceRaw {
+//         InstanceRaw {
+//             model: (cgmath::Matrix4::from_translation(self.position)
+//                 * cgmath::Matrix4::from(self.rotation))
+//             .into(),
+//         }
+//     }
+// }
 
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct InstanceRaw {
-    #[allow(dead_code)]
-    model: [[f32; 4]; 4],
-}
+// #[repr(C)]
+// #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+// struct InstanceRaw {
+//     #[allow(dead_code)]
+//     model: [[f32; 4]; 4],
+// }
 
-impl InstanceRaw {
-    fn desc() -> wgpu::VertexBufferLayout<'static> {
-        use std::mem;
-        wgpu::VertexBufferLayout {
-            array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
-            // We need to switch from using a step mode of Vertex to Instance
-            // This means that our shaders will only change to use the next
-            // instance when the shader starts processing a new instance
-            step_mode: wgpu::VertexStepMode::Instance,
-            attributes: &[
-                wgpu::VertexAttribute {
-                    offset: 0,
-                    // While our vertex shader only uses locations 0, and 1 now, in later tutorials we'll
-                    // be using 2, 3, and 4, for Vertex. We'll start at slot 5 not conflict with them later
-                    shader_location: 5,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                // A mat4 takes up 4 vertex slots as it is technically 4 vec4s. We need to define a slot
-                // for each vec4. We don't have to do this in code though.
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
-                    shader_location: 6,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 8]>() as wgpu::BufferAddress,
-                    shader_location: 7,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-                wgpu::VertexAttribute {
-                    offset: mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
-                    shader_location: 8,
-                    format: wgpu::VertexFormat::Float32x4,
-                },
-            ],
-        }
-    }
-}
+// impl InstanceRaw {
+//     fn desc() -> wgpu::VertexBufferLayout<'static> {
+//         use std::mem;
+//         wgpu::VertexBufferLayout {
+//             array_stride: mem::size_of::<InstanceRaw>() as wgpu::BufferAddress,
+//             // We need to switch from using a step mode of Vertex to Instance
+//             // This means that our shaders will only change to use the next
+//             // instance when the shader starts processing a new instance
+//             step_mode: wgpu::VertexStepMode::Instance,
+//             attributes: &[
+//                 wgpu::VertexAttribute {
+//                     offset: 0,
+//                     // While our vertex shader only uses locations 0, and 1 now, in later tutorials we'll
+//                     // be using 2, 3, and 4, for Vertex. We'll start at slot 5 not conflict with them later
+//                     shader_location: 5,
+//                     format: wgpu::VertexFormat::Float32x4,
+//                 },
+//                 // A mat4 takes up 4 vertex slots as it is technically 4 vec4s. We need to define a slot
+//                 // for each vec4. We don't have to do this in code though.
+//                 wgpu::VertexAttribute {
+//                     offset: mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
+//                     shader_location: 6,
+//                     format: wgpu::VertexFormat::Float32x4,
+//                 },
+//                 wgpu::VertexAttribute {
+//                     offset: mem::size_of::<[f32; 8]>() as wgpu::BufferAddress,
+//                     shader_location: 7,
+//                     format: wgpu::VertexFormat::Float32x4,
+//                 },
+//                 wgpu::VertexAttribute {
+//                     offset: mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
+//                     shader_location: 8,
+//                     format: wgpu::VertexFormat::Float32x4,
+//                 },
+//             ],
+//         }
+//     }
+// }
 
 pub struct RenderContext<'a> {
     pub render_pass: wgpu::RenderPass<'a>,
@@ -142,9 +142,9 @@ pub struct State {
     pub config: wgpu::SurfaceConfiguration,
     is_surface_configured: bool,
     //render_pipeline: wgpu::RenderPipeline,
-    vertex_buffer: wgpu::Buffer,
-    index_buffer: wgpu::Buffer,
-    num_indices: u32,
+    // vertex_buffer: wgpu::Buffer,
+    // index_buffer: wgpu::Buffer,
+    // num_indices: u32,
     // #[allow(dead_code)]
     // diffuse_texture: texture::Texture,
     // diffuse_bind_group: wgpu::BindGroup,
@@ -422,17 +422,17 @@ impl State {
         //     cache: None,
         // });
 
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(VERTICES),
-            usage: wgpu::BufferUsages::VERTEX,
-        });
-        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Index Buffer"),
-            contents: bytemuck::cast_slice(INDICES),
-            usage: wgpu::BufferUsages::INDEX,
-        });
-        let num_indices = INDICES.len() as u32;
+        // let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Vertex Buffer"),
+        //     contents: bytemuck::cast_slice(VERTICES),
+        //     usage: wgpu::BufferUsages::VERTEX,
+        // });
+        // let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        //     label: Some("Index Buffer"),
+        //     contents: bytemuck::cast_slice(INDICES),
+        //     usage: wgpu::BufferUsages::INDEX,
+        // });
+        // let num_indices = INDICES.len() as u32;
 
         Ok(Self {
             surface,
@@ -441,9 +441,9 @@ impl State {
             config,
             is_surface_configured: false,
             // render_pipeline,
-            vertex_buffer,
-            index_buffer,
-            num_indices,
+            // vertex_buffer,
+            // index_buffer,
+            // num_indices,
             // diffuse_texture,
             // diffuse_bind_group,
             // camera,
