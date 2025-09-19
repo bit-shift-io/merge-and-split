@@ -5,7 +5,6 @@ use crate::math::Vec2;
 pub enum ParticleType {
     Particle,
     MetaParticle,
-    MergedParticle, // i.e. this particle is hidden from the system as the meta particle is acting on its behalf.
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -16,6 +15,7 @@ pub struct Particle {
     pub mass: f32,
 
     pub particle_type: ParticleType,
+    pub is_merged: bool, // This is a meta particle that is merged with another meta particle, so it hidden from the system.
 
     pub energy_delta: f32, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
     pub n: Vec2,
@@ -87,6 +87,11 @@ impl Particle {
         self.right_index = right_index;
         self
     }
+
+    pub fn set_merged(&mut self, is_merged: bool) -> &mut Self {
+        self.is_merged = is_merged;
+        self
+    }
 }
 
 impl Default for Particle {
@@ -98,6 +103,7 @@ impl Default for Particle {
             mass: 1.0,
 
             particle_type: ParticleType::Particle,
+            is_merged: false,
 
             energy_delta: 0.0,
             n: Vec2::new(0.0, 0.0),
