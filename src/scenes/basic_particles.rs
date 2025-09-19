@@ -126,6 +126,7 @@ impl Plugin for BasicParticles {
         // Update particle system
         // todo: Need a ParticlePipeline to apply any number of Operations.
         // todo: The paper talks about doing this whole merge and split twice to avoid some problems.
+        // todo: The paper also talks about limiting the depth of recursion on merge and split to avoid the whole thing becoming too ridgid.
         {
             let m = Merge::default();
             m.execute(&mut self.particle_vec);
