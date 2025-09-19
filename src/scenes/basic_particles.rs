@@ -125,6 +125,7 @@ impl Plugin for BasicParticles {
     fn update(&mut self, app: &mut App) {
         // Update particle system
         // todo: Need a ParticlePipeline to apply any number of Operations.
+        // todo: The paper talks about doing this whole merge and split twice to avoid some problems.
         {
             let m = Merge::default();
             m.execute(&mut self.particle_vec);
