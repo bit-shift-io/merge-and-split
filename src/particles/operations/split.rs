@@ -198,4 +198,64 @@ mod tests {
         assert_eq!(ps[1].is_merged, false);        
     }
 
+
+    #[test]
+    fn merge_and_split_3_intersecting() {
+        let mut ps = ParticleVec::default();
+        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0)); // At origin.
+        let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)); // To the right of p1 such that it just overlaps.
+        let p3 = *Particle::default().set_pos(Vec2::new(0.5, 0.5)); // Between p1 and p2, but higher, so all 3 overlap.
+
+        ps.push(p1);
+        ps.push(p2);
+        ps.push(p3);
+
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, false);
+
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, false);
+
+        assert_eq!(ps[2].particle_type, ParticleType::Particle);
+        assert_eq!(ps[2].is_merged, false);
+
+        // This should merge p1, p2 and p3 as they intersect.
+        let psm = Merge::default();
+        psm.execute(&mut ps);
+
+        assert_eq!(ps.len(), 5); // 3 original particles + 2 meta particle. 2 meta particles have been added to the Particle System.
+
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, true);
+
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, true);
+
+        assert_eq!(ps[2].particle_type, ParticleType::Particle);
+        assert_eq!(ps[2].is_merged, true);
+
+        assert_eq!(ps[3].particle_type, ParticleType::MetaParticle); // The merging of p1 and p2 -> p12
+        assert_eq!(ps[3].is_merged, true);
+
+        assert_eq!(ps[4].particle_type, ParticleType::MetaParticle); // The merging of p12 and p3 -> p123
+        assert_eq!(ps[4].is_merged, false);
+
+        // This should split the meta particle.
+        let pss = Split::default();
+        pss.execute(&mut ps);
+
+        assert_eq!(ps.len(), 3);
+
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, false);
+
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, false);
+
+        assert_eq!(ps[2].particle_type, ParticleType::Particle);
+        assert_eq!(ps[2].is_merged, false);
+
+
+    }
+
 }
