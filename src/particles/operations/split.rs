@@ -12,9 +12,14 @@ impl Operation for Split {
     fn execute(&self, ps: &mut ParticleVec) {
         let particle_count: usize = ps.len();
 
+        // The more to the right of the particle system vector we go, 
+        // the more recursion depth of merged meta particles there are.
+        // So lets work backwards and split the meta partcies. By the time we get back to the first particle all
+        // meta particles will be split back into their origional particles.
+
         // Meta Particles are always at the end of the Particle System.
         // We are only interested in splitting MetaParticles.
-        // todo: Keep meta particles in a seperate list?
+        // to think about: Keep meta particles in a seperate list?
         let mut first_meta_particle_index = usize::MAX;
         for i in 0..particle_count {
             // We are only interested in splitting MetaParticles.
@@ -31,7 +36,8 @@ impl Operation for Split {
             return;
         }
 
-        for i in first_meta_particle_index..particle_count {
+        // Here we start iterating backwards backwards.
+        for i in (first_meta_particle_index..particle_count).rev() {
             debug_assert!(ps[i].particle_type == ParticleType::MetaParticle);
 
             // Split the meta-particle back into two particles.
@@ -148,34 +154,48 @@ mod tests {
 
     use super::*;
 
-    // #[test]
-    // fn marge_then_split() {
-    //     let mut ps = ParticleVec::default();
-    //     let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
-    //     let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
 
-    //     ps.push(p1);
-    //     ps.push(p2);
+    #[test]
+    fn merge_and_split_2_intersecting() {
+        let mut ps = ParticleVec::default();
+        let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
+        let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
 
-    //     assert_eq!(ps[0].particle_type, ParticleType::Particle);
-    //     assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        ps.push(p1);
+        ps.push(p2);
 
-    //     // This should merge p2 and p1 as they intersect.
-    //     let psm = Merge::default();
-    //     psm.execute(&mut ps);
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, false);
 
-    //     assert_eq!(ps[0].particle_type, ParticleType::MergedParticle);
-    //     assert_eq!(ps[1].particle_type, ParticleType::MergedParticle);
-    //     assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, false);
 
-    //     assert_eq!(ps[2].particle_type, ParticleType::MetaParticle);
+        // This should merge p2 and p1 as they intersect.
+        let psm = Merge::default();
+        psm.execute(&mut ps);
 
-    //     // This should split particle.
-    //     let pss = Split::default();
-    //     pss.execute(&mut ps);
+        assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
 
-    //     assert_eq!(ps[0].particle_type, ParticleType::Particle);
-    //     assert_eq!(ps[1].particle_type, ParticleType::Particle);
-    //     assert_eq!(ps.len(), 2);
-    // }
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, true);
+
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, true);
+
+        assert_eq!(ps[2].particle_type, ParticleType::MetaParticle);
+        assert_eq!(ps[2].is_merged, false);
+
+        // This should split the meta particle.
+        let pss = Split::default();
+        pss.execute(&mut ps);
+
+        assert_eq!(ps.len(), 2);
+
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, false);
+
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, false);        
+    }
+
 }
