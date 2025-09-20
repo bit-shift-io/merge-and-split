@@ -19,13 +19,12 @@ impl BasicParticles {
         let camera_controller = CameraController::new(0.2);
 
         let mut particle_vec = ParticleVec::default();
-        let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
-        let p2 = *Particle::default().set_pos(Vec2::new(2.0, 0.0));
+        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
+        let p2 = *Particle::default().set_pos(Vec2::new(2.0, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
         particle_vec.push(p1);
         particle_vec.push(p2);
 
-        // this is breaking!
-        let p3 = *Particle::default().set_pos(Vec2::new(2.0, 2.0)).set_vel(Vec2::new(-0.0, -0.1));
+        let p3 = *Particle::default().set_pos(Vec2::new(1.0, 2.0)).set_vel(Vec2::new(-0.0, -0.1));
         particle_vec.push(p3);
 
 
@@ -127,6 +126,7 @@ impl Plugin for BasicParticles {
         // todo: Need a ParticlePipeline to apply any number of Operations.
         // todo: The paper talks about doing this whole merge and split twice to avoid some problems.
         // todo: The paper also talks about limiting the depth of recursion on merge and split to avoid the whole thing becoming too ridgid.
+        // todo: The paper mentions time step based such that a particle will not more more than its radius in 1 step due to the simple collision detection.
         {
             let m = Merge::default();
             m.execute(&mut self.particle_vec);

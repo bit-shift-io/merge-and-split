@@ -23,6 +23,11 @@ impl Operation for Merge {
 
                 let p1 = &ps[ai];
                 let p2 = &ps[bi];
+
+                // Two static particles cannot merge.
+                if p1.is_static && p2.is_static {
+                    continue;
+                }
                 
                 // Collision Rule 1: |x2 − x1| < r1 + r2 (page 5).
                 // See if two particles will collide. Continue if they do not collide.

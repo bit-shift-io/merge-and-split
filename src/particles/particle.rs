@@ -13,6 +13,7 @@ pub struct Particle {
     pub vel: Vec2,
     pub radius: f32,
     pub mass: f32,
+    pub is_static: bool,
 
     pub particle_type: ParticleType,
     pub is_merged: bool, // This is a meta particle that is merged with another meta particle, so it hidden from the system.
@@ -24,11 +25,11 @@ pub struct Particle {
 }
 
 impl Particle {
-    // pub fn from_meta_particle(pos: Vec2, vel: Vec2, radius: f32, mass: f32) -> Self {
-    //     debug_assert!(!pos.x.is_nan());
-    //     debug_assert!(!pos.y.is_nan());
-    //     Self { pos, vel, radius, mass }
-    // }
+    pub fn set_static(&mut self, is_static: bool) -> &mut Self {
+        self.is_static = is_static;
+        self
+    }
+
 
     pub fn set_radius(&mut self, radius: f32) -> &mut Self {
         debug_assert!(!radius.is_nan());
@@ -101,6 +102,7 @@ impl Default for Particle {
             vel: Vec2::new(0.0, 0.0),
             radius: 0.5,
             mass: 1.0,
+            is_static: false,
 
             particle_type: ParticleType::Particle,
             is_merged: false,

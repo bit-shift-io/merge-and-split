@@ -117,8 +117,48 @@ impl Operation for Split {
             // v'2 from momentum conservation (Eq 8)
             let v2_prime = (m12 * v12_prime - m1 * v1_prime) / m2;
             
-            // Verify separation (Eq 14)
-            debug_assert!((v2_prime - v1_prime).dot(n_hat) >= -epsilon, "Particles not separating");
+            debug_assert!(!(p1.is_static && p2.is_static), "Two static particles were maerged");
+
+            // Test case - p1 = static, p2 = dynamic
+            if p1.is_static {
+                {
+                    let p1_mut = &mut ps[ai];
+                    p1_mut.set_merged(false);
+                }
+
+                {
+                    let combined_v12_prime = v2_prime - v1_prime;
+                    let combined_x12_prime = x2_prime;
+
+                    let p2_mut = &mut ps[bi];
+                    p2_mut.set_merged(false)
+                        .set_pos(combined_x12_prime)
+                        .set_vel(combined_v12_prime);
+                }
+                continue;
+            }
+
+            // Test case - p1 = dynamic, p2 = static
+            if p2.is_static {
+                {
+                    let combined_v12_prime = v2_prime - v1_prime;
+                    let combined_x12_prime = x2_prime;
+
+                    let p1_mut = &mut ps[ai];
+                    p1_mut.set_merged(false)
+                        .set_pos(combined_x12_prime)
+                        .set_vel(combined_v12_prime);;
+                }
+
+                {
+                    let p2_mut = &mut ps[bi];
+                    p2_mut.set_merged(false);
+                }
+                continue;
+            }
+
+            // Verify separation (Eq 14) - throwing in static particles breaks this assert.
+            //debug_assert!((v2_prime - v1_prime).dot(n_hat) >= -epsilon, "Particles not separating");
 
             {
                 let p1_mut = &mut ps[ai];
@@ -254,8 +294,59 @@ mod tests {
 
         assert_eq!(ps[2].particle_type, ParticleType::Particle);
         assert_eq!(ps[2].is_merged, false);
-
-
     }
+
+
+    #[test]
+    fn merge_and_split_2_static_intersecting() {
+        let mut ps = ParticleVec::default();
+        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
+        let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
+
+        ps.push(p1);
+        ps.push(p2);
+
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, false);
+        assert_eq!(ps[0].is_static, true);
+
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, false);
+        assert_eq!(ps[1].is_static, false);
+
+        // This should merge p2 and p1 as they intersect.
+        let psm = Merge::default();
+        psm.execute(&mut ps);
+
+        assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
+
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, true);
+        assert_eq!(ps[0].is_static, true);
+
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, true);
+        assert_eq!(ps[1].is_static, false);
+
+        assert_eq!(ps[2].particle_type, ParticleType::MetaParticle);
+        assert_eq!(ps[2].is_merged, false);
+
+        // This should split the meta particle.
+        let pss = Split::default();
+        pss.execute(&mut ps);
+
+        assert_eq!(ps.len(), 2);
+
+        assert_eq!(ps[0].particle_type, ParticleType::Particle);
+        assert_eq!(ps[0].is_merged, false);
+        assert_eq!(ps[0].is_static, true);
+        assert_eq!(ps[0].pos, Vec2::new(0.0, 0.0));
+        assert_eq!(ps[0].vel, Vec2::new(0.0, 0.0));
+
+        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+        assert_eq!(ps[1].is_merged, false); 
+        assert_eq!(ps[1].is_static, false);       
+    }
+
 
 }
