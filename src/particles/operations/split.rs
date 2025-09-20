@@ -1,6 +1,6 @@
 use cgmath::{InnerSpace, Vector2};
 
-use crate::{math::vec2::Vec2, particles::{operations::operation::Operation, particle::ParticleType, particle_vec::ParticleVec}};
+use crate::{math::vec2::{reflect_vector_a_around_b, Vec2}, particles::{operations::operation::Operation, particle::ParticleType, particle_vec::ParticleVec}};
 
 
 
@@ -59,6 +59,8 @@ impl Operation for Split {
             let p1 = &ps[ai];
             let p2 = &ps[bi];
 
+            debug_assert!(!(p1.is_static && p2.is_static), "Two static particles were maerged");
+
             let m12 = meta_particle.mass;
             let x12_prime = meta_particle.pos;
             let v12_prime = meta_particle.vel;
@@ -74,92 +76,137 @@ impl Operation for Split {
             let delta_e = meta_particle.energy_delta;
 
             // Compute positions of split particles (Eq 6,7)
-            let x1_prime = x12_prime - (m2 / m12) * n;
-            let x2_prime = x12_prime + (m1 / m12) * n;
+            let mut x1_prime = x12_prime - (m2 / m12) * n;
+            let mut x2_prime = x12_prime + (m1 / m12) * n;
+
+            if p1.is_static {
+                x1_prime = p1.pos;
+                //x2_prime = x12_prime - (m1 / m12) * n; //sub(*x12, scale(m1 / m12, *n));  // Right position adjusted
+            }
+            if p2.is_static {
+                //x1_prime = x12_prime + (m2 / m12) * n; //add(*x12, scale(m2 / m12, *n));  // Left position adjusted
+                x2_prime = p2.pos;
+            }
 
             let n_hat = n / (n.magnitude2() + epsilon);
 
-            // s^2 from Eq 11
-            let s2 = 2.0 * alpha * delta_e / m12 * (m1 / m2);
-            let s = s2.max(0.0).sqrt(); //Math.sqrt(max(s2, 0));
+            let v1_prime;
+            let v2_prime;
 
-            // Quadratic equation for mu (Eq 13)
-            let v1_original = p1.vel;
-            let delta_v = v12_prime - v1_original;
-            let b = -2.0 * n_hat.dot(delta_v); // np.dot(n_hat, delta_v);
-            let c = delta_v.magnitude2() - s2; //np.linalg.norm(delta_v)**2 - s2;
-            let a = 1.0;
-            let discriminant = b.powi(2) - 4.0 * a * c; //b**2 - 4*a*c;
+            // One Static particle, One Dynamic particle:
+            // Static particle velocity = 0 (enforced)
+            // Dynamic particle bounces using reflection formula: v_dynamic' = v_dynamic + (1 + α) * (v_relative · n̂) * n̂
+            // This preserves the coefficient of restitution α
 
-            let epsilon_vec: Vector2<f32>;// = Vec2::new(0.0, 0.0);
-            let mu: f32;// = 0.0;
-            if discriminant >= 0.0 {
-                // Two roots, take smaller (Eq 14)
-                let mu1 = (-b + discriminant.sqrt()) / (2.0 * a);
-                let mu2 = (-b - discriminant.sqrt()) / (2.0 * a);
-                mu = mu1.min(mu2); //min(mu1, mu2);
-                epsilon_vec = Vec2::new(0.0, 0.0); //np.zeros_like(n_hat);
-            } else {
-                // No real root, use geometric solution (Eq 15,16)
-                mu = n_hat.dot(v12_prime - v1_original);
-                let w = v12_prime - v1_original - mu * n_hat;
-                let w_norm = w.magnitude(); //np.linalg.norm(w)
-                if w_norm > epsilon {
-                    epsilon_vec = (w_norm - s) * w / w_norm;
-                } else {
-                    epsilon_vec = Vec2::new(0.0, 0.0); //np.zeros_like(w);
-                }
-            }
-
-            // v'1 from Eq 12
-            let v1_prime = v1_original + mu * n_hat + epsilon_vec;
-            
-            // v'2 from momentum conservation (Eq 8)
-            let v2_prime = (m12 * v12_prime - m1 * v1_prime) / m2;
-            
-            debug_assert!(!(p1.is_static && p2.is_static), "Two static particles were maerged");
-
-            // todo: I'm not convinced this is not adding in more energy into the system
-            // Test case - p1 = static, p2 = dynamic
+            // Dynamic particle gets all the momentum: v_dynamic = (m12/m_dynamic) * v12
             if p1.is_static {
-                {
-                    let p1_mut = &mut ps[ai];
-                    p1_mut.set_merged(false);
+                // // Left static, right dynamic - bounce off static wall
+                // v1_prime = Vec2::new(0.0, 0.0); //np.zeros_like(v1_original)  // Static particle doesn't move
+                // // Dynamic particle bounces with reflection (coefficient of restitution alpha)
+                // // v2' = v2 + (1 + alpha) * (v12' - v2) · n_hat * n_hat
+                // let relative_vel = (v12_prime - p2.vel).dot(n_hat); //np.dot(v12_prime - v2_original, n_hat)
+                // v2_prime = p2.vel + (1.0 + alpha) * relative_vel * n_hat;
+
+                // Static particle velocity: v1 = 0
+                // v1_prime = Vec2::new(0.0, 0.0); //vec3_zero();
+                
+                // // Right particle velocity: conserve momentum
+                // // m1*v1 + m2*v2 = m12*v12, with v1 = 0
+                // v2_prime = -(m12 / m2) * v12_prime; //scale(m12 / m2, *v12);
+
+                //let hat_n = normalize(*n);
+                //let x1_new = p1.pos; //left.get_position();  // Static particle keeps original position
+                //let x2_new = sub(*x12, scale(m1 / m12, *n));  // Right position adjusted
+                
+                // Static particle velocity: v1 = 0
+                v1_prime = Vec2::new(0.0, 0.0); //let v1_new = vec3_zero();
+
+                // To reflect a vector a off a tangent surface in cgmath, 
+                // you should first find the tangent vector and the normal vector of the surface, 
+                // then use the formula 
+                // R = a - 2 * dot(a, N) * N, 
+                // where N is the unit normal vector and 
+                // R is the reflected vector. 
+                // This formula computes the reflection of vector a about a surface defined by its normal N
+
+                let v2 = p2.vel - 2.0 * p2.vel.dot(n_hat) * n_hat;
+                let v3 = reflect_vector_a_around_b(p2.vel, n_hat);
+                v2_prime = v3
+                
+                // // CORRECTED: Mirror the dynamic particle's velocity across the collision normal
+                // // For elastic collision with static object, v_dynamic_final = v_dynamic_initial - 2*(v_dynamic_initial · n̂)*n̂
+                // // Since the meta-particle contains both, we need to extract the dynamic component
+                
+                // // Get the initial velocity of the dynamic particle (right)
+                // let v2_initial = p2.vel; //right.get_velocity();
+                
+                // // Project initial velocity onto collision normal
+                // let v2_normal_component = v2_initial.dot(n_hat) * n_hat; //scale(dot(v2_initial, n_hat), n_hat);
+                // let v2_tangential_component = v2_initial - v2_normal_component;
+                
+                // // For elastic collision with static object (coefficient of restitution = alpha):
+                // // Normal component is reflected: v_normal_final = -alpha * v_normal_initial
+                // // Tangential component is unchanged (no friction in this model)
+                // let v2_normal_final = -alpha * v2_normal_component;
+                // v2_prime = v2_normal_final + v2_tangential_component;
+            } else if p2.is_static {
+                // // Right static, left dynamic
+                // v2_prime = Vec2::new(0.0, 0.0); //np.zeros_like(m.right.velocity)  // Static particle doesn't move
+                // // Dynamic particle bounces with reflection
+                // let relative_vel = (v12_prime - p1.vel).dot(n_hat); //np.dot(v12_prime - v1_original, n_hat)
+                // v1_prime = p1.vel + (1.0 + alpha) * relative_vel * n_hat;
+
+                // Static particle velocity: v2 = 0
+                v2_prime = Vec2::new(0.0, 0.0); //vec3_zero();
+                
+                let v3 = reflect_vector_a_around_b(p1.vel, n_hat);
+                v1_prime = v3
+
+                // Left particle velocity: conserve momentum
+                // m1*v1 + m2*v2 = m12*v12, with v2 = 0
+                //v1_prime = -(m12 / m1) * v12_prime; //scale(m12 / m1, *v12);
+            } else {
+                // s^2 from Eq 11
+                let s2 = 2.0 * alpha * delta_e / m12 * (m1 / m2);
+                let s = s2.max(0.0).sqrt(); //Math.sqrt(max(s2, 0));
+
+                // Quadratic equation for mu (Eq 13)
+                let v1_original = p1.vel;
+                let delta_v = v12_prime - v1_original;
+                let b = -2.0 * n_hat.dot(delta_v); // np.dot(n_hat, delta_v);
+                let c = delta_v.magnitude2() - s2; //np.linalg.norm(delta_v)**2 - s2;
+                let a = 1.0;
+                let discriminant = b.powi(2) - 4.0 * a * c; //b**2 - 4*a*c;
+
+                let epsilon_vec: Vector2<f32>;// = Vec2::new(0.0, 0.0);
+                let mu: f32;// = 0.0;
+                if discriminant >= 0.0 {
+                    // Two roots, take smaller (Eq 14)
+                    let mu1 = (-b + discriminant.sqrt()) / (2.0 * a);
+                    let mu2 = (-b - discriminant.sqrt()) / (2.0 * a);
+                    mu = mu1.min(mu2); //min(mu1, mu2);
+                    epsilon_vec = Vec2::new(0.0, 0.0); //np.zeros_like(n_hat);
+                } else {
+                    // No real root, use geometric solution (Eq 15,16)
+                    mu = n_hat.dot(v12_prime - v1_original);
+                    let w = v12_prime - v1_original - mu * n_hat;
+                    let w_norm = w.magnitude(); //np.linalg.norm(w)
+                    if w_norm > epsilon {
+                        epsilon_vec = (w_norm - s) * w / w_norm;
+                    } else {
+                        epsilon_vec = Vec2::new(0.0, 0.0); //np.zeros_like(w);
+                    }
                 }
 
-                {
-                    let combined_v12_prime = v2_prime - v1_prime;
-                    let combined_x12_prime = x2_prime;
-
-                    let p2_mut = &mut ps[bi];
-                    p2_mut.set_merged(false)
-                        .set_pos(combined_x12_prime)
-                        .set_vel(combined_v12_prime);
-                }
-                continue;
+                // v'1 from Eq 12
+                v1_prime = v1_original + mu * n_hat + epsilon_vec;
+                
+                // v'2 from momentum conservation (Eq 8)
+                v2_prime = (m12 * v12_prime - m1 * v1_prime) / m2;
+                
+                // Verify separation (Eq 14)
+                //debug_assert!((v2_prime - v1_prime).dot(n_hat) >= -epsilon, "Particles not separating");
             }
-
-            // Test case - p1 = dynamic, p2 = static
-            if p2.is_static {
-                {
-                    let combined_v12_prime = v2_prime - v1_prime;
-                    let combined_x12_prime = x2_prime;
-
-                    let p1_mut = &mut ps[ai];
-                    p1_mut.set_merged(false)
-                        .set_pos(combined_x12_prime)
-                        .set_vel(combined_v12_prime);
-                }
-
-                {
-                    let p2_mut = &mut ps[bi];
-                    p2_mut.set_merged(false);
-                }
-                continue;
-            }
-
-            // Verify separation (Eq 14) - throwing in static particles breaks this assert.
-            //debug_assert!((v2_prime - v1_prime).dot(n_hat) >= -epsilon, "Particles not separating");
 
             {
                 let p1_mut = &mut ps[ai];
@@ -346,8 +393,9 @@ mod tests {
 
         assert_eq!(ps[1].particle_type, ParticleType::Particle);
         assert_eq!(ps[1].is_merged, false); 
-        assert_eq!(ps[1].is_static, false);       
+        assert_eq!(ps[1].is_static, false);  
+        //assert_eq!(ps[1].pos, Vec2::new(0.9, 0.0));
+        assert_eq!(ps[1].vel, Vec2::new(0.1, 0.0));   
     }
-
 
 }
