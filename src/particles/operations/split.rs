@@ -119,6 +119,7 @@ impl Operation for Split {
             
             debug_assert!(!(p1.is_static && p2.is_static), "Two static particles were maerged");
 
+            // todo: I'm not convinced this is not adding in more energy into the system
             // Test case - p1 = static, p2 = dynamic
             if p1.is_static {
                 {
