@@ -105,7 +105,7 @@ impl Default for Merge {
 
 #[cfg(test)]
 mod tests {
-    use crate::math::Vec2;
+    use crate::math::vec2::Vec2;
 
     use super::*;
 

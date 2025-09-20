@@ -1,4 +1,4 @@
-use std::ops::{Deref, DerefMut, Index, IndexMut};
+use std::{ops::{Deref, DerefMut, Index, IndexMut, RangeBounds}, slice::Iter, vec::ExtractIf};
 
 use crate::particles::particle::Particle;
 
@@ -17,6 +17,23 @@ impl ParticleVec {
     pub fn truncate(&mut self, len: usize) {
         self.0.truncate(len);
     }
+
+    pub fn extend(&mut self, other_vec: &ParticleVec) {
+        self.0.extend(other_vec.0.clone()); // Is there a non-clone way to do this?
+    }
+
+    pub fn iter(&self) -> Iter<'_, Particle> {
+        self.0.iter()
+    }
+
+    // pub fn extract_if<F, R>(&mut self, range: R, filter: F) -> ExtractIf<'_, T, F, A>
+    // where
+    //     T: Particle,
+    //     F: FnMut(&mut T) -> bool,
+    //     R: RangeBounds<usize>,
+    // {
+    //     self.0.extract_if(range, filter)
+    // }
 }
 
 // Implement the Index trait for immutable access
@@ -46,7 +63,7 @@ impl Default for ParticleVec {
 
 #[cfg(test)]
 mod tests {
-    use crate::math::Vec2;
+    use crate::math::vec2::Vec2;
     use super::*;
 
     #[test]

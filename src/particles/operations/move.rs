@@ -41,7 +41,7 @@ impl Default for Move {
 
 #[cfg(test)]
 mod tests {
-    use crate::{math::Vec2, particles::particle::Particle};
+    use crate::{math::vec2::Vec2, particles::particle::Particle};
 
     use super::*;
 

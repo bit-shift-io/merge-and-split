@@ -1,6 +1,6 @@
 use cgmath::{InnerSpace, Vector2};
 
-use crate::{math::Vec2, particles::{operations::operation::Operation, particle::ParticleType, particle_vec::ParticleVec}};
+use crate::{math::vec2::Vec2, particles::{operations::operation::Operation, particle::ParticleType, particle_vec::ParticleVec}};
 
 
 
@@ -147,7 +147,7 @@ impl Operation for Split {
                     let p1_mut = &mut ps[ai];
                     p1_mut.set_merged(false)
                         .set_pos(combined_x12_prime)
-                        .set_vel(combined_v12_prime);;
+                        .set_vel(combined_v12_prime);
                 }
 
                 {

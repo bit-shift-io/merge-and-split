@@ -1,7 +1,7 @@
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{math::Vec2, particles::{operations::{merge::Merge, r#move::Move, operation::Operation, split::Split}, particle::Particle, particle_vec::ParticleVec}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{math::vec2::Vec2, particles::{operations::{merge::Merge, r#move::Move, operation::Operation, split::Split}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
@@ -14,19 +14,42 @@ pub struct BasicParticles {
     shader: Option<Shader>,
 }
 
+
+fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) {
+    // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
+    let particle_radius = 0.5;
+
+    // static
+    let mut perimeter = ShapeBuilder::new();
+    perimeter.set_particle_template(Particle::default().set_static(true).set_radius(particle_radius).clone())
+        .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 8.0))
+        .create_in_particle_vec(particle_vec);
+
+    // some dynamic particles on the inside    
+    let mut liquid = ShapeBuilder::new();
+    liquid
+        .set_particle_template(Particle::default().set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(0.0, 0.5)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
+        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(5.0, 5.0)))
+        .create_in_particle_vec(particle_vec);
+}
+
+fn setup_3_particles(particle_vec: &mut ParticleVec) {
+    let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
+    let p2 = *Particle::default().set_pos(Vec2::new(2.0, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
+    particle_vec.push(p1);
+    particle_vec.push(p2);
+
+    let p3 = *Particle::default().set_pos(Vec2::new(1.0, 2.0)).set_vel(Vec2::new(-0.0, -0.1));
+    particle_vec.push(p3);
+}
+
 impl BasicParticles {
     pub fn new() -> Self {
         let camera_controller = CameraController::new(0.2);
 
         let mut particle_vec = ParticleVec::default();
-        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
-        let p2 = *Particle::default().set_pos(Vec2::new(2.0, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
-        particle_vec.push(p1);
-        particle_vec.push(p2);
-
-        let p3 = *Particle::default().set_pos(Vec2::new(1.0, 2.0)).set_vel(Vec2::new(-0.0, -0.1));
-        particle_vec.push(p3);
-
+        setup_circular_contained_liquid(&mut particle_vec);
+        //setup_3_particles(&mut particle_vec);
 
         Self {
             camera: None,
