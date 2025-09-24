@@ -48,6 +48,8 @@ impl Operation for VerletIntegration {
             // Update velocity
             let vel_new = p1.vel + 0.5 * (accel + a_new) * self.time_delta;
 
+            // todo: Assert that a particle has not moved more than its radius in a timestep, if so we have a problem!
+            
             p1.set_pos(pos_new).set_vel(vel_new);
 
             if p1.debug {
@@ -84,7 +86,7 @@ mod tests {
         o.execute(&mut ps);
         assert_eq!(ps[0].pos, Vec2::new(0.1, 0.0));
 
-        // MOve by 0.5m time steps.
+        // Move by 0.5m time steps.
         o.set_time_delta(0.5);
         o.execute(&mut ps);
         assert_eq!(ps[0].pos, Vec2::new(0.15, 0.0));

@@ -40,6 +40,8 @@ impl Operation for EulerIntegration {
             let vel = force * self.time_delta;
             p1.vel += vel;
 
+            // todo: Assert that a particle has not moved more than its radius in a timestep, if so we have a problem!
+            
             p1.pos += p1.vel * self.time_delta;
 
             if p1.debug {

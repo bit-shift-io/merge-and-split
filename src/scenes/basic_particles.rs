@@ -34,7 +34,7 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) {
     let mut liquid = ShapeBuilder::new();
     liquid
         .set_particle_template(Particle::default().set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
-        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(2.0, 2.0)))
+        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(6.0, 6.0)))
         .create_in_particle_vec(particle_vec);
 
     // Lets debug what happens to this particle (top left of the fluid)
@@ -188,8 +188,17 @@ impl Plugin for BasicParticles {
             i.execute(&mut self.particle_vec);
 
             // This should split particle.
-            let mut s = Split::default();
+            let mut s = Split::default().set_restitution_coefficient(0.5).clone();
             s.execute(&mut self.particle_vec);
+
+            // Second merge and split
+            // {
+            //     let mut m = Merge::default();
+            //     m.execute(&mut self.particle_vec);
+
+            //     let mut s = Split::default().set_restitution_coefficient(0.5).clone();
+            //     s.execute(&mut self.particle_vec);
+            // }
 
             // Measure metrics and see if anything has changed
             met.execute(&mut self.particle_vec);

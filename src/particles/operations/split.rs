@@ -4,8 +4,16 @@ use crate::{math::vec2::{reflect_vector_a_around_b, Vec2}, particles::{operation
 
 
 
-
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Split {
+    pub restitution_coefficient: f32,
+}
+
+impl Split {
+    pub fn set_restitution_coefficient(&mut self, restitution_coefficient: f32) -> &mut Self {
+        self.restitution_coefficient = restitution_coefficient;
+        self
+    }
 }
 
 impl Operation for Split {
@@ -46,10 +54,10 @@ impl Operation for Split {
             // delta_E: stored energy from merge
             // n: original connection vector
             // v1_original: original velocity of p1
-            // alpha: restitution coefficient (0 to 1)
+            // alpha: restitution coefficient (0 to 1) - energy restored to the system. 0 full lose. 1 fully kept
 
-            let alpha = 1.0; // todo: User tweakable.
-            let epsilon = 1e-10; // todo: User tweakable.
+            let alpha = self.restitution_coefficient; // User tweakable.
+            let epsilon = 0.0; //1e-10; // todo: User tweakable.
 
             let meta_particle = &ps[i];
 
@@ -88,7 +96,7 @@ impl Operation for Split {
                 x2_prime = p2.pos;
             }
 
-            let n_hat = n / (n.magnitude2() + epsilon);
+            let n_hat = n.normalize(); //n / (n.magnitude2() + epsilon);
 
             let v1_prime;
             let v2_prime;
@@ -129,6 +137,7 @@ impl Operation for Split {
                 // R is the reflected vector. 
                 // This formula computes the reflection of vector a about a surface defined by its normal N
 
+                // todo: consider restitution_coefficient
                 let v2 = p2.vel - 2.0 * p2.vel.dot(n_hat) * n_hat;
                 let v3 = reflect_vector_a_around_b(p2.vel, n_hat);
                 v2_prime = v3
@@ -156,6 +165,8 @@ impl Operation for Split {
                 // let relative_vel = (v12_prime - p1.vel).dot(n_hat); //np.dot(v12_prime - v1_original, n_hat)
                 // v1_prime = p1.vel + (1.0 + alpha) * relative_vel * n_hat;
 
+                // todo: consider restitution_coefficient
+                
                 // Static particle velocity: v2 = 0
                 v2_prime = Vec2::new(0.0, 0.0); //vec3_zero();
                 
@@ -166,9 +177,9 @@ impl Operation for Split {
                 // m1*v1 + m2*v2 = m12*v12, with v2 = 0
                 //v1_prime = -(m12 / m1) * v12_prime; //scale(m12 / m1, *v12);
             } else {
-                // s^2 from Eq 11
+                // s^2 from Eq 11.
                 let s2 = 2.0 * alpha * delta_e / m12 * (m1 / m2);
-                let s = s2.max(0.0).sqrt(); //Math.sqrt(max(s2, 0));
+                let s: f32 = s2.sqrt();//.max(0.0).sqrt(); //Math.sqrt(max(s2, 0));
 
                 // Quadratic equation for mu (Eq 13)
                 let v1_original = p1.vel;
@@ -176,33 +187,43 @@ impl Operation for Split {
                 let b = -2.0 * n_hat.dot(delta_v); // np.dot(n_hat, delta_v);
                 let c = delta_v.magnitude2() - s2; //np.linalg.norm(delta_v)**2 - s2;
                 let a = 1.0;
-                let discriminant = b.powi(2) - 4.0 * a * c; //b**2 - 4*a*c;
+                let discriminant = b.powi(2) - 4.0 * a * c; //b**2 - 4*a*c; -- Where is this coming from?
 
                 let epsilon_vec: Vector2<f32>;// = Vec2::new(0.0, 0.0);
-                let mu: f32;// = 0.0;
+                let mut mu: f32;// = 0.0;
                 if discriminant >= 0.0 {
                     // Two roots, take smaller (Eq 14)
                     let mu1 = (-b + discriminant.sqrt()) / (2.0 * a);
                     let mu2 = (-b - discriminant.sqrt()) / (2.0 * a);
                     mu = mu1.min(mu2); //min(mu1, mu2);
+
+                    // fmnote: The assert below to check seperation is failing
+                    // the python version indicates we should take the higher in a special case
+                    // which might resolve the problem?
+                    //
+                    // Check/Verify separation (Eq 14)
+                    // if (v2_prime - v1_prime).dot(n_hat) >= -epsilon {
+                    //     mu = mu2; // If not, take larger? But paper says take smaller for separation
+                    // }
+
                     epsilon_vec = Vec2::new(0.0, 0.0); //np.zeros_like(n_hat);
                 } else {
                     // No real root, use geometric solution (Eq 15,16)
                     mu = n_hat.dot(v12_prime - v1_original);
-                    let w = v12_prime - v1_original - mu * n_hat;
-                    let w_norm = w.magnitude(); //np.linalg.norm(w)
-                    if w_norm > epsilon {
-                        epsilon_vec = (w_norm - s) * w / w_norm;
+                    let w = (v12_prime - v1_original) - (mu * n_hat);
+                    let w_len = w.magnitude(); //np.linalg.norm(w)
+                    if w_len > epsilon {
+                        epsilon_vec = (w_len - s) * (w / w_len);
                     } else {
                         epsilon_vec = Vec2::new(0.0, 0.0); //np.zeros_like(w);
                     }
                 }
 
                 // v'1 from Eq 12
-                v1_prime = v1_original + mu * n_hat + epsilon_vec;
+                v1_prime = v1_original + (mu * n_hat) + epsilon_vec;
                 
-                // v'2 from momentum conservation (Eq 8)
-                v2_prime = (m12 * v12_prime - m1 * v1_prime) / m2;
+                // v'2 from momentum conservation (Eq 8, fleshed out more on page 4)
+                v2_prime = ((m12 / m2) * v12_prime) - ((m12 / m2) * v1_prime); //(m12 * v12_prime - m1 * v1_prime) / m2;
                 
                 // Verify separation (Eq 14)
                 //debug_assert!((v2_prime - v1_prime).dot(n_hat) >= -epsilon, "Particles not separating");
@@ -237,6 +258,7 @@ impl Operation for Split {
 impl Default for Split {
     fn default() -> Self {
         Self {
+            restitution_coefficient: 1.0,
         }
     }
 }
@@ -284,7 +306,7 @@ mod tests {
         assert_eq!(ps[2].is_merged, false);
 
         // This should split the meta particle.
-        let mut pss = Split::default();
+        let mut pss = Split::default().set_restitution_coefficient(1.0).clone();
         pss.execute(&mut ps);
 
         assert_eq!(ps.len(), 2);
@@ -322,6 +344,10 @@ mod tests {
         assert_eq!(ps[2].particle_type, ParticleType::Particle);
         assert_eq!(ps[2].is_merged, false);
 
+        // Measure metrics
+        let mut met1 = Metrics::default();
+        met1.execute(&mut ps);
+
         // This should merge p1, p2 and p3 as they intersect.
         let mut psm = Merge::default();
         psm.execute(&mut ps);
@@ -357,6 +383,11 @@ mod tests {
 
         assert_eq!(ps[2].particle_type, ParticleType::Particle);
         assert_eq!(ps[2].is_merged, false);
+
+        // Measure metrics again to see if there is any change
+        let mut met2 = Metrics::default();
+        met2.execute(&mut ps);
+        assert_eq!(met1.total_velocity_magnitude, met2.total_velocity_magnitude);  
     }
 
 
