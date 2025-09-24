@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{math::vec2::Vec2, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{math::vec2::Vec2, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
@@ -177,15 +177,22 @@ impl Plugin for BasicParticles {
         // todo: The paper also talks about limiting the depth of recursion on merge and split to avoid the whole thing becoming too ridgid.
         // todo: The paper mentions time step based such that a particle will not more more than its radius in 1 step due to the simple collision detection.
         {
-            let m = Merge::default();
+            // Measure system metrics
+            let mut met = Metrics::default();
+            met.execute(&mut self.particle_vec);
+
+            let mut m = Merge::default();
             m.execute(&mut self.particle_vec);
 
-            let o = *VerletIntegration::default().set_time_delta(0.01);
-            o.execute(&mut self.particle_vec);
+            let mut i = *VerletIntegration::default().set_time_delta(0.01);
+            i.execute(&mut self.particle_vec);
 
             // This should split particle.
-            let s = Split::default();
+            let mut s = Split::default();
             s.execute(&mut self.particle_vec);
+
+            // Measure metrics and see if anything has changed
+            met.execute(&mut self.particle_vec);
         }
 
         // Update camera, then apply the camera matrix to the particle instance renderer.

@@ -3,3 +3,4 @@ pub mod merge;
 pub mod euler_integration;
 pub mod verlet_integration;
 pub mod split;
+pub mod metrics;

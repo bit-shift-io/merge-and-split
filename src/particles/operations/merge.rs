@@ -9,7 +9,7 @@ pub struct Merge {
 }
 
 impl Operation for Merge {
-    fn execute(&self, ps: &mut ParticleVec) {
+    fn execute(&mut self, ps: &mut ParticleVec) {
         let particle_count: usize = ps.len();
         for ai in 0..particle_count {
             // Skip "merged" particles, they are handled by the meta particle.
@@ -145,7 +145,7 @@ mod tests {
         assert_eq!(ps[1].is_merged, false);
 
         // This should merge p2 and p1 as they intersect.
-        let psm = Merge::default();
+        let mut psm = Merge::default();
         psm.execute(&mut ps);
 
         assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
@@ -181,7 +181,7 @@ mod tests {
         assert_eq!(ps[2].is_merged, false);
 
         // This should merge p1, p2 and p3 as they intersect.
-        let psm = Merge::default();
+        let mut psm = Merge::default();
         psm.execute(&mut ps);
 
         assert_eq!(ps.len(), 5); // 3 original particles + 2 meta particle. 2 meta particles have been added to the Particle System.
@@ -215,7 +215,7 @@ mod tests {
         assert_eq!(ps[1].particle_type, ParticleType::Particle);
 
         // This should NOT merge p1 and p2, as they are not close enough.
-        let psm = Merge::default();
+        let mut psm = Merge::default();
         psm.execute(&mut ps);
 
         assert_eq!(ps[0].particle_type, ParticleType::Particle);

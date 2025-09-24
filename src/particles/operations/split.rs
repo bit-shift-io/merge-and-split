@@ -9,7 +9,7 @@ pub struct Split {
 }
 
 impl Operation for Split {
-    fn execute(&self, ps: &mut ParticleVec) {
+    fn execute(&mut self, ps: &mut ParticleVec) {
         let particle_count: usize = ps.len();
 
         // The more to the right of the particle system vector we go, 
@@ -244,7 +244,7 @@ impl Default for Split {
 
 #[cfg(test)]
 mod tests {
-    use crate::particles::{operations::merge::Merge, particle::Particle};
+    use crate::particles::{operations::{merge::Merge, metrics::Metrics}, particle::Particle};
 
     use super::*;
 
@@ -264,8 +264,12 @@ mod tests {
         assert_eq!(ps[1].particle_type, ParticleType::Particle);
         assert_eq!(ps[1].is_merged, false);
 
+        // Measure metrics
+        let mut met1 = Metrics::default();
+        met1.execute(&mut ps);
+
         // This should merge p2 and p1 as they intersect.
-        let psm = Merge::default();
+        let mut psm = Merge::default();
         psm.execute(&mut ps);
 
         assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
@@ -280,7 +284,7 @@ mod tests {
         assert_eq!(ps[2].is_merged, false);
 
         // This should split the meta particle.
-        let pss = Split::default();
+        let mut pss = Split::default();
         pss.execute(&mut ps);
 
         assert_eq!(ps.len(), 2);
@@ -289,7 +293,12 @@ mod tests {
         assert_eq!(ps[0].is_merged, false);
 
         assert_eq!(ps[1].particle_type, ParticleType::Particle);
-        assert_eq!(ps[1].is_merged, false);        
+        assert_eq!(ps[1].is_merged, false);  
+
+        // Measure metrics again to see if there is any change
+        let mut met2 = Metrics::default();
+        met2.execute(&mut ps);
+        assert_eq!(met1.total_velocity_magnitude, met2.total_velocity_magnitude);        
     }
 
 
@@ -314,7 +323,7 @@ mod tests {
         assert_eq!(ps[2].is_merged, false);
 
         // This should merge p1, p2 and p3 as they intersect.
-        let psm = Merge::default();
+        let mut psm = Merge::default();
         psm.execute(&mut ps);
 
         assert_eq!(ps.len(), 5); // 3 original particles + 2 meta particle. 2 meta particles have been added to the Particle System.
@@ -335,7 +344,7 @@ mod tests {
         assert_eq!(ps[4].is_merged, false);
 
         // This should split the meta particle.
-        let pss = Split::default();
+        let mut pss = Split::default();
         pss.execute(&mut ps);
 
         assert_eq!(ps.len(), 3);
@@ -369,7 +378,7 @@ mod tests {
         assert_eq!(ps[1].is_static, false);
 
         // This should merge p2 and p1 as they intersect.
-        let psm = Merge::default();
+        let mut psm = Merge::default();
         psm.execute(&mut ps);
 
         assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
@@ -386,7 +395,7 @@ mod tests {
         assert_eq!(ps[2].is_merged, false);
 
         // This should split the meta particle.
-        let pss = Split::default();
+        let mut pss = Split::default();
         pss.execute(&mut ps);
 
         assert_eq!(ps.len(), 2);

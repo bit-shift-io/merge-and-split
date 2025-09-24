@@ -26,7 +26,7 @@ impl VerletIntegration {
 }
 
 impl Operation for VerletIntegration {
-    fn execute(&self, ps: &mut ParticleVec) {
+    fn execute(&mut self, ps: &mut ParticleVec) {
         let particle_count: usize = ps.len();
         for ai in 0..particle_count {
             let p1 = &mut ps[ai];
