@@ -117,15 +117,15 @@ impl Operation for Merge {
                         .set_pos(x12)
                         .set_vel(v12)
                         .set_mass(m12)
-                        .set_radius(r12)
+                        //.set_radius(r12) // meta particles appear to have no radius
                         .set_energy_delta(energy_delta)
                         .set_n(n)
                         .set_left_index(ai)
                         .set_right_index(bi);
                     ps.push(meta_particle);
 
-                    particle_count = ps.len(); // Update particle_count based on new length of ps.particles array.
-                    break; // Move onto the next ai where there is a valid non-merged particle.
+                    //particle_count = ps.len(); // Update particle_count based on new length of ps.particles array.
+                    //break; // Move onto the next ai where there is a valid non-merged particle.
                 }
             }
         }

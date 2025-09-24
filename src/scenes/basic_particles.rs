@@ -159,18 +159,17 @@ impl Plugin for BasicParticles {
     }
 
     fn update(&mut self, app: &mut App) {
-        if self.frame_idx > 140 {
-            thread::sleep(Duration::from_millis(200));
-        }
+        // if self.frame_idx > 140 {
+        //     thread::sleep(Duration::from_millis(200));
+        // }
         
         self.frame_idx += 1;
         println!("F: {}", self.frame_idx);
 
         // Frame 151, the particle on the left (p50) gets merged and its not near anything! It seems there is a metaparticle P81 that is apparently nearby, but there should not be.
-
-        if self.frame_idx >= 151 {
-            println!("slow frame?")
-        }
+        // if self.frame_idx >= 151 {
+        //     println!("slow frame?")
+        // }
 
         // Update particle system
         // todo: Need a ParticlePipeline to apply any number of Operations.
