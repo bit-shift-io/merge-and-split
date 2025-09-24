@@ -1,3 +1,5 @@
+use std::{thread, time::Duration};
+
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
@@ -12,6 +14,7 @@ pub struct BasicParticles {
     quad_mesh: Option<Mesh>,
     material: Option<Material>,
     shader: Option<Shader>,
+    frame_idx: u128
 }
 
 
@@ -25,12 +28,17 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) {
         .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 8.0))
         .create_in_particle_vec(particle_vec);
 
+    println!("Perimiter has particles from 0 to {}", particle_vec.len());
+
     // some dynamic particles on the inside    
     let mut liquid = ShapeBuilder::new();
     liquid
-        .set_particle_template(Particle::default().set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(0.0, 0.5)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
-        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(2.0, 2.0)))
+        .set_particle_template(Particle::default().set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, -2.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
+        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(3.0, 3.0)))
         .create_in_particle_vec(particle_vec);
+
+    // Lets debug what happens to this particle (top left of the fluid)
+    particle_vec[50].set_debug(true);
 }
 
 fn setup_3_particles(particle_vec: &mut ParticleVec) {
@@ -59,6 +67,7 @@ impl BasicParticles {
             quad_mesh: None,
             material: None,
             shader: None,
+            frame_idx: 0,
         }
     }
 
@@ -71,6 +80,11 @@ impl BasicParticles {
         // Add particles into the instance renderer
         let mut instances: Vec<Instance> = vec![]; 
         for i in 0..self.particle_vec.len() {
+            // Skip debug particle so we can see where it is
+            // if self.particle_vec[i].debug {
+            //     continue;
+            // }
+
             // todo: Clean this up with Instance::new()
             let position = cgmath::Vector3 {
                         x: self.particle_vec[i].pos[0],
@@ -103,7 +117,7 @@ impl Plugin for BasicParticles {
         self.update_particle_instances(&state.queue, &state.device);
 
         self.quad_mesh = Some(Mesh::from_verticies_and_indicies("Quad".to_owned(), &state.device, QUAD_VERTICES, QUAD_INDICES));
-        self.material = Some(Material::from_file("happy-tree.png".to_owned(), &state.device, &state.queue));
+        self.material = Some(Material::from_file("marble.png".to_owned(), &state.device, &state.queue));
 
         self.camera = Some(Camera::new(&state.device, state.config.width as f32 / state.config.height as f32));
         
@@ -145,6 +159,19 @@ impl Plugin for BasicParticles {
     }
 
     fn update(&mut self, app: &mut App) {
+        if self.frame_idx > 140 {
+            thread::sleep(Duration::from_millis(200));
+        }
+        
+        self.frame_idx += 1;
+        println!("F: {}", self.frame_idx);
+
+        // Frame 151, the particle on the left (p50) gets merged and its not near anything! It seems there is a metaparticle P81 that is apparently nearby, but there should not be.
+
+        if self.frame_idx >= 151 {
+            println!("slow frame?")
+        }
+
         // Update particle system
         // todo: Need a ParticlePipeline to apply any number of Operations.
         // todo: The paper talks about doing this whole merge and split twice to avoid some problems.

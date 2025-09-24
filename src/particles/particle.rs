@@ -1,5 +1,7 @@
 
-use crate::math::vec2::Vec2;
+use std::{fmt, usize};
+
+use crate::math::vec2::{Vec2};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ParticleType {
@@ -9,6 +11,9 @@ pub enum ParticleType {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Particle {
+    pub index: usize, // for debugging
+    pub debug: bool, // for debugging
+
     pub pos: Vec2,
     pub vel: Vec2,
     pub radius: f32,
@@ -30,6 +35,15 @@ impl Particle {
         self
     }
 
+    pub fn set_index(&mut self, index: usize) -> &mut Self {
+        self.index = index;
+        self
+    }
+
+    pub fn set_debug(&mut self, debug: bool) -> &mut Self {
+        self.debug = debug;
+        self
+    }
 
     pub fn set_radius(&mut self, radius: f32) -> &mut Self {
         debug_assert!(!radius.is_nan());
@@ -55,6 +69,11 @@ impl Particle {
     pub fn set_vel(&mut self, vel: Vec2) -> &mut Self {
         debug_assert!(!vel.x.is_nan());
         debug_assert!(!vel.y.is_nan());
+
+        if self.debug {
+            println!("set_vel called on {}, changing vel to:{},{}", self, vel[0], vel[1]);
+        }
+
         self.vel = vel;
         //self.pos_prev = pos;
         self
@@ -98,6 +117,9 @@ impl Particle {
 impl Default for Particle {
     fn default() -> Self {
         Self {
+            index: usize::MAX,
+            debug: false,
+
             pos: Vec2::new(0.0, 0.0),
             vel: Vec2::new(0.0, 0.0),
             radius: 0.5,
@@ -112,6 +134,12 @@ impl Default for Particle {
             left_index: usize::MAX,
             right_index: usize::MAX,
         }
+    }
+}
+
+impl fmt::Display for Particle {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "(P:{} POS:{},{} VEL:{},{})", self.index, self.pos[0], self.pos[1], self.vel[0], self.vel[1])
     }
 }
 

@@ -304,9 +304,9 @@ pub struct Model {
 
 // impl InstanceRenderer {
 //     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, config: &wgpu::SurfaceConfiguration) -> Self {
-//         let diffuse_bytes = include_bytes!("happy-tree.png");
+//         let diffuse_bytes = include_bytes!("marble.png");
 //         let diffuse_texture =
-//             texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "happy-tree.png").unwrap();
+//             texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "marble.png").unwrap();
 
 //         let texture_bind_group_layout =
 //             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {

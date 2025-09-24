@@ -1,3 +1,5 @@
+use std::fmt;
+
 use cgmath::InnerSpace;
 
 pub(crate) type Vec2 = cgmath::Vector2<f32>;
@@ -22,3 +24,7 @@ pub fn reflect_vector_a_around_b(a: Vec2, b: Vec2) -> Vec2 {
 
     a_reflected
 }
+
+// pub fn fmt_vec_2(v: Vec2, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//     write!(f, "({}, {})", v[0], v[1])
+// }

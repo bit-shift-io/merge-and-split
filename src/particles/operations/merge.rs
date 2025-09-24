@@ -8,6 +8,33 @@ pub struct Merge {
 
 impl Operation for Merge {
     fn execute(&self, ps: &mut ParticleVec) {
+        // I think my algorithm here is wrong.
+        // I iterate over every particle, create meta particles, then the meta particles are also doing collision detection which appears wrong.
+
+        // The rust impl in grok says I should find all colliding particles with p[0], then recursively merge those. find all particles colliding with p[1], then recursively merge those:
+        // fn find_collision_components(particles: &Vec<Particle>, dt: f64) -> Vec<Vec<usize>> {
+        //     let mut components: Vec<Vec<usize>> = (0..particles.len()).map(|i| vec![i]).collect();
+
+        //     // Merge components if colliding (simple O(n^2) for small n)
+        //     for i in 0..particles.len() {
+        //         for j in (i+1)..particles.len() {
+        //             let xi = particles[i].position;
+        //             let xj = particles[j].position;
+        //             let dist = norm(sub(xi, xj));
+        //             if dist < particles[i].radius + particles[j].radius {
+        //                 let n = sub(xj, xi);
+        //                 let rel_v = sub(particles[j].velocity, particles[i].velocity);
+        //                 if dot(rel_v, n) < 0.0 {
+        //                     // Merge components (simplified, assume no union-find for brevity)
+        //                     // In real code, use union-find
+        //                     // For now, skip proper merging, assume small number
+        //                 }
+        //             }
+        //         }
+        //     }
+        //     components // Stub, implement proper graph connected components
+        // }
+
         let mut particle_count: usize = ps.len();
         for ai in 0..particle_count {
             // Skip "merged" particles, they are handled by the meta particle.
@@ -46,6 +73,15 @@ impl Operation for Merge {
                     continue;
                 }
 
+                if p1.debug || p2.debug {
+                    println!("Merge p1:{} with p2:{}", p1, p2);
+                }
+
+
+                if ps.len() == 80 {
+                    println!("Merge is about to make our bogus P80 particle if frame=151...");
+                }
+
                 // https://www.cemyuksel.com/research/papers/particle_merging-and-splitting_tvcg2021.pdf
                 // page 3:
                 //
@@ -58,7 +94,7 @@ impl Operation for Merge {
                 // m12 = m1 + m2 , (1)
                 // x12 = (m1x1 + m2x2) /m12 , (2)
                 // v12 = (m1v1 + m2v2) /m12 . (3)
-                let r12 = p1.radius + p2.radius;
+                let r12 = p1.radius + p2.radius; // I think this is the problem!
                 let m12 = p1.mass + p2.mass;
                 let x12 = (p1.mass * p1.pos + p2.mass * p2.pos) / m12;
                 let v12 = (p1.mass * p1.vel + p2.mass * p2.vel) / m12;
@@ -87,6 +123,7 @@ impl Operation for Merge {
                         .set_left_index(ai)
                         .set_right_index(bi);
                     ps.push(meta_particle);
+
                     particle_count = ps.len(); // Update particle_count based on new length of ps.particles array.
                     break; // Move onto the next ai where there is a valid non-merged particle.
                 }

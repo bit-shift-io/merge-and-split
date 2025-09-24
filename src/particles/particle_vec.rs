@@ -11,7 +11,7 @@ impl ParticleVec {
     }
 
     pub fn push(&mut self, value: Particle) {
-        self.0.push(value);
+        self.0.push(*value.clone().set_index(self.0.len()));
     }
 
     pub fn truncate(&mut self, len: usize) {
@@ -19,7 +19,13 @@ impl ParticleVec {
     }
 
     pub fn extend(&mut self, other_vec: &ParticleVec) {
+        let index_start = self.0.len();
         self.0.extend(other_vec.0.clone()); // Is there a non-clone way to do this?
+
+        // Update indicies of newly added particles for debugging.
+        for i in index_start..self.0.len() {
+            self.0[i].set_index(i);
+        }
     }
 
     pub fn iter(&self) -> Iter<'_, Particle> {

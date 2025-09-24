@@ -208,6 +208,12 @@ impl Operation for Split {
                 //debug_assert!((v2_prime - v1_prime).dot(n_hat) >= -epsilon, "Particles not separating");
             }
 
+            if p1.debug || p2.debug {
+                println!("Split p1:{} and p2:{} from meta:{}. These will change to: p1:{} and p2:{}", p1, p2, meta_particle, 
+                    p1.clone().set_debug(false).set_pos(x1_prime).set_vel(v1_prime), 
+                    p2.clone().set_debug(false).set_pos(x2_prime).set_vel(v2_prime));
+            }
+
             {
                 let p1_mut = &mut ps[ai];
                 p1_mut.set_merged(false)
