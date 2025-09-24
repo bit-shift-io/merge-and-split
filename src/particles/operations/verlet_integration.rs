@@ -2,16 +2,14 @@ use cgmath::InnerSpace;
 
 use crate::{math::vec2::Vec2, particles::{operations::operation::Operation, particle_vec::ParticleVec}};
 
-
-
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Move {
+pub struct VerletIntegration {
     pub time_delta: f32, // really we should get this from an OperationContext?
     pub gravity: Vec2,
 }
 
-// This is also known as "integration". Move and apply any gravity/force.
-impl Move {
+// Verlet integration conserves energy (Euler does not).
+impl VerletIntegration {
     pub fn set_time_delta(&mut self, time_delta: f32) -> &mut Self {
         debug_assert!(!time_delta.is_nan());
         debug_assert!(time_delta > 0.0);
@@ -27,8 +25,7 @@ impl Move {
     }
 }
 
-// todo: rename to EulerIntegration
-impl Operation for Move {
+impl Operation for VerletIntegration {
     fn execute(&self, ps: &mut ParticleVec) {
         let particle_count: usize = ps.len();
         for ai in 0..particle_count {
@@ -39,20 +36,28 @@ impl Operation for Move {
                 continue;
             }
             
-            let force = p1.mass * self.gravity; // F = ma
-            let vel = force * self.time_delta;
-            p1.vel += vel;
+            let force = self.gravity * p1.mass;
+            let accel = force / p1.mass; // F = ma, rearranged to a = F / m
 
-            p1.pos += p1.vel * self.time_delta;
+            // Update position
+            let pos_new = p1.pos + p1.vel * self.time_delta + 0.5 * accel * self.time_delta.powi(2);
+
+            // New acceleration (constant for gravity, but computed for generality)
+            let a_new = accel; //force(x_new) / m
+    
+            // Update velocity
+            let vel_new = p1.vel + 0.5 * (accel + a_new) * self.time_delta;
+
+            p1.set_pos(pos_new).set_vel(vel_new);
 
             if p1.debug {
-                println!("Move {}", p1);
+                println!("VerletIntegration {}", p1);
             }
         }
     }
 }
 
-impl Default for Move {
+impl Default for VerletIntegration {
     fn default() -> Self {
         Self {
             time_delta: 0.0,
@@ -75,7 +80,7 @@ mod tests {
         ps.push(p1);
 
         // Move by 1 time step.
-        let mut o = *Move::default().set_time_delta(1.0).set_gravity(Vec2::new(0.0, 0.0));
+        let mut o = *VerletIntegration::default().set_time_delta(1.0).set_gravity(Vec2::new(0.0, 0.0));
         o.execute(&mut ps);
         assert_eq!(ps[0].pos, Vec2::new(0.1, 0.0));
 
@@ -85,18 +90,3 @@ mod tests {
         assert_eq!(ps[0].pos, Vec2::new(0.15, 0.0));
     }
 }
-
-
-// // Simple integration: gravity only, explicit Euler
-// fn integrate(metas: &mut Vec<MetaParticle>, dt: f64) {
-//     let gravity = [0.0, 0.0, -9.8];
-//     for meta in metas.iter_mut() {
-//         let a = gravity; // Force computation stub; in real, sum forces / mass
-//         let mut vel = meta.get_velocity();
-//         vel = add(vel, scale(dt, a));
-//         let mut pos = meta.get_position();
-//         pos = add(pos, scale(dt, vel));
-//         meta.set_velocity(vel);
-//         meta.set_position(pos);
-//     }
-// }

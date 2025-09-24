@@ -10,34 +10,7 @@ pub struct Merge {
 
 impl Operation for Merge {
     fn execute(&self, ps: &mut ParticleVec) {
-        // I think my algorithm here is wrong.
-        // I iterate over every particle, create meta particles, then the meta particles are also doing collision detection which appears wrong.
-
-        // The rust impl in grok says I should find all colliding particles with p[0], then recursively merge those. find all particles colliding with p[1], then recursively merge those:
-        // fn find_collision_components(particles: &Vec<Particle>, dt: f64) -> Vec<Vec<usize>> {
-        //     let mut components: Vec<Vec<usize>> = (0..particles.len()).map(|i| vec![i]).collect();
-
-        //     // Merge components if colliding (simple O(n^2) for small n)
-        //     for i in 0..particles.len() {
-        //         for j in (i+1)..particles.len() {
-        //             let xi = particles[i].position;
-        //             let xj = particles[j].position;
-        //             let dist = norm(sub(xi, xj));
-        //             if dist < particles[i].radius + particles[j].radius {
-        //                 let n = sub(xj, xi);
-        //                 let rel_v = sub(particles[j].velocity, particles[i].velocity);
-        //                 if dot(rel_v, n) < 0.0 {
-        //                     // Merge components (simplified, assume no union-find for brevity)
-        //                     // In real code, use union-find
-        //                     // For now, skip proper merging, assume small number
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     components // Stub, implement proper graph connected components
-        // }
-
-        let mut particle_count: usize = ps.len();
+        let particle_count: usize = ps.len();
         for ai in 0..particle_count {
             // Skip "merged" particles, they are handled by the meta particle.
             if ps[ai].is_merged {
