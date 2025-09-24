@@ -33,8 +33,8 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) {
     // some dynamic particles on the inside    
     let mut liquid = ShapeBuilder::new();
     liquid
-        .set_particle_template(Particle::default().set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, -2.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
-        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(3.0, 3.0)))
+        .set_particle_template(Particle::default().set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
+        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(2.0, 2.0)))
         .create_in_particle_vec(particle_vec);
 
     // Lets debug what happens to this particle (top left of the fluid)

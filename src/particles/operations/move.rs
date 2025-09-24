@@ -39,9 +39,8 @@ impl Operation for Move {
                 continue;
             }
             
-
-            //let force = p1.mass * self.gravity; // F = ma
-            let vel = Vec2::new(0.0, -9.8) * self.time_delta; //force * self.time_delta;
+            let force = p1.mass * self.gravity; // F = ma
+            let vel = force * self.time_delta;
             p1.vel += vel;
 
             p1.pos += p1.vel * self.time_delta;
