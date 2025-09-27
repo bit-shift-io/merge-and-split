@@ -1,28 +1,32 @@
 use cgmath::InnerSpace;
 
-use crate::{math::vec2::Vec2, particles::{operations::operation::Operation, particle_vec::ParticleVec}};
+use crate::{math::{float::float_approx_equal, vec2::Vec2}, particles::{operations::operation::Operation, particle_vec::ParticleVec}};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Metrics {
-    pub total_velocity_magnitude: f32,
+    pub momentum_magnitude: f32,
 }
 
 impl Metrics {
+    pub fn approx_equal(&self, other: &Metrics) -> bool {
+        float_approx_equal(self.momentum_magnitude, other.momentum_magnitude, f32::EPSILON)
+    }
 }
 
 impl Operation for Metrics {
     fn execute(&mut self, ps: &mut ParticleVec) {
         let particle_count: usize = ps.len();
-        let mut total_velocity_magnitude = 0.0;
+        let mut momentum_magnitude = 0.0;
         for ai in 0..particle_count {
             let p1 = &ps[ai];
 
-            // Static and merged particles do not get moved.
+            // Static and merged particles are ignored.
             if p1.is_static || p1.is_merged {
                 continue;
             }
             
-            total_velocity_magnitude += p1.vel.magnitude(); // leave this mag2 and sqrt later.
+            let momentum = p1.vel * p1.mass;
+            momentum_magnitude += momentum.magnitude(); // leave this mag2 and sqrt later.
 
             if p1.debug {
                 println!("Metrics {}", p1);
@@ -30,15 +34,15 @@ impl Operation for Metrics {
         }
 
         // This helps us see if energy is being added or removed into the system.
-        println!("Metrics Total Vel Magnitude: {} -> {}", self.total_velocity_magnitude, total_velocity_magnitude);
-        self.total_velocity_magnitude = total_velocity_magnitude;
+        println!("Metrics Momentum Magnitude: {} -> {}", self.momentum_magnitude, momentum_magnitude);
+        self.momentum_magnitude = momentum_magnitude;
     }
 }
 
 impl Default for Metrics {
     fn default() -> Self {
         Self {
-            total_velocity_magnitude: 0.0
+            momentum_magnitude: 0.0
         }
     }
 }
@@ -61,6 +65,6 @@ mod tests {
 
         let mut met = Metrics::default();
         met.execute(&mut ps);
-        assert_eq!(met.total_velocity_magnitude, 0.2);
+        assert_eq!(met.momentum_magnitude, 0.2);
     }
 }

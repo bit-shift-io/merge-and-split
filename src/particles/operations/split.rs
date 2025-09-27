@@ -306,6 +306,11 @@ mod tests {
         let mut pss = Split::default().set_restitution_coefficient(1.0).clone();
         pss.execute(&mut ps);
 
+        // Measure metrics
+        let mut met2 = Metrics::default();
+        met2.execute(&mut ps);
+        assert!(met1.approx_equal(&met2));
+
         assert_eq!(ps.len(), 2);
 
         assert_eq!(ps[0].particle_type, ParticleType::Particle);
@@ -315,9 +320,9 @@ mod tests {
         assert_eq!(ps[1].is_merged, false);  
 
         // Measure metrics again to see if there is any change
-        let mut met2 = Metrics::default();
-        met2.execute(&mut ps);
-        assert_eq!(met1.total_velocity_magnitude, met2.total_velocity_magnitude);        
+        let mut met3 = Metrics::default();
+        met3.execute(&mut ps);
+        assert!(met1.approx_equal(&met3));       
     }
 
 
@@ -345,6 +350,11 @@ mod tests {
         // This should merge p1, p2 and p3 as they intersect.
         let mut psm = Merge::default();
         psm.execute(&mut ps);
+
+        // Measure metrics
+        let mut met2 = Metrics::default();
+        met2.execute(&mut ps);
+        assert!(met1.approx_equal(&met2));
 
         assert_eq!(ps.len(), 5); // 3 original particles + 2 meta particle. 2 meta particles have been added to the Particle System.
 
@@ -383,9 +393,9 @@ mod tests {
         assert_eq!(ps[2].is_merged, false);
 
         // Measure metrics again to see if there is any change
-        let mut met2 = Metrics::default();
-        met2.execute(&mut ps);
-        assert_eq!(met1.total_velocity_magnitude, met2.total_velocity_magnitude);  
+        let mut met3 = Metrics::default();
+        met3.execute(&mut ps);
+        assert!(met1.approx_equal(&met3));
     }
 
 
