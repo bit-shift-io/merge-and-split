@@ -191,7 +191,7 @@ impl Operation for Split {
                 let v1_original = p1.vel;
                 let delta_v = v12_prime - v1_original;
 
-                let a = 1.0; // mu ^ 2 in Eq 13.
+                let a = 1.0; // mu ^ 2 in Eq 13. why is this 1?
                 let b = -2.0 * n_hat.dot(delta_v);
                 let c = delta_v.magnitude2() - s2;
                 let discriminant = b * b - 4.0 * a * c;
@@ -206,11 +206,12 @@ impl Operation for Split {
                     let root2 = (-b - sqrt_d) / two_a;
     
                     // Two roots, take smaller (Eq 14)
-                    if root1.abs() < root2.abs() {
-                        mu = root1;
-                    } else {
-                        mu = root2;
-                    }
+                    // if root1.abs() < root2.abs() {
+                    //     mu = root1;
+                    // } else {
+                    //     mu = root2;
+                    // }
+                    mu = root1.min(root2); // this typically gives a -ve number which we need for this to work. The above code I commented out does not do this.
 
                     epsilon_vec = Vec2::new(0.0, 0.0);
                 } else {
@@ -225,6 +226,8 @@ impl Operation for Split {
                     }
                 }
 
+                // FM: I think there is a problem here. Velocity is not changing direction
+                // in the unit test, so the 2 particles keep moving towards each other.
                 // v'1 from Eq 12
                 v1_prime = v1_original + (mu * n_hat) + epsilon_vec;
                 
@@ -253,11 +256,9 @@ impl Operation for Split {
                 #[cfg(debug_assertions)]
                 {
                     // If there are 2 real roots, particle seperation is guarnateed.
-                    //if discriminant >= 0.0 {
-                        let delta_v = v2_prime - v1_prime;
-                        let d = delta_v.dot(n_hat);
-                        debug_assert!(d >= 0.0, "Particles not separating");
-                    //}
+                    let delta_v = v2_prime - v1_prime;
+                    let d = delta_v.dot(n_hat);
+                    debug_assert!(d >= 0.0, "Particles not separating");
                 }
             }
 
