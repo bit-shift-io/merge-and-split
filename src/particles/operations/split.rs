@@ -237,16 +237,16 @@ impl Operation for Split {
                     use core::f32;
                     use crate::math::float::float_approx_equal;
 
-                    // if self.restitution_coefficient == 1.0 {
-                    //     let p1_momentum = (p1.mass * p1.vel).magnitude();
-                    //     let p2_momentum = (p2.mass * p2.vel).magnitude();
-                    //     let moment_before = p1_momentum + p2_momentum;
+                    if self.restitution_coefficient == 1.0 {
+                        let p1_momentum = (p1.mass * p1.vel).magnitude();
+                        let p2_momentum = (p2.mass * p2.vel).magnitude();
+                        let moment_before = p1_momentum + p2_momentum;
 
-                    //     let p1_momentum_prime = (p1.mass * v1_prime).magnitude();
-                    //     let p2_momentum_prime = (p2.mass * v2_prime).magnitude();
-                    //     let momentum_after = p1_momentum_prime + p2_momentum_prime;
-                    //     debug_assert!(float_approx_equal(moment_before, momentum_after, f32::EPSILON * 10.0) , "Momentum not conserved");
-                    // }
+                        let p1_momentum_prime = (p1.mass * v1_prime).magnitude();
+                        let p2_momentum_prime = (p2.mass * v2_prime).magnitude();
+                        let momentum_after = p1_momentum_prime + p2_momentum_prime;
+                        debug_assert!(float_approx_equal(moment_before, momentum_after, f32::EPSILON * 10.0) , "Momentum not conserved");
+                    }
                 }
 
                 // Verify separation (Eq 14)
