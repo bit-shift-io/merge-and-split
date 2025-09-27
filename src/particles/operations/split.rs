@@ -245,7 +245,7 @@ impl Operation for Split {
                         let p1_momentum_prime = (p1.mass * v1_prime).magnitude();
                         let p2_momentum_prime = (p2.mass * v2_prime).magnitude();
                         let momentum_after = p1_momentum_prime + p2_momentum_prime;
-                        debug_assert!(float_approx_equal(moment_before, momentum_after, f32::EPSILON * 10.0) , "Momentum not conserved");
+                        debug_assert!(float_approx_equal(moment_before, momentum_after, f32::EPSILON) , "Momentum not conserved");
                     }
                 }
 
