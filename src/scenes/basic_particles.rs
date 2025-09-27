@@ -188,7 +188,7 @@ impl Plugin for BasicParticles {
             i.execute(&mut self.particle_vec);
 
             // This should split particle.
-            let mut s = Split::default().set_restitution_coefficient(0.5).clone();
+            let mut s = Split::default().set_restitution_coefficient(1.0).clone();
             s.execute(&mut self.particle_vec);
 
             // Second merge and split

@@ -82,6 +82,7 @@ impl Operation for Split {
 
             let n = meta_particle.n;
             let delta_e = meta_particle.energy_delta;
+            debug_assert!(delta_e >= 0.0, "Negative energy not possible");
 
             // Compute positions of split particles (Eq 6,7)
             let mut x1_prime = x12_prime - (m2 / m12) * n;
@@ -177,45 +178,50 @@ impl Operation for Split {
                 // m1*v1 + m2*v2 = m12*v12, with v2 = 0
                 //v1_prime = -(m12 / m1) * v12_prime; //scale(m12 / m1, *v12);
             } else {
-                // s^2 from Eq 11.
-                let s2 = 2.0 * alpha * delta_e / m12 * (m1 / m2);
+                // s^2 from Eq 11. on page 3
+                let s2 = (2.0 * alpha * delta_e) / (m12 * (m1 / m2));
                 let s: f32 = s2.sqrt();//.max(0.0).sqrt(); //Math.sqrt(max(s2, 0));
 
-                // Quadratic equation for mu (Eq 13)
+                // Now we are attempting to find a solution for v1_prime as the paper says:
+                // "Hence the only unknown if v1_prime, and once it is solved, 
+                // v2_prime can be calculated using momentum conservation (Eq 8)"
+
+                // Solve Quadratic equation for mu (Eq 13)
+                // ax² + bx + c = 0
                 let v1_original = p1.vel;
                 let delta_v = v12_prime - v1_original;
-                let b = -2.0 * n_hat.dot(delta_v); // np.dot(n_hat, delta_v);
-                let c = delta_v.magnitude2() - s2; //np.linalg.norm(delta_v)**2 - s2;
-                let a = 1.0;
-                let discriminant = b.powi(2) - 4.0 * a * c; //b**2 - 4*a*c; -- Where is this coming from?
 
-                let epsilon_vec: Vector2<f32>;// = Vec2::new(0.0, 0.0);
-                let mu: f32;// = 0.0;
+                let a = 1.0; // mu ^ 2 in Eq 13.
+                let b = -2.0 * n_hat.dot(delta_v);
+                let c = delta_v.magnitude2() - s2;
+                let discriminant = b * b - 4.0 * a * c;
+
+                let epsilon_vec: Vector2<f32>;
+                let mu: f32;
                 if discriminant >= 0.0 {
+                    // Calculate roots using quadratic formula
+                    let sqrt_d = discriminant.sqrt();
+                    let two_a = 2.0 * a;
+                    let root1 = (-b + sqrt_d) / two_a;
+                    let root2 = (-b - sqrt_d) / two_a;
+    
                     // Two roots, take smaller (Eq 14)
-                    let mu1 = (-b + discriminant.sqrt()) / (2.0 * a);
-                    let mu2 = (-b - discriminant.sqrt()) / (2.0 * a);
-                    mu = mu1.min(mu2); //min(mu1, mu2);
+                    if root1.abs() < root2.abs() {
+                        mu = root1;
+                    } else {
+                        mu = root2;
+                    }
 
-                    // fmnote: The assert below to check seperation is failing
-                    // the python version indicates we should take the higher in a special case
-                    // which might resolve the problem?
-                    //
-                    // Check/Verify separation (Eq 14)
-                    // if (v2_prime - v1_prime).dot(n_hat) >= -epsilon {
-                    //     mu = mu2; // If not, take larger? But paper says take smaller for separation
-                    // }
-
-                    epsilon_vec = Vec2::new(0.0, 0.0); //np.zeros_like(n_hat);
+                    epsilon_vec = Vec2::new(0.0, 0.0);
                 } else {
                     // No real root, use geometric solution (Eq 15,16)
-                    mu = n_hat.dot(v12_prime - v1_original);
-                    let w = (v12_prime - v1_original) - (mu * n_hat);
-                    let w_len = w.magnitude(); //np.linalg.norm(w)
+                    mu = n_hat.dot(delta_v);
+                    let w = delta_v - (mu * n_hat);
+                    let w_len = w.magnitude();
                     if w_len > epsilon {
                         epsilon_vec = (w_len - s) * (w / w_len);
                     } else {
-                        epsilon_vec = Vec2::new(0.0, 0.0); //np.zeros_like(w);
+                        epsilon_vec = Vec2::new(0.0, 0.0);
                     }
                 }
 
@@ -223,10 +229,36 @@ impl Operation for Split {
                 v1_prime = v1_original + (mu * n_hat) + epsilon_vec;
                 
                 // v'2 from momentum conservation (Eq 8, fleshed out more on page 4)
-                v2_prime = ((m12 / m2) * v12_prime) - ((m12 / m2) * v1_prime); //(m12 * v12_prime - m1 * v1_prime) / m2;
+                v2_prime = ((m12 / m2) * v12_prime) - ((m1 / m2) * v1_prime);
                 
+                // Verify conservation of momentum
+                #[cfg(debug_assertions)]
+                {
+                    use core::f32;
+                    use crate::math::float::float_approx_equal;
+
+                    // if self.restitution_coefficient == 1.0 {
+                    //     let p1_momentum = (p1.mass * p1.vel).magnitude();
+                    //     let p2_momentum = (p2.mass * p2.vel).magnitude();
+                    //     let moment_before = p1_momentum + p2_momentum;
+
+                    //     let p1_momentum_prime = (p1.mass * v1_prime).magnitude();
+                    //     let p2_momentum_prime = (p2.mass * v2_prime).magnitude();
+                    //     let momentum_after = p1_momentum_prime + p2_momentum_prime;
+                    //     debug_assert!(float_approx_equal(moment_before, momentum_after, f32::EPSILON * 10.0) , "Momentum not conserved");
+                    // }
+                }
+
                 // Verify separation (Eq 14)
-                //debug_assert!((v2_prime - v1_prime).dot(n_hat) >= -epsilon, "Particles not separating");
+                #[cfg(debug_assertions)]
+                {
+                    // If there are 2 real roots, particle seperation is guarnateed.
+                    //if discriminant >= 0.0 {
+                        let delta_v = v2_prime - v1_prime;
+                        let d = delta_v.dot(n_hat);
+                        debug_assert!(d >= 0.0, "Particles not separating");
+                    //}
+                }
             }
 
             if p1.debug || p2.debug {
