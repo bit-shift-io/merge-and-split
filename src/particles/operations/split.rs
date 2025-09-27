@@ -67,18 +67,18 @@ impl Operation for Split {
             let p1 = &ps[ai];
             let p2 = &ps[bi];
 
-            debug_assert!(!(p1.is_static && p2.is_static), "Two static particles were maerged");
+            debug_assert!(!(p1.is_static && p2.is_static), "Two static particles were merged");
 
             let m12 = meta_particle.mass;
             let x12_prime = meta_particle.pos;
             let v12_prime = meta_particle.vel;
-            let r12 = meta_particle.radius;
+            //let r12 = meta_particle.radius;
 
             let m1 = p1.mass;
             let m2 = p2.mass;
 
-            let r1 = p1.radius;
-            let r2 = p2.radius;
+            //let r1 = p1.radius;
+            //let r2 = p2.radius;
 
             let n = meta_particle.n;
             let delta_e = meta_particle.energy_delta;
@@ -190,7 +190,7 @@ impl Operation for Split {
                 let discriminant = b.powi(2) - 4.0 * a * c; //b**2 - 4*a*c; -- Where is this coming from?
 
                 let epsilon_vec: Vector2<f32>;// = Vec2::new(0.0, 0.0);
-                let mut mu: f32;// = 0.0;
+                let mu: f32;// = 0.0;
                 if discriminant >= 0.0 {
                     // Two roots, take smaller (Eq 14)
                     let mu1 = (-b + discriminant.sqrt()) / (2.0 * a);
@@ -270,15 +270,12 @@ mod tests {
 
     use super::*;
 
-
     #[test]
     fn merge_and_split_2_intersecting() {
-        let mut ps = ParticleVec::default();
         let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
 
-        ps.push(p1);
-        ps.push(p2);
+        let mut ps = ParticleVec::from([p1, p2]);
 
         assert_eq!(ps[0].particle_type, ParticleType::Particle);
         assert_eq!(ps[0].is_merged, false);
@@ -326,15 +323,12 @@ mod tests {
 
     #[test]
     fn merge_and_split_3_intersecting() {
-        let mut ps = ParticleVec::default();
         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0)); // At origin.
         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)); // To the right of p1 such that it just overlaps.
         let p3 = *Particle::default().set_pos(Vec2::new(0.5, 0.5)); // Between p1 and p2, but higher, so all 3 overlap.
 
-        ps.push(p1);
-        ps.push(p2);
-        ps.push(p3);
-
+        let mut ps = ParticleVec::from([p1, p2, p3]);
+        
         assert_eq!(ps[0].particle_type, ParticleType::Particle);
         assert_eq!(ps[0].is_merged, false);
 
@@ -365,11 +359,15 @@ mod tests {
 
         assert_eq!(ps[3].particle_type, ParticleType::MetaParticle); // The merging of p1 and p2 -> p12
         assert_eq!(ps[3].is_merged, true);
+        assert_eq!(ps[3].left_index, 0);
+        assert_eq!(ps[3].right_index, 1);
 
         assert_eq!(ps[4].particle_type, ParticleType::MetaParticle); // The merging of p12 and p3 -> p123
         assert_eq!(ps[4].is_merged, false);
+        assert_eq!(ps[4].left_index, 3);
+        assert_eq!(ps[4].right_index, 2);
 
-        // This should split the meta particle.
+        // This should split the meta particles.
         let mut pss = Split::default();
         pss.execute(&mut ps);
 
@@ -393,12 +391,10 @@ mod tests {
 
     #[test]
     fn merge_and_split_2_static_intersecting() {
-        let mut ps = ParticleVec::default();
         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
 
-        ps.push(p1);
-        ps.push(p2);
+        let mut ps = ParticleVec::from([p1, p2]);
 
         assert_eq!(ps[0].particle_type, ParticleType::Particle);
         assert_eq!(ps[0].is_merged, false);

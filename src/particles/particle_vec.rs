@@ -5,6 +5,12 @@ use crate::particles::particle::Particle;
 
 pub struct ParticleVec(Vec<Particle>);
 
+impl<const N: usize> From<[Particle; N]> for ParticleVec {
+    fn from(s: [Particle; N]) -> Self {
+        Self(Vec::<Particle>::from(s))
+    }
+}
+
 impl ParticleVec {
     pub fn len(&self) -> usize {
         self.0.len()
@@ -76,5 +82,11 @@ mod tests {
     fn default() {
         let ps = ParticleVec::default();
         assert_eq!(ps.0, vec![]);
+    }
+
+    #[test]
+    fn from_constructor() {
+        let ps = ParticleVec::from([Particle::default(), Particle::default()]);
+        assert_eq!(ps.len(), 2);
     }
 }
