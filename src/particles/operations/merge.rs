@@ -2,10 +2,179 @@ use std::usize;
 
 use cgmath::InnerSpace;
 
-use crate::particles::{operations::operation::Operation, particle::{Particle, ParticleType}, particle_vec::ParticleVec};
+use crate::{math::vec2::Vec2, particles::{operations::operation::Operation, particle::{Particle, ParticleType}, particle_vec::ParticleVec}};
 
+
+// MetaParticle enum for tree structure
+enum MetaParticle {
+    Leaf {
+        //index: usize,
+        particle: Particle,
+    },
+    Node {
+        left: Box<MetaParticle>,
+        right: Box<MetaParticle>,
+        mass: f32,
+        position: Vec2,
+        velocity: Vec2,
+        delta_e: f32,
+        n: Vec2,
+        v_left_initial: Vec2,
+        v_right_initial: Vec2,
+    },
+}
+
+impl MetaParticle {
+    // Get mass of this meta
+    fn get_mass(&self) -> f32 {
+        match self {
+            MetaParticle::Leaf { particle } => particle.mass, //PARTICLES[*index].mass, // Assume global PARTICLES vec
+            MetaParticle::Node { mass, .. } => *mass,
+        }
+    }
+
+    // Get position (for leaf, from particle; for node, stored)
+    fn get_pos(&self) -> Vec2 {
+        match self {
+            MetaParticle::Leaf { particle } => particle.pos, //PARTICLES[*index].position,
+            MetaParticle::Node { position, .. } => *position,
+        }
+    }
+
+    // Get velocity
+    fn get_vel(&self) -> Vec2 {
+        match self {
+            MetaParticle::Leaf { particle } => particle.vel, //PARTICLES[*index].velocity,
+            MetaParticle::Node { velocity, .. } => *velocity,
+        }
+    }
+
+    // Set position (for node only, leaves updated later)
+    fn set_pos(&mut self, pos: Vec2) {
+        if let MetaParticle::Node { position, .. } = self {
+            *position = pos;
+        }
+    }
+
+    // Set velocity (for node only)
+    fn set_vel(&mut self, vel: Vec2) {
+        if let MetaParticle::Node { velocity, .. } = self {
+            *velocity = vel;
+        }
+    }
+}
+
+// Function to merge two metas into a node
+fn merge(left: MetaParticle, right: MetaParticle) -> MetaParticle {
+    let m1 = left.get_mass();
+    let m2 = right.get_mass();
+    let m12 = m1 + m2;
+
+    let x1 = left.get_pos();
+    let x2 = right.get_pos();
+    let x12 = ((m1 / m12) * x1) + ((m2 / m12) * x2); // let x12 = add(scale(m1 / m12, x1), scale(m2 / m12, x2));
+
+    let v1 = left.get_vel();
+    let v2 = right.get_vel();
+    let v12 = ((m1 / m12) * v1) + ((m2 / m12) * v2); //let v12 = add(scale(m1 / m12, v1), scale(m2 / m12, v2));
+
+    let delta_v = v1 - v2; //sub(v1, v2);
+    let delta_e = (m1 * m2 / (2.0 * m12)) * delta_v.magnitude2(); //norm_sq(delta_v);
+
+    let n = x2 - x1; //sub(x2, x1);
+
+    MetaParticle::Node {
+        left: Box::new(left),
+        right: Box::new(right),
+        mass: m12,
+        position: x12,
+        velocity: v12,
+        delta_e,
+        n,
+        v_left_initial: v1,
+        v_right_initial: v2,
+    }
+}
+
+// Recursive function to build meta tree from list of particle indices
+fn build_meta_tree(indices: &[usize], ps: &ParticleVec) -> MetaParticle {
+    debug_assert!(indices.len() > 0);
+
+    if indices.len() == 1 {
+        MetaParticle::Leaf { particle: ps[indices[0]] }
+    } else if indices.len() == 2 {
+        let left = MetaParticle::Leaf { particle: ps[indices[0]] }; //index: indices[0] };
+        let right = MetaParticle::Leaf { particle: ps[indices[1]] }; //index: indices[1] };
+        merge(left, right)
+    } else {
+        // Split into two halves for balanced tree
+        let mid = indices.len() / 2;
+        let left_tree = build_meta_tree(&indices[0..mid], ps);
+        let right_tree = build_meta_tree(&indices[mid..], ps);
+        merge(left_tree, right_tree)
+    }
+}
 
 pub struct Merge {
+}
+
+impl Merge {
+    pub fn compute_collisions(&self, ps: &ParticleVec) -> Vec<Vec<usize>> {
+        //let mut collisions = Vec::with_capacity(ps.len());
+
+        // start off colliding with "self", such that all particles are converted to a metaparticle.
+        let mut collisions: Vec<Vec<usize>> = (0..ps.len()).map(|i| vec![i]).collect();
+
+        let particle_count: usize = ps.len();
+        for ai in 0..particle_count {
+            for bi in (&ai+1)..particle_count {
+                let p1 = &ps[ai];
+                let p2 = &ps[bi];
+
+                // Two static particles cannot merge.
+                if p1.is_static && p2.is_static {
+                    continue;
+                }
+                
+                // Collision Rule 1: |x2 − x1| < r1 + r2 (page 5).
+                // See if two particles will collide. Continue if they do not collide.
+                let dist_sqrd = (p1.pos - p2.pos).magnitude2();
+                let r1_plus_r2 = p1.radius + p2.radius;
+                let r12_sqrd = r1_plus_r2 * r1_plus_r2;
+                if dist_sqrd >= r12_sqrd {
+                    continue;
+                }
+
+                // Collision Rule 2: n · (v2 − v1) < 0 (page 5).
+                let n = p2.pos - p1.pos;
+                let rel_v = p2.vel - p1.vel;
+                let d = n.dot(rel_v);
+                if d >= 0.0 {
+                    continue;
+                }
+
+                collisions[ai].push(bi);
+            }
+        }
+        collisions
+    }
+
+    fn execute2(&mut self, ps: &mut ParticleVec) -> Vec<MetaParticle> {
+        let mut meta_particles = vec![];
+        let collisions = self.compute_collisions(ps);
+        for ci in 0..collisions.len() {
+            let particle_collisions = &collisions[ci];
+
+            let meta_particle = build_meta_tree(particle_collisions, ps);
+            meta_particles.push(meta_particle);
+            // for pci in 0..particle_collisions.len() {
+            //     let p1_idx = ci;
+            //     let p2_idx = particle_collisions[pci];
+            // }
+        }
+
+        meta_particles
+    }
 }
 
 impl Operation for Merge {
@@ -128,6 +297,19 @@ mod tests {
     use crate::math::vec2::Vec2;
 
     use super::*;
+
+    #[test]
+    fn execute2_merge_3_intersecting() {
+        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0)); // At origin.
+        let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)); // To the right of p1 such that it just overlaps.
+        let p3 = *Particle::default().set_pos(Vec2::new(0.5, 0.5)); // Between p1 and p2, but higher, so all 3 overlap.
+
+        let mut ps = ParticleVec::from([p1, p2, p3]);
+
+        let mut m = Merge::default();
+        let meta_particles = m.execute2(&mut ps);
+        println!("done")
+    }
 
     #[test]
     fn merge_2_intersecting() {
