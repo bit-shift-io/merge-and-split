@@ -210,7 +210,7 @@ fn split(meta: &mut MetaParticle, alpha: f32, ps: &mut ParticleVec) {
             let c = dv.magnitude2() - s_sq;
             let discriminant = b * b - 4.0 * a * c;
 
-            let mut mu = 0.0;
+            let mu;
             let mut epsilon = Vec2::new(0.0, 0.0);
 
             if discriminant >= 0.0 {

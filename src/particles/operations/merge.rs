@@ -4,6 +4,9 @@ use cgmath::InnerSpace;
 
 use crate::{math::vec2::Vec2, particles::{operations::operation::Operation, particle::{Particle, ParticleType}, particle_vec::ParticleVec}};
 
+
+pub const LARGE_MASS: f32 = 100000.0; // This might cause problems if this goes too high due to merging combining masses.
+
 pub struct Merge {
 }
 
@@ -53,8 +56,8 @@ impl Merge {
 
 // Function to merge two metas into a node
 fn merge(left: Particle, right: Particle) -> Particle {
-    let m1 = left.mass; //get_mass(ps);
-    let m2 = right.mass; //get_mass(ps);
+    let m1 = if left.is_static { LARGE_MASS } else { left.mass }; //get_mass(ps);
+    let m2 = if right.is_static { LARGE_MASS } else { right.mass }; //get_mass(ps);
     let m12 = m1 + m2;
 
     let x1 = left.pos; //get_pos(ps);
