@@ -199,7 +199,7 @@ fn split(meta: &mut MetaParticle, alpha: f32, ps: &mut ParticleVec) {
             set_positions_recursive(right, x2_new, ps);
 
             // Now compute velocities
-            let s_sq = 2.0 * alpha * *delta_e / *m12 * (m1 / m2);
+            let s_sq = 2.0 * alpha * *delta_e / *m12 * (m2 / m1); //let s_sq = 2.0 * alpha * *delta_e / *m12 * (m1 / m2);
             let s = s_sq.sqrt();
 
             // Try epsilon = 0 first
