@@ -47,10 +47,99 @@ impl Merge {
         }
         collisions
     }
+
+    fn execute2(&mut self, ps: &mut ParticleVec) {
+        let collisions = self.compute_collisions(ps); // to help us test/debug
+        for ci in 0..collisions.len() {
+            let particle_collisions = &collisions[ci];
+            build_meta_tree(particle_collisions, ps);
+        }
+    }
+}
+
+
+// Function to merge two metas into a node
+fn merge(left: Particle, right: Particle) -> Particle {
+    let m1 = left.mass; //get_mass(ps);
+    let m2 = right.mass; //get_mass(ps);
+    let m12 = m1 + m2;
+
+    let x1 = left.pos; //get_pos(ps);
+    let x2 = right.pos; //get_pos(ps);
+    let x12 = ((m1 / m12) * x1) + ((m2 / m12) * x2);
+
+    let v1 = left.vel; //get_vel(ps);
+    let v2 = right.vel; //get_vel(ps);
+    let v12 = ((m1 / m12) * v1) + ((m2 / m12) * v2);
+
+    let delta_v = v1 - v2;
+    let delta_e = (m1 * m2 / (2.0 * m12)) * delta_v.magnitude2();
+
+    let n = x2 - x1;
+
+    let mut meta_particle = *Particle::default()
+        .set_particle_type(ParticleType::MetaParticle)
+        .set_pos(x12)
+        .set_vel(v12)
+        .set_mass(m12)
+        .set_energy_delta(delta_e)
+        .set_n(n)
+        .set_left_index(left.index)
+        .set_right_index(right.index);
+
+    meta_particle.v_left_initial = v1;
+    meta_particle.v_right_initial = v2;
+
+    // MetaParticle::Node {
+    //     left: Box::new(left),
+    //     right: Box::new(right),
+    //     mass: m12,
+    //     position: x12,
+    //     velocity: v12,
+    //     delta_e,
+    //     n,
+    //     v_left_initial: v1,
+    //     v_right_initial: v2,
+    // }
+    return meta_particle;
+}
+
+// Recursive function to build meta tree from list of particle indices
+fn build_meta_tree(indices: &[usize], ps: &mut ParticleVec) -> Particle {
+    debug_assert!(indices.len() > 0);
+
+    if indices.len() == 1 {
+        //MetaParticle::Leaf { index: indices[0] }
+        return ps[indices[0]];
+    } else if indices.len() == 2 {
+        let left = ps[indices[0]];
+        let right = ps[indices[1]];
+        //let left = MetaParticle::Leaf { index: indices[0] };
+        //let right = MetaParticle::Leaf { index: indices[1] };
+        let mut meta_particle = merge(left, right);
+        meta_particle.set_index(ps.len());
+        ps.push(meta_particle);
+        ps[left.index].set_merged(true);
+        ps[right.index].set_merged(true);
+        return meta_particle;
+    } else {
+        // Split into two halves for balanced tree
+        let mid = indices.len() / 2;
+        let left_tree = build_meta_tree(&indices[0..mid], ps);
+        let right_tree = build_meta_tree(&indices[mid..], ps);
+        let mut meta_particle = merge(left_tree, right_tree);
+        meta_particle.set_index(ps.len());
+        ps.push(meta_particle);
+        ps[left_tree.index].set_merged(true);
+        ps[right_tree.index].set_merged(true);
+        return meta_particle;
+    }
 }
 
 impl Operation for Merge {
     fn execute(&mut self, ps: &mut ParticleVec) {
+        let collisions = self.compute_collisions(ps); // to help us test/debug
+
         let particle_count: usize = ps.len();
         for ai in 0..particle_count {
             // Skip "merged" particles, they are handled by the meta particle.
@@ -185,18 +274,23 @@ mod tests {
 
         // This should merge p2 and p1 as they intersect.
         let mut psm = Merge::default();
-        psm.execute(&mut ps);
+        psm.execute2(&mut ps);
 
         assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
 
         assert_eq!(ps[0].particle_type, ParticleType::Particle);
         assert_eq!(ps[0].is_merged, true);
+        assert_eq!(ps[0].index, 0);
 
         assert_eq!(ps[1].particle_type, ParticleType::Particle);
         assert_eq!(ps[1].is_merged, true);
+        assert_eq!(ps[1].index, 1);
 
         assert_eq!(ps[2].particle_type, ParticleType::MetaParticle);
         assert_eq!(ps[2].is_merged, false);
+        assert_eq!(ps[2].index, 2);
+        assert_eq!(ps[2].left_index, 0);
+        assert_eq!(ps[2].right_index, 1);
     }
 
     #[test]
@@ -218,7 +312,7 @@ mod tests {
 
         // This should merge p1, p2 and p3 as they intersect.
         let mut psm = Merge::default();
-        psm.execute(&mut ps);
+        psm.execute2(&mut ps);
 
         assert_eq!(ps.len(), 5); // 3 original particles + 2 meta particle. 2 meta particles have been added to the Particle System.
 
@@ -233,13 +327,13 @@ mod tests {
 
         assert_eq!(ps[3].particle_type, ParticleType::MetaParticle); // The merging of p1 and p2 -> p12
         assert_eq!(ps[3].is_merged, true);
-        assert_eq!(ps[3].left_index, 0);
-        assert_eq!(ps[3].right_index, 1);
+        assert_eq!(ps[3].left_index, 1);
+        assert_eq!(ps[3].right_index, 2);
 
         assert_eq!(ps[4].particle_type, ParticleType::MetaParticle); // The merging of p12 and p3 -> p123
         assert_eq!(ps[4].is_merged, false);
-        assert_eq!(ps[4].left_index, 3);
-        assert_eq!(ps[4].right_index, 2);
+        assert_eq!(ps[4].left_index, 0);
+        assert_eq!(ps[4].right_index, 3);
     }
 
     #[test]

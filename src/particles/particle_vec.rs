@@ -7,7 +7,13 @@ pub struct ParticleVec(Vec<Particle>);
 
 impl<const N: usize> From<[Particle; N]> for ParticleVec {
     fn from(s: [Particle; N]) -> Self {
-        Self(Vec::<Particle>::from(s))
+        let mut s = Self(Vec::<Particle>::from(s));
+        
+        // Update indicies of newly added particles.
+        for i in 0..s.0.len() {
+            s[i].set_index(i);
+        }
+        return s;
     }
 }
 
@@ -28,7 +34,7 @@ impl ParticleVec {
         let index_start = self.0.len();
         self.0.extend(other_vec.0.clone()); // Is there a non-clone way to do this?
 
-        // Update indicies of newly added particles for debugging.
+        // Update indicies of newly added particles.
         for i in index_start..self.0.len() {
             self.0[i].set_index(i);
         }

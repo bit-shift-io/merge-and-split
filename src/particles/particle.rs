@@ -23,10 +23,14 @@ pub struct Particle {
     pub particle_type: ParticleType,
     pub is_merged: bool, // This is a meta particle that is merged with another meta particle, so it hidden from the system.
 
+    // Stuff for meta particles:
     pub energy_delta: f32, // "the change in kinetic energy, ∆E, and store it as a potential energy in a virtual bond between the two colliding particles"
     pub n: Vec2,
     pub left_index: usize, // How many other particle are merged into this particle? 0 = No particles
     pub right_index: usize, // Index of the particle this is currently merged with. usize::MAX if not merged
+
+    pub v_left_initial: Vec2,
+    pub v_right_initial: Vec2,
 }
 
 impl Particle {
@@ -133,6 +137,9 @@ impl Default for Particle {
             n: Vec2::new(0.0, 0.0),
             left_index: usize::MAX,
             right_index: usize::MAX,
+
+            v_left_initial: Vec2::new(0.0, 0.0),
+            v_right_initial: Vec2::new(0.0, 0.0)
         }
     }
 }
