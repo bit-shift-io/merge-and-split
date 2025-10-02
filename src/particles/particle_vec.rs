@@ -7,17 +7,21 @@ pub struct ParticleVec(Vec<Particle>);
 
 impl<const N: usize> From<[Particle; N]> for ParticleVec {
     fn from(s: [Particle; N]) -> Self {
-        let mut s = Self(Vec::<Particle>::from(s));
+        let mut se = Self(Vec::<Particle>::from(s));
         
         // Update indicies of newly added particles.
-        for i in 0..s.0.len() {
-            s[i].set_index(i);
+        for i in 0..se.0.len() {
+            se[i].set_index(i);
         }
-        return s;
+        return se;
     }
 }
 
 impl ParticleVec {
+    pub fn as_slice(&self) -> &[Particle] {
+        self.0.as_slice()
+    }
+    
     pub fn len(&self) -> usize {
         self.0.len()
     }

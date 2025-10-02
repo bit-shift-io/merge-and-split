@@ -3,13 +3,14 @@ use std::{thread, time::Duration};
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{math::vec2::Vec2, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{constraints::fixed_point_spring::FixedPointSpringVec, math::vec2::Vec2, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
     camera: Option<Camera>,
     camera_controller: CameraController,
     particle_vec: ParticleVec,
+    fixed_point_spring_vec: FixedPointSpringVec,
     particle_instance_renderer: Option<InstanceRenderer>,
     quad_mesh: Option<Mesh>,
     material: Option<Material>,
@@ -18,15 +19,19 @@ pub struct BasicParticles {
 }
 
 
-fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) {
+fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) -> FixedPointSpringVec {
     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
     let particle_radius = 0.5;
 
+    let static_large_mass = 10000.0;
+
     // static
     let mut perimeter = ShapeBuilder::new();
-    perimeter.set_particle_template(Particle::default().set_static(true).set_radius(particle_radius).clone())
+    perimeter.set_particle_template(Particle::default()/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
         .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 8.0))
         .create_in_particle_vec(particle_vec);
+
+    let fixed_point_springs_vec = FixedPointSpringVec::from_existing_particle_positions(&perimeter.particles.as_slice());
 
     println!("Perimiter has particles from 0 to {}", particle_vec.len());
 
@@ -39,6 +44,8 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) {
 
     // Lets debug what happens to this particle (top left of the fluid)
     particle_vec[50].set_debug(true);
+
+    fixed_point_springs_vec
 }
 
 fn setup_3_particles(particle_vec: &mut ParticleVec) {
@@ -56,13 +63,14 @@ impl BasicParticles {
         let camera_controller = CameraController::new(0.2);
 
         let mut particle_vec = ParticleVec::default();
-        setup_circular_contained_liquid(&mut particle_vec);
+        let fixed_point_spring_vec = setup_circular_contained_liquid(&mut particle_vec);
         //setup_3_particles(&mut particle_vec);
 
         Self {
             camera: None,
             camera_controller,
             particle_vec,
+            fixed_point_spring_vec,
             particle_instance_renderer: None,
             quad_mesh: None,
             material: None,
@@ -191,6 +199,8 @@ impl Plugin for BasicParticles {
             let mut s = Split::default().set_restitution_coefficient(1.0).clone();
             s.execute(&mut self.particle_vec);
 
+            // Apply constraints
+            self.fixed_point_spring_vec.execute(&mut self.particle_vec, 0.01);
             // Second merge and split
             // {
             //     let mut m = Merge::default();

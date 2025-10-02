@@ -28,8 +28,8 @@ fn split(meta_index: usize, alpha: f32, ps: &mut ParticleVec) {
     let v1 = meta.v_left_initial;
     let v2 = meta.v_right_initial;
 
-    let m1 = if left.is_static { LARGE_MASS } else { left.mass }; //left.mass; //get_mass(ps);
-    let m2 = if right.is_static { LARGE_MASS } else { right.mass }; //right.mass; //get_mass(ps);
+    let m1 = left.mass; //if left.is_static { LARGE_MASS } else { left.mass }; //left.mass; //get_mass(ps);
+    let m2 = right.mass; //if right.is_static { LARGE_MASS } else { right.mass }; //right.mass; //get_mass(ps);
 
     // Compute positions for children
     let hat_n = n.normalize();

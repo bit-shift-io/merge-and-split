@@ -9,6 +9,7 @@ pub mod platform;
 pub mod particles;
 pub mod math;
 pub mod scenes;
+pub mod constraints;
 
 fn main() {
     //platform::app_inner::run().unwrap();
