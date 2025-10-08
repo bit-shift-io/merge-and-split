@@ -112,8 +112,9 @@ impl BasicParticles {
                         );
 
             let colour = self.particle_vec[i].colour;
+            let radius = self.particle_vec[i].radius;
 
-            instances.push(Instance { position, rotation, colour });
+            instances.push(Instance { position, rotation, colour, radius });
         }
         particle_instance_renderer.update_instances(&instances, &queue, &device);
     }

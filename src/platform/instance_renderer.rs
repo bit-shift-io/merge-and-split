@@ -71,6 +71,7 @@ pub struct Instance {
     pub position: cgmath::Vector3<f32>,
     pub rotation: cgmath::Quaternion<f32>,
     pub colour: cgmath::Vector4<f32>,
+    pub radius: f32,
 }
 
 impl Instance {
@@ -80,6 +81,7 @@ impl Instance {
                 * cgmath::Matrix4::from(self.rotation))
             .into(),
             colour: self.colour.into(),
+            radius: self.radius,
         }
     }
 }
@@ -90,6 +92,7 @@ pub struct InstanceRaw {
     #[allow(dead_code)]
     model: [[f32; 4]; 4],
     colour: [f32; 4],
+    radius: f32,
 }
 
 impl InstanceRaw {
@@ -130,6 +133,11 @@ impl InstanceRaw {
                     offset: mem::size_of::<[f32; 16]>() as wgpu::BufferAddress,
                     shader_location: 9,
                     format: wgpu::VertexFormat::Float32x4,
+                },
+                wgpu::VertexAttribute { // radius
+                    offset: mem::size_of::<[f32; 20]>() as wgpu::BufferAddress,
+                    shader_location: 10,
+                    format: wgpu::VertexFormat::Float32,
                 },
             ],
         }

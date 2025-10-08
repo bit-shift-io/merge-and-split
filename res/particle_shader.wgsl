@@ -16,6 +16,7 @@ struct InstanceInput {
     @location(7) model_matrix_2: vec4<f32>,
     @location(8) model_matrix_3: vec4<f32>,
     @location(9) colour: vec4<f32>,
+    @location(10) radius: f32,
 }
 
 struct VertexOutput {
@@ -24,6 +25,7 @@ struct VertexOutput {
     @location(1) dist_to_centre: f32,
     @location(2) position: vec3<f32>,
     @location(3) colour: vec4<f32>,
+    @location(4) radius: f32,
 }
 
 @vertex
@@ -39,10 +41,11 @@ fn vs_main(
     );
     var out: VertexOutput;
     out.tex_coords = model.tex_coords;
-    out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0);
+    out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0); // todo: multiple by radius * 2?
     out.dist_to_centre = length(model.position);
     out.position = model.position;
     out.colour = instance.colour;
+    out.radius = instance.radius;
     return out;
 }
 
@@ -59,7 +62,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     // particle has radius of 0.5!
     var l = length(in.position);
-    if (l > 0.5) {
+    if (l > in.radius) {
         discard;
     }
     //return vec4<f32>(l, 0, 0, 1);
