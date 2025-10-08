@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{constraints::fixed_point_spring::FixedPointSpringVec, math::vec2::Vec2, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{constraints::fixed_point_spring::FixedPointSpringVec, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
@@ -35,10 +35,11 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) -> FixedPoint
 
     println!("Perimiter has particles from 0 to {}", particle_vec.len());
 
-    // some dynamic particles on the inside    
+    // some dynamic particles on the inside   
+    let blue = Vec4::new(0.0, 0.0, 1.0, 1.0); 
     let mut liquid = ShapeBuilder::new();
     liquid
-        .set_particle_template(Particle::default().set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
+        .set_particle_template(Particle::default().set_colour(blue).set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
         .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(6.0, 6.0)))
         .create_in_particle_vec(particle_vec);
 
@@ -108,7 +109,9 @@ impl BasicParticles {
                             cgmath::Deg(0.0),
                         );
 
-            instances.push(Instance { position, rotation });
+            let colour = self.particle_vec[i].colour;
+
+            instances.push(Instance { position, rotation, colour });
         }
         particle_instance_renderer.update_instances(&instances, &queue, &device);
     }

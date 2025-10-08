@@ -1,7 +1,9 @@
 
 use std::{fmt, usize};
 
-use crate::math::vec2::{Vec2};
+use cgmath::Array;
+
+use crate::math::{vec2::Vec2, vec4::Vec4};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ParticleType {
@@ -19,6 +21,8 @@ pub struct Particle {
     pub radius: f32,
     pub mass: f32,
     pub is_static: bool,
+
+    pub colour: Vec4,
 
     pub particle_type: ParticleType,
     pub is_merged: bool, // This is a meta particle that is merged with another meta particle, so it hidden from the system.
@@ -59,6 +63,15 @@ impl Particle {
     pub fn set_mass(&mut self, mass: f32) -> &mut Self {
         debug_assert!(!mass.is_nan());
         self.mass = mass;
+        self
+    }
+
+    pub fn set_colour(&mut self, colour: Vec4) -> &mut Self {
+        debug_assert!(!colour.x.is_nan());
+        debug_assert!(!colour.y.is_nan());
+        debug_assert!(!colour.z.is_nan());
+        debug_assert!(!colour.w.is_nan());
+        self.colour = colour;
         self
     }
 
@@ -129,6 +142,8 @@ impl Default for Particle {
             radius: 0.5,
             mass: 1.0,
             is_static: false,
+
+            colour: Vec4::new(1.0, 1.0, 1.0, 1.0),
 
             particle_type: ParticleType::Particle,
             is_merged: false,

@@ -15,6 +15,7 @@ struct InstanceInput {
     @location(6) model_matrix_1: vec4<f32>,
     @location(7) model_matrix_2: vec4<f32>,
     @location(8) model_matrix_3: vec4<f32>,
+    @location(9) colour: vec4<f32>,
 }
 
 struct VertexOutput {
@@ -22,6 +23,7 @@ struct VertexOutput {
     @location(0) tex_coords: vec2<f32>,
     @location(1) dist_to_centre: f32,
     @location(2) position: vec3<f32>,
+    @location(3) colour: vec4<f32>,
 }
 
 @vertex
@@ -40,6 +42,7 @@ fn vs_main(
     out.clip_position = camera.view_proj * model_matrix * vec4<f32>(model.position, 1.0);
     out.dist_to_centre = length(model.position);
     out.position = model.position;
+    out.colour = instance.colour;
     return out;
 }
 
@@ -61,5 +64,6 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     }
     //return vec4<f32>(l, 0, 0, 1);
     //return vec4<f32>(in.position, 1);
-    return textureSample(t_diffuse, s_diffuse, in.tex_coords);
+    let diffuseTexCol = textureSample(t_diffuse, s_diffuse, in.tex_coords);
+    return diffuseTexCol * in.colour;
 }
