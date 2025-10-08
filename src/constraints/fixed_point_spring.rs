@@ -21,8 +21,8 @@ impl FixedPointSpringVec {
 
             // - k: Spring stiffness constant (higher = stronger pull).
             // - damping: Damping coefficient (higher = more resistance to motion).
-            let damping = 1.0;
-            let k = 10.0;
+            let damping = 10.0;
+            let k = 1000.0;
 
             // Update velocity based on how far away from the point we are.
             // If this is to support Verlet, should we calculate an acceleration?

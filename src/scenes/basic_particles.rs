@@ -23,7 +23,7 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) -> FixedPoint
     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
     let particle_radius = 0.5;
 
-    let static_large_mass = 10000.0;
+    let static_large_mass = 10.0; //10000.0;
 
     // static
     let mut perimeter = ShapeBuilder::new();
@@ -42,8 +42,8 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) -> FixedPoint
         .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(6.0, 6.0)))
         .create_in_particle_vec(particle_vec);
 
-    // Lets debug what happens to this particle (top left of the fluid)
-    particle_vec[50].set_debug(true);
+    // // Lets debug what happens to this particle (top left of the fluid)
+    // particle_vec[50].set_debug(true);
 
     fixed_point_springs_vec
 }
@@ -186,8 +186,8 @@ impl Plugin for BasicParticles {
         // todo: The paper mentions time step based such that a particle will not more more than its radius in 1 step due to the simple collision detection.
         {
             // Measure system metrics
-            let mut met = Metrics::default();
-            met.execute(&mut self.particle_vec);
+            //let mut met = Metrics::default();
+            //met.execute(&mut self.particle_vec);
 
             let mut m = Merge::default();
             m.execute(&mut self.particle_vec);
@@ -201,17 +201,18 @@ impl Plugin for BasicParticles {
 
             // Apply constraints
             self.fixed_point_spring_vec.execute(&mut self.particle_vec, 0.01);
-            // Second merge and split
-            // {
-            //     let mut m = Merge::default();
-            //     m.execute(&mut self.particle_vec);
 
-            //     let mut s = Split::default().set_restitution_coefficient(0.5).clone();
-            //     s.execute(&mut self.particle_vec);
-            // }
+            // Second merge and split - this fixes some particle penetration
+            {
+                let mut m = Merge::default();
+                m.execute(&mut self.particle_vec);
+
+                let mut s = Split::default().set_restitution_coefficient(1.0).clone();
+                s.execute(&mut self.particle_vec);
+            }
 
             // Measure metrics and see if anything has changed
-            met.execute(&mut self.particle_vec);
+            //met.execute(&mut self.particle_vec);
         }
 
         // Update camera, then apply the camera matrix to the particle instance renderer.
