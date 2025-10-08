@@ -22,14 +22,15 @@ pub struct BasicParticles {
 
 fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) -> FixedPointSpringVec {
     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-    let particle_radius = 0.5;
+    let particle_radius = 0.1;
 
-    let static_large_mass = 10.0; //10000.0;
+    let static_large_mass = 100.0; //10000.0;
 
     // static
+    let red = Vec4::new(1.0, 0.0,0.0, 1.0);
     let mut perimeter = ShapeBuilder::new();
-    perimeter.set_particle_template(Particle::default()/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-        .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 8.0))
+    perimeter.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
+        .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 5.0))
         .create_in_particle_vec(particle_vec);
 
     let fixed_point_springs_vec = FixedPointSpringVec::from_existing_particle_positions(&perimeter.particles.as_slice());
@@ -41,7 +42,7 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) -> FixedPoint
     let mut liquid = ShapeBuilder::new();
     liquid
         .set_particle_template(Particle::default().set_colour(blue).set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
-        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(6.0, 6.0)))
+        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(5.0, 5.0)))
         .create_in_particle_vec(particle_vec);
 
     // // Lets debug what happens to this particle (top left of the fluid)

@@ -30,7 +30,7 @@ pub struct LevelBuilderContext<'a> {
 
 impl<'a> LevelBuilderContext<'a> {
     pub fn new(particle_vec: &'a mut ParticleVec, rng: &'a mut Pcg64) -> Self {
-        let particle_radius = cm_to_m(4.0);
+        let particle_radius = cm_to_m(10.0); // was 4.0
 
         Self {
             particle_vec, //particle_sim,
