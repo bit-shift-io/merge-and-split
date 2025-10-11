@@ -42,7 +42,7 @@ impl FixedPointSpringVec {
 
         for (i, particle) in ps.iter().enumerate() {
             se.0.push(FixedPointSpring {
-                particle_index: i,
+                particle_index: particle.index,
                 target_pos: particle.pos,
                 stiffness_factor: 0.0,
                 is_enabled: true

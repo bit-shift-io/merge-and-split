@@ -1,7 +1,7 @@
 use rand_pcg::Pcg64;
 use rand::Rng;
 
-use crate::{level::{level::Level, level_blocks::{finish_operation::FinishOperation, spawn_operation::SpawnOperation}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry, level_entity::LevelEntity}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec}};
+use crate::{entity::entity_system::EntitySystem, level::{level_blocks::{finish_operation::FinishOperation, spawn_operation::SpawnOperation}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec}};
 
 
 pub struct LevelBuilder {
@@ -26,11 +26,11 @@ pub struct LevelBuilderContext<'a> {
     pub is_first: bool,
     pub is_last: bool,
     pub rng: &'a mut Pcg64,
-    pub level: &'a mut Level,
+    pub entity_system: &'a mut EntitySystem,
 }
 
 impl<'a> LevelBuilderContext<'a> {
-    pub fn new(level: &'a mut Level, particle_vec: &'a mut ParticleVec, rng: &'a mut Pcg64) -> Self {
+    pub fn new(entity_system: &'a mut EntitySystem, particle_vec: &'a mut ParticleVec, rng: &'a mut Pcg64) -> Self {
         let particle_radius = cm_to_m(10.0); // was 4.0
 
         Self {
@@ -43,19 +43,17 @@ impl<'a> LevelBuilderContext<'a> {
             is_first: true,
             is_last: false,
             rng,
-            level,
+            entity_system,
         }
     }
 }
 
 impl LevelBuilder {
-    pub fn generate_level_based_on_date(&mut self, level: &mut Level, particle_vec: &mut ParticleVec) {
-        level.entities.clear();
-       
+    pub fn generate_level_based_on_date(&mut self, entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
         // set a random seed used for level generation based on todays date. Each day we get a new map to try
         let mut rng = Random::seed_from_beginning_of_day(); //seed_from_beginning_of_week(); //car_scene.rng;
         
-        let mut level_builder_context = LevelBuilderContext::new(level, particle_vec, &mut rng);
+        let mut level_builder_context = LevelBuilderContext::new(entity_system, particle_vec, &mut rng);
         self.generate(&mut level_builder_context, 1);
     }
 

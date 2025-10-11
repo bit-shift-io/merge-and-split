@@ -1,7 +1,4 @@
-use crate::{level::level::Level, particles::particle_vec::ParticleVec};
-
-use super::level_builder::LevelBuilderContext;
-
+use crate::particles::particle_vec::ParticleVec;
 
 
 pub struct UpdateContext<'a> {
@@ -10,6 +7,6 @@ pub struct UpdateContext<'a> {
     pub time_delta: f32,
 }
 
-pub trait LevelEntity {
+pub trait Entity {
     fn update(&mut self, context: &mut UpdateContext);
 }

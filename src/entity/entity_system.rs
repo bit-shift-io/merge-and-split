@@ -1,14 +1,20 @@
-use crate::{level::level_entity::{LevelEntity, UpdateContext}, particles::particle_vec::ParticleVec};
+use crate::{entity::entity::{Entity, UpdateContext}, particles::particle_vec::ParticleVec};
 
-pub struct Level {
-    pub entities: Vec<Box<dyn LevelEntity>>,
+
+pub struct EntitySystem {
+    pub entities: Vec<Box<dyn Entity>>,
 }
 
-impl Level {
+impl EntitySystem {
     pub fn new() -> Self {
         Self {
             entities: vec![],
         }
+    }
+
+    pub fn push<T: Entity + 'static>(&mut self, entity: T) -> &mut Self {
+        self.entities.push(Box::new(entity));
+        self
     }
 
     pub fn update(&mut self, particle_vec: &mut ParticleVec, time_delta: f32) {

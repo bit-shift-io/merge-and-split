@@ -1,4 +1,5 @@
-use crate::{constraints::fixed_point_spring::FixedPointSpringVec, level::{entities::fixed_point_spring_vec_entity::{FixedPointSpringVecEntity}, level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, math::vec2::Vec2, particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
+use crate::{constraints::fixed_point_spring::FixedPointSpringVec, entity::entities::fixed_point_spring_vec_entity::FixedPointSpringVecEntity, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, math::vec2::Vec2, particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
+
 
 pub struct SpawnOperation {
 }
@@ -48,9 +49,7 @@ impl LevelBuilderOperation for SpawnOperation {
         // and hand them off to create an array of fixed springs constraints for this slice of particles
         let particle_vec_slice = &level_builder_context.particle_vec.as_slice()[particle_vec_start_index..];
         let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(particle_vec_slice);
-        level_builder_context.level.entities.push(Box::new(FixedPointSpringVecEntity {
-            fixed_point_spring_vec,
-        }));
+        level_builder_context.entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
 
         level_builder_context.cursor = cursor_end;
     }
