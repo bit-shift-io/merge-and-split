@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{constraints::fixed_point_spring::FixedPointSpringVec, entity::{entities::fixed_point_spring_vec_entity::FixedPointSpringVecEntity, entity_system::EntitySystem}, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{constraints::fixed_point_spring::FixedPointSpringVec, entity::{entities::{car_entity::CarEntity, fixed_point_spring_vec_entity::FixedPointSpringVecEntity}, entity_system::EntitySystem}, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
@@ -156,7 +156,12 @@ impl Plugin for BasicParticles {
             state.config.format,
         ));
 
+        // Generate a procedural level.
         LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec);
+
+        // Add car to the scene.
+        let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 0.0));
+        self.entity_system.push(car);
     }
 
 
