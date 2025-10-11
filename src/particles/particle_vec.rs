@@ -1,9 +1,9 @@
-use std::{ops::{Deref, DerefMut, Index, IndexMut, RangeBounds}, slice::Iter, vec::ExtractIf};
+use std::{ops::{Deref, DerefMut, Index, IndexMut, RangeBounds}, ptr::NonNull, slice::Iter, vec::ExtractIf};
 
 use crate::particles::particle::Particle;
 
 
-pub struct ParticleVec(Vec<Particle>);
+pub struct ParticleVec(pub Vec<Particle>);
 
 impl<const N: usize> From<[Particle; N]> for ParticleVec {
     fn from(s: [Particle; N]) -> Self {
@@ -20,6 +20,10 @@ impl<const N: usize> From<[Particle; N]> for ParticleVec {
 impl ParticleVec {
     pub fn as_slice(&self) -> &[Particle] {
         self.0.as_slice()
+    }
+
+    pub fn get_subslice(&self, range: std::ops::RangeFrom<usize>) -> Option<&[Particle]> {
+        self.0.get(range)
     }
     
     pub fn len(&self) -> usize {

@@ -1,7 +1,7 @@
 use rand_pcg::Pcg64;
 use rand::Rng;
 
-use crate::{entity::entity_system::EntitySystem, level::{level_blocks::{finish_operation::FinishOperation, spawn_operation::SpawnOperation}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec}};
+use crate::{entity::entity_system::EntitySystem, level::{level_blocks::{finish_operation::FinishOperation, spawn_operation::SpawnOperation, straight_level_block::StraightLevelBlock}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec}};
 
 
 pub struct LevelBuilder {
@@ -54,7 +54,7 @@ impl LevelBuilder {
         let mut rng = Random::seed_from_beginning_of_day(); //seed_from_beginning_of_week(); //car_scene.rng;
         
         let mut level_builder_context = LevelBuilderContext::new(entity_system, particle_vec, &mut rng);
-        self.generate(&mut level_builder_context, 1);
+        self.generate(&mut level_builder_context, 3);
     }
 
     pub fn generate(&mut self, level_builder_context: &mut LevelBuilderContext, num_blocks: i32) -> &mut Self {
@@ -122,9 +122,9 @@ impl Default for LevelBuilder {
         // instead of picking random numbers in a range, pick a random integer and just quantize the number eg. pick a number and then * by 0.5 to get 0.5, 1.0, 1.5, 2.0 as random distances. this might provide more "variety" through less choice.
         // we should keep a bounding box for each operation applied to help work out if a block can be used instead of using x_direction_changed for example
         registry.register(SpawnOperation {});
-        // registry.register(FinishOperation {});
+        registry.register(FinishOperation {});
         // //registry.register(SaggyBridgeOperation {});
-        // registry.register(StraightLevelBlock {});
+        registry.register(StraightLevelBlock {});
         // registry.register(CliffOperation {});
         // registry.register(FluidFunnel {});
         // //registry.register(JellyCube {});

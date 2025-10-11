@@ -213,10 +213,6 @@ impl Plugin for BasicParticles {
             let mut s = Split::default().set_restitution_coefficient(1.0).clone();
             s.execute(&mut self.particle_vec);
 
-            // Apply constraints
-            //self.fixed_point_spring_vec.execute(&mut self.particle_vec, time_delta);
-            self.entity_system.update(&mut self.particle_vec, time_delta);
-
 
             // Second merge and split - this fixes some particle penetration
             {
@@ -230,6 +226,9 @@ impl Plugin for BasicParticles {
             // Measure metrics and see if anything has changed
             //met.execute(&mut self.particle_vec);
         }
+
+        // Apply constraints
+        self.entity_system.update(&mut self.particle_vec, time_delta);
 
         // Update camera, then apply the camera matrix to the particle instance renderer.
         let state = match &mut app.state {

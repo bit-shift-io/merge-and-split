@@ -47,8 +47,7 @@ impl LevelBuilderOperation for SpawnOperation {
 
         // Now we have pushed in more particles that have proper particle indicies, we take a slice of the new particles
         // and hand them off to create an array of fixed springs constraints for this slice of particles
-        let particle_vec_slice = &level_builder_context.particle_vec.as_slice()[particle_vec_start_index..];
-        let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(particle_vec_slice);
+        let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&level_builder_context.particle_vec.0[particle_vec_start_index..]);
         level_builder_context.entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
 
         level_builder_context.cursor = cursor_end;
