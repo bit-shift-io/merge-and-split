@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{constraints::fixed_point_spring::FixedPointSpringVec, level::level::Level, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{constraints::fixed_point_spring::FixedPointSpringVec, level::{level::Level, level_builder::LevelBuilder}, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
@@ -33,7 +33,7 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) -> FixedPoint
         .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 5.0))
         .create_in_particle_vec(particle_vec);
 
-    let fixed_point_springs_vec = FixedPointSpringVec::from_existing_particle_positions(&perimeter.particles.as_slice());
+    let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&perimeter.particles.as_slice());
 
     println!("Perimiter has particles from 0 to {}", particle_vec.len());
 
@@ -48,7 +48,7 @@ fn setup_circular_contained_liquid(particle_vec: &mut ParticleVec) -> FixedPoint
     // // Lets debug what happens to this particle (top left of the fluid)
     // particle_vec[50].set_debug(true);
 
-    fixed_point_springs_vec
+    fixed_point_spring_vec
 }
 
 fn setup_3_particles(particle_vec: &mut ParticleVec) {
@@ -79,7 +79,7 @@ impl BasicParticles {
             material: None,
             shader: None,
             frame_idx: 0,
-            level: Level {},
+            level: Level::new(),
         }
     }
 
@@ -153,7 +153,7 @@ impl Plugin for BasicParticles {
             state.config.format,
         ));
 
-        self.level = Level::setup_level(&mut self.particle_vec);
+        LevelBuilder::default().generate_level_based_on_date(&mut self.level, &mut self.particle_vec);
     }
 
 
@@ -188,6 +188,10 @@ impl Plugin for BasicParticles {
         //     println!("slow frame?")
         // }
 
+        let time_delta: f32 = 0.01;
+
+        self.level.update(&mut self.particle_vec, time_delta);
+
         // Update particle system
         // todo: Need a ParticlePipeline to apply any number of Operations.
         // todo: The paper talks about doing this whole merge and split twice to avoid some problems.
@@ -201,7 +205,7 @@ impl Plugin for BasicParticles {
             let mut m = Merge::default();
             m.execute(&mut self.particle_vec);
 
-            let mut i = *VerletIntegration::default().set_time_delta(0.01);
+            let mut i = *VerletIntegration::default().set_time_delta(time_delta);
             i.execute(&mut self.particle_vec);
 
             // This should split particle.
@@ -209,7 +213,7 @@ impl Plugin for BasicParticles {
             s.execute(&mut self.particle_vec);
 
             // Apply constraints
-            self.fixed_point_spring_vec.execute(&mut self.particle_vec, 0.01);
+            self.fixed_point_spring_vec.execute(&mut self.particle_vec, time_delta);
 
             // Second merge and split - this fixes some particle penetration
             {

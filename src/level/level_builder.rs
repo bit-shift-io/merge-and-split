@@ -1,7 +1,7 @@
 use rand_pcg::Pcg64;
 use rand::Rng;
 
-use crate::{level::{level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}, math::{unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec}};
+use crate::{level::{level::Level, level_blocks::{finish_operation::FinishOperation, spawn_operation::SpawnOperation}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry, level_entity::LevelEntity}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec}};
 
 
 pub struct LevelBuilder {
@@ -26,10 +26,11 @@ pub struct LevelBuilderContext<'a> {
     pub is_first: bool,
     pub is_last: bool,
     pub rng: &'a mut Pcg64,
+    pub level: &'a mut Level,
 }
 
 impl<'a> LevelBuilderContext<'a> {
-    pub fn new(particle_vec: &'a mut ParticleVec, rng: &'a mut Pcg64) -> Self {
+    pub fn new(level: &'a mut Level, particle_vec: &'a mut ParticleVec, rng: &'a mut Pcg64) -> Self {
         let particle_radius = cm_to_m(10.0); // was 4.0
 
         Self {
@@ -42,13 +43,22 @@ impl<'a> LevelBuilderContext<'a> {
             is_first: true,
             is_last: false,
             rng,
+            level,
         }
     }
 }
 
-
 impl LevelBuilder {
-    
+    pub fn generate_level_based_on_date(&mut self, level: &mut Level, particle_vec: &mut ParticleVec) {
+        level.entities.clear();
+       
+        // set a random seed used for level generation based on todays date. Each day we get a new map to try
+        let mut rng = Random::seed_from_beginning_of_day(); //seed_from_beginning_of_week(); //car_scene.rng;
+        
+        let mut level_builder_context = LevelBuilderContext::new(level, particle_vec, &mut rng);
+        self.generate(&mut level_builder_context, 1);
+    }
+
     pub fn generate(&mut self, level_builder_context: &mut LevelBuilderContext, num_blocks: i32) -> &mut Self {
         // Algorithm to generate a level
         // 1. Set cursor to origin. This is where the car will spawn (well, a bit behind)
@@ -94,5 +104,34 @@ impl LevelBuilder {
 
         self
     }
+}
 
+
+impl Default for LevelBuilder {
+    fn default() -> Self {
+        let mut registry = LevelBuilderOperationRegistry::new();
+
+        // here is our registry
+        //
+        // things to try:
+        // - a jelly draw bridge you drive into and it falls over
+        // - a flexible curved pipe that changes direction and flips the car over at the same time
+        // - a big ball you drive onto and keep it rolling forwards to get to the other side
+        // - an elevator
+        // - a steep incline with toothed or flexible ground to give you grip to get up step. (or change the car tyres to be spiked)
+        // - some cloth you need to drive under/tear through
+        //
+        // instead of picking random numbers in a range, pick a random integer and just quantize the number eg. pick a number and then * by 0.5 to get 0.5, 1.0, 1.5, 2.0 as random distances. this might provide more "variety" through less choice.
+        // we should keep a bounding box for each operation applied to help work out if a block can be used instead of using x_direction_changed for example
+        registry.register(SpawnOperation {});
+        // registry.register(FinishOperation {});
+        // //registry.register(SaggyBridgeOperation {});
+        // registry.register(StraightLevelBlock {});
+        // registry.register(CliffOperation {});
+        // registry.register(FluidFunnel {});
+        // //registry.register(JellyCube {});
+        // registry.register(DropDirectionReverse {});
+ 
+        LevelBuilder::new(registry)
+    }
 }
