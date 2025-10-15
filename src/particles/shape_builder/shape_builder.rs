@@ -4,7 +4,7 @@
 
 use cgmath::InnerSpace;
 
-use crate::{math::{aabb2d::Aabb2d, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec}};
+use crate::{math::{aabb2d::Aabb2d, vec2::Vec2}, particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}}};
 
 
 
@@ -45,7 +45,7 @@ pub struct ShapeBuilder {
     elastic_limit: f32,
     damping: f32,
 */
-    //pub particle_handles: Vec<ParticleHandle>,
+    pub particle_handles: Vec<ParticleHandle>,
     //pub stick_handles: Vec<StickHandle>,
 
     /* 
@@ -56,7 +56,7 @@ pub struct ShapeBuilder {
 impl ShapeBuilder {
     pub fn new() -> Self {
         Self { 
-            particles: ParticleVec::default(), 
+            particles: ParticleVec::new(), 
             particle_template: Particle::default(),
 /* 
             constraints: vec![],
@@ -65,7 +65,7 @@ impl ShapeBuilder {
 
             cursor: Vec2::new(0.0, 0.0),
 
-            //particle_handles: vec![],
+            particle_handles: vec![],
 
             /* 
             constraint_handles: vec![],
@@ -123,8 +123,12 @@ impl ShapeBuilder {
     // }
 
     pub fn create_in_particle_vec(&mut self, particle_vec: &mut ParticleVec) -> &mut Self {
+        let start_index = particle_vec.len();
         (*particle_vec).extend(&self.particles);
 
+        for i in start_index..particle_vec.len() {
+            self.particle_handles.push(i);
+        }
         // let mut particle_handles = (*particle_vec).extend(&self.particles);
         // self.particle_handles.append(&mut particle_handles);
         self

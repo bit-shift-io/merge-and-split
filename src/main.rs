@@ -12,6 +12,7 @@ pub mod scenes;
 pub mod constraints;
 pub mod level;
 pub mod entity;
+pub mod event;
 
 fn main() {
     //platform::app_inner::run().unwrap();

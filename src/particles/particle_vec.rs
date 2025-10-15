@@ -3,6 +3,10 @@ use std::{ops::{Deref, DerefMut, Index, IndexMut, RangeBounds}, ptr::NonNull, sl
 use crate::particles::particle::Particle;
 
 
+//pub struct ParticleHandle(pub usize);
+pub type ParticleHandle = usize;
+
+
 pub struct ParticleVec(pub Vec<Particle>);
 
 impl<const N: usize> From<[Particle; N]> for ParticleVec {
@@ -18,6 +22,12 @@ impl<const N: usize> From<[Particle; N]> for ParticleVec {
 }
 
 impl ParticleVec {
+    pub fn new() -> Self {
+        Self {
+            0: vec![],
+        }
+    }
+
     pub fn as_slice(&self) -> &[Particle] {
         self.0.as_slice()
     }
@@ -78,13 +88,13 @@ impl IndexMut<usize> for ParticleVec {
     }
 }
 
-impl Default for ParticleVec {
-    fn default() -> Self {
-        Self {
-            0: vec![],
-        }
-    }
-}
+// impl Default for ParticleVec {
+//     fn default() -> Self {
+//         Self {
+//             0: vec![],
+//         }
+//     }
+// }
 
 
 #[cfg(test)]
@@ -92,9 +102,15 @@ mod tests {
     use crate::math::vec2::Vec2;
     use super::*;
 
+    // #[test]
+    // fn default() {
+    //     let ps = ParticleVec::default();
+    //     assert_eq!(ps.0, vec![]);
+    // }
+
     #[test]
-    fn default() {
-        let ps = ParticleVec::default();
+    fn new() {
+        let ps = ParticleVec::new();
         assert_eq!(ps.0, vec![]);
     }
 

@@ -1,107 +1,117 @@
-use crate::{entity::entity::{Entity, UpdateContext}, math::vec2::Vec2, particles::particle_vec::ParticleVec};
+use cgmath::InnerSpace;
+
+use crate::{constraints::stick::{Stick, StickVec}, entity::entity::{Entity, UpdateContext}, math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}}};
 
 
 pub struct CarWheel {
-    // hub_particle_handle: ParticleHandle,
-    // surface_particle_handles: Vec<ParticleHandle>,
+    hub_particle_handle: ParticleHandle,
+    surface_particle_handles: Vec<ParticleHandle>,
+    stick_vec: StickVec,
 }
 
 impl CarWheel {
     pub fn new(origin: Vec2, particle_vec: &mut ParticleVec) -> Self {
-        // let particle_mass = 1.0; //g_to_kg(10.0);
+        let particle_mass = 1.0; //g_to_kg(10.0);
+        let green = Vec4::new(0.0, 1.0, 0.0, 1.0);
+        let mut stick_vec = StickVec::new();
 
-        // // wheel hub - this is on mask layer zero which is a special no collisions layer
-        // let hub_particle_handle = {
-        //     let mask = 0x0;
-        //     let particle_radius = cm_to_m(4.0);
-        //     let mut builder = ShapeBuilder::new();
-        //     builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_color(Color::from(LinearRgba::GREEN)).clone());
+        // wheel hub - this is on mask layer zero which is a special no collisions layer
+        let hub_particle_handle = {
+            let mask = 0x0;
+            let particle_radius = cm_to_m(4.0);
+            let mut builder = ShapeBuilder::new();
+            builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(green).clone());
 
-        //     builder.add_particle(builder.create_particle().set_position(origin).clone())
-        //         .create_in_particle_vec(particle_vec);
+            builder.add_particle(builder.create_particle().set_pos(origin).clone())
+                .create_in_particle_vec(particle_vec);
 
-        //     builder.particle_handles.first().unwrap().clone()
-        // };
+            builder.particle_handles.first().unwrap().clone()
+        };
 
-        // // wheel surface
-        // let surface_particle_handles = {
-        //     let mask = 0x1;
-        //     let divisions = 20;
-        //     let circle_radius = cm_to_m(35.0); // around a typical car tyre size - 17-18" (once you account for particle radius)
-        //     let particle_radius = cm_to_m(4.0);
-        //     let mut builder = ShapeBuilder::new();
-        //     builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_color(Color::from(LinearRgba::GREEN)).clone());
+        // wheel surface
+        let surface_particle_handles = {
+            let mask = 0x1;
+            let divisions = 20;
+            let circle_radius = cm_to_m(35.0); // around a typical car tyre size - 17-18" (once you account for particle radius)
+            let particle_radius = cm_to_m(4.0);
+            let mut builder = ShapeBuilder::new();
+            builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(green).clone());
 
-        //     builder.apply_operation(Circle::new(origin, circle_radius));
-        //     builder.apply_operation(AdjacentSticks::new(StickConstraint::default().clone(), 1, true)); // connect adjacent points
-        //     builder.apply_operation(AdjacentSticks::new(StickConstraint::default().clone(), 6, true)); // connect every n points for extra stability during collisions
+            builder.apply_operation(Circle::new(origin, circle_radius));
 
-        //     builder.create_in_particle_vec(particle_vec);
 
-        //     builder.particle_handles.clone()
-        // };
+            builder.create_in_particle_vec(particle_vec); // cause particle_handles to be populated in the shape builder
 
-        // /*
-        // // wheel interior
-        // let interior_particle_handles = {
-        //     let mask = 0x1;
-        //     let divisions = 14;
-        //     let circle_radius = cm_to_m(14.0);
-        //     let particle_radius = cm_to_m(4.0);
-        //     let mut builder = ShapeBuilder::new();
-        //     builder.set_mass(particle_mass);
-        //     builder.add_circle(origin, circle_radius, particle_radius, divisions)
-        //         //.connect_with_stick_chain(2) // stop the air escaping so easily
-        //         .create_in_particle_vec(particle_vec, mask);
-        //     builder.particle_handles.clone()
+            AdjacentSticks::new(Stick::default().set_stiffness_factor(10.0).clone(), 1, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect adjacent points
+            AdjacentSticks::new(Stick::default().set_stiffness_factor(10.0).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
+            // // builder.apply_operation(AdjacentSticks::new(Stick::default().clone(), 1, true)); // connect adjacent points
+            // builder.apply_operation(AdjacentSticks::new(Stick::default().clone(), 6, true)); // connect every n points for extra stability during collisions
+
+
+            builder.particle_handles.clone()
+        };
+
+        /*
+        // wheel interior
+        let interior_particle_handles = {
+            let mask = 0x1;
+            let divisions = 14;
+            let circle_radius = cm_to_m(14.0);
+            let particle_radius = cm_to_m(4.0);
+            let mut builder = ShapeBuilder::new();
+            builder.set_mass(particle_mass);
+            builder.add_circle(origin, circle_radius, particle_radius, divisions)
+                //.connect_with_stick_chain(2) // stop the air escaping so easily
+                .create_in_particle_vec(particle_vec, mask);
+            builder.particle_handles.clone()
             
-        //     //vec![]
-        // };       */
+            //vec![]
+        };       */
 
 
-        // // notes:
-        // // the wheel hub needs a constraint to set its position to the centre of the wheel
-        // // that is its position should be determined by a few points on the surface wheel.
-        // // that said, this might cause issues with the air inside the wheel (YES, this is happening!). If this is the case
-        // // we need a way to disable collisions for the hub (set radius to 0 - no we need to disable collision for the hub with the air - could use collision masks?). Set its layer to zero to mean the no collisions layer?
-        // // or add a flag to particles to say they are "invisible"?
+        // notes:
+        // the wheel hub needs a constraint to set its position to the centre of the wheel
+        // that is its position should be determined by a few points on the surface wheel.
+        // that said, this might cause issues with the air inside the wheel (YES, this is happening!). If this is the case
+        // we need a way to disable collisions for the hub (set radius to 0 - no we need to disable collision for the hub with the air - could use collision masks?). Set its layer to zero to mean the no collisions layer?
+        // or add a flag to particles to say they are "invisible"?
 
          
-        //  /* todo: port to v4
-        // // to optimise this we really only need maybe 4 points to determine the centre of the wheel for the incoming particles
-        // // we set all particles as output particles so the axle can be pushed by any sticks
-        // let mut weighted_particles = vec![];
-        // for particle_handle in surface_particle_handles.iter() {
-        //     weighted_particles.push(WeightedParticle::new(particle_handle.clone(), 1.0));
-        // }
+         /* todo: port to v4
+        // to optimise this we really only need maybe 4 points to determine the centre of the wheel for the incoming particles
+        // we set all particles as output particles so the axle can be pushed by any sticks
+        let mut weighted_particles = vec![];
+        for particle_handle in surface_particle_handles.iter() {
+            weighted_particles.push(WeightedParticle::new(particle_handle.clone(), 1.0));
+        }
 
-        // // todo: reenable outgoing_particles
-        // particle_vec.create_attachment_constraint(weighted_particles.clone(), weighted_particles.clone(), hub_particle_handle.clone());
-        // */
+        // todo: reenable outgoing_particles
+        particle_vec.create_attachment_constraint(weighted_particles.clone(), weighted_particles.clone(), hub_particle_handle.clone());
+        */
 
-        // // instead of the above, which moved the huib to the centre, lets try just connecting the hub to the rim
-        // // then we can just change the stiffness!
-        // {
-        //     let mut constraint_container = particle_vec.constraint_container.as_ref().write().unwrap();
+        // instead of the above, which moved the huib to the centre, lets try just connecting the hub to the rim
+        // then we can just change the stiffness!
+        
+        {
+            //let mut constraint_container = particle_vec.constraint_container.as_ref().write().unwrap();
+
+            for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
+                let length = (particle_vec[hub_particle_handle].pos - particle_vec[*surface_particle_handle].pos).magnitude(); 
             
-        //     for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
-        //         let length = (particle_vec.get_particle(hub_particle_handle).pos - particle_vec.get_particle(surface_particle_handle.clone()).pos).length(); 
-            
-        //         constraint_container.add(StickConstraint::default()
-        //             .set_stiffness_factor(20.0)
-        //             .set_length(length)
-        //             .set_particle_handles([hub_particle_handle, surface_particle_handle.clone()]).box_clone()
-        //         );
-        //     }
-        // }
+                stick_vec.push(*Stick::default()
+                    .set_stiffness_factor(10.0)
+                    .set_length(length)
+                    .set_particle_handles([hub_particle_handle, surface_particle_handle.clone()])
+                );
+            }
+        }
 
-        // Self {
-        //     hub_particle_handle,
-        //     surface_particle_handles,
-        //     //interior_particle_handles
-        // }
-
-        Self {}
+        Self {
+            hub_particle_handle,
+            surface_particle_handles,
+            stick_vec,
+            //interior_particle_handles
+        }
     }
 
     fn rotate(&mut self, direction: f32, particle_vec: &mut ParticleVec) {
@@ -116,6 +126,10 @@ impl CarWheel {
         // // this will stop the wheels expanding outwards as you accelerate
         // particle_manipulator.add_rotational_force_around_point(particle_vec, &self.surface_particle_handles, centre, force_magnitude * direction);
         // //particle_manipulator.add_rotational_force_around_point(particle_vec, &self.interior_particle_handles, centre, force_magnitude * direction);
+    }
+
+    fn update(&mut self, context: &mut UpdateContext) {
+        self.stick_vec.execute(context.particle_vec, context.time_delta);
     }
 }
 
@@ -179,6 +193,8 @@ impl CarEntity {
 
 impl Entity for CarEntity {
     fn update(&mut self, context: &mut UpdateContext) {
-        // todo:
+        for wheel in self.wheels.iter_mut() {
+            wheel.update(context);
+        }
     }
 }

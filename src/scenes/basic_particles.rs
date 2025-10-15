@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{constraints::fixed_point_spring::FixedPointSpringVec, entity::{entities::{car_entity::CarEntity, fixed_point_spring_vec_entity::FixedPointSpringVecEntity}, entity_system::EntitySystem}, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{constraints::fixed_point_spring::FixedPointSpringVec, entity::{entities::{car_entity::CarEntity, fixed_point_spring_vec_entity::FixedPointSpringVecEntity}, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
@@ -17,6 +17,7 @@ pub struct BasicParticles {
     shader: Option<Shader>,
     frame_idx: u128,
     entity_system: EntitySystem,
+    event_system: EventSystem,
 }
 
 
@@ -68,8 +69,9 @@ impl BasicParticles {
         let camera_controller = CameraController::new(0.2);
 
         let mut entity_system = EntitySystem::new();
-        let mut particle_vec = ParticleVec::default();
-        setup_circular_contained_liquid(&mut entity_system, &mut particle_vec);
+        let mut particle_vec = ParticleVec::new();
+        
+        //setup_circular_contained_liquid(&mut entity_system, &mut particle_vec);
         //setup_3_particles(&mut particle_vec);
 
         Self {
@@ -83,6 +85,7 @@ impl BasicParticles {
             shader: None,
             frame_idx: 0,
             entity_system,
+            event_system: EventSystem::new(),
         }
     }
 
@@ -160,7 +163,7 @@ impl Plugin for BasicParticles {
         LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec);
 
         // Add car to the scene.
-        let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 0.0));
+        let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
         self.entity_system.push(car);
     }
 

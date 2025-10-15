@@ -83,6 +83,10 @@ impl Particle {
         self
     }
 
+    pub fn add_vel(&mut self, vel: Vec2) -> &mut Self {
+        self.set_vel(self.vel + vel)
+    }
+
     pub fn set_vel(&mut self, vel: Vec2) -> &mut Self {
         debug_assert!(!vel.x.is_nan());
         debug_assert!(!vel.y.is_nan());

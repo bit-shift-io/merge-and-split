@@ -77,7 +77,7 @@ mod tests {
 
     #[test]
     fn execute() {
-        let mut ps = ParticleVec::default();
+        let mut ps = ParticleVec::new();
         let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
         ps.push(p1);
 

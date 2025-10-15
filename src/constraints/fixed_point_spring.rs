@@ -11,6 +11,27 @@ pub struct FixedPointSpring {
 
 pub struct FixedPointSpringVec(Vec<FixedPointSpring>);
 
+/**
+ * k: Spring stiffness constant (higher = stronger pull).
+    damping: Damping coefficient (higher = more resistance to motion).
+            let damping = 100.0;
+            let k = 10000.0;
+
+// // Update velocity based on how far away from the point we are.
+            // // If this is to support Verlet, should we calculate an acceleration?
+ */
+pub fn compute_velocity_to_spring_to_target_position(damping: f32, k: f32, current_pos: Vec2, current_vel: Vec2, target_pos: Vec2, mass: f32, time_delta: f32) -> Vec2 {
+    // Update velocity based on how far away from the point we are.
+    // If this is to support Verlet, should we calculate an acceleration?
+    let displacement = current_pos - target_pos;
+    let spring_force = -displacement * k; // Hooke's law: F = -k * x (rest length 0)
+    let damping_force = -current_vel * damping;
+    let total_force = spring_force + damping_force;
+    let acceleration = total_force / mass; // Since mass = 1, a = F. F = ma, a = F/m
+    let vel = current_vel + acceleration * time_delta;
+    vel
+}
+
 impl FixedPointSpringVec {
     pub fn execute(&mut self, ps: &mut ParticleVec, time_delta: f32) {
         for i in 0..self.0.len() {
@@ -24,15 +45,19 @@ impl FixedPointSpringVec {
             let damping = 100.0;
             let k = 10000.0;
 
-            // Update velocity based on how far away from the point we are.
-            // If this is to support Verlet, should we calculate an acceleration?
             let particle = &mut ps[spring.particle_index];
             let displacement = particle.pos - spring.target_pos;
             let spring_force = -displacement * k; // Hooke's law: F = -k * x (rest length 0)
             let damping_force = -particle.vel * damping;
             let total_force = spring_force + damping_force;
             let acceleration = total_force / particle.mass; // Since mass = 1, a = F. F = ma, a = F/m
-            let vel = particle.vel + acceleration * time_delta;
+            let vel_old = particle.vel + acceleration * time_delta;
+
+            let vel = compute_velocity_to_spring_to_target_position(damping, k, particle.pos, particle.vel, spring.target_pos, particle.mass, time_delta);
+            
+            debug_assert!(vel_old.x == vel.x);
+            debug_assert!(vel_old.y == vel.y);
+
             particle.set_vel(vel);
         }
     }
