@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use cgmath::Rotation3;
 use winit::keyboard::KeyCode;
 
-use crate::{constraints::fixed_point_spring::FixedPointSpringVec, entity::{entities::{car_entity::CarEntity, fixed_point_spring_vec_entity::FixedPointSpringVecEntity}, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{constraints::{fixed_point_spring::FixedPointSpringVec, stick::{Stick, StickVec}}, entity::{entities::{car_entity::CarEntity, fixed_point_spring_vec_entity::FixedPointSpringVecEntity, stick_vec_entity::StickVecEntity}, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{circle::Circle, line_segment::LineSegment, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
@@ -21,10 +21,45 @@ pub struct BasicParticles {
 }
 
 
+fn setup_stick_test(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
+    // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
+    let particle_radius = 0.1;
+    let static_large_mass = 100.0; //10000.0;
+
+    // static
+    {
+        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+        let mut builder = ShapeBuilder::new();
+        builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
+            .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
+            .create_in_particle_vec(particle_vec);
+
+        let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
+        entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
+    }
+
+    // stick connecting 2 particles
+    {
+        let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
+
+        let mut stick_vec = StickVec::new();
+
+        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
+        let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
+        
+        let start_index = particle_vec.len();
+        particle_vec.push(p1);
+        particle_vec.push(p2);
+
+        stick_vec.push(Stick::from_particles(particle_vec, [start_index, start_index + 1]));
+        entity_system.push(StickVecEntity::new(stick_vec));
+    }
+
+}
+
 fn setup_circular_contained_liquid(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
     let particle_radius = 0.1;
-
     let static_large_mass = 100.0; //10000.0;
 
     // static
@@ -160,11 +195,15 @@ impl Plugin for BasicParticles {
         ));
 
         // Generate a procedural level.
-        LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec);
+        //LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec);
 
         // Add car to the scene.
-        let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
-        self.entity_system.push(car);
+        // let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
+        // self.entity_system.push(car);
+
+
+        //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
+        setup_stick_test(&mut self.entity_system, &mut self.particle_vec);
     }
 
 
