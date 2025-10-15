@@ -27,7 +27,7 @@
      
 //         let mut sb = ShapeBuilder::new();
 //         sb.set_particle_template(level_builder_context.particle_template.clone().set_static(false).clone());
-//         sb.apply_operation(RectangleStickGrid::from_rectangle(StickConstraint::default().set_stiffness_factor(500.0).clone(), 
+//         sb.apply_operation(RectangleStickGrid::from_rectangle(StickConstraint::default().set_stiffness_factor(1.0).clone(), 
 //             rectangle));
         
 //         // set left and right most particles and make them static

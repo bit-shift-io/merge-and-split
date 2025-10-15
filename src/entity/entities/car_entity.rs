@@ -42,8 +42,8 @@ impl CarWheel {
 
             builder.create_in_particle_vec(particle_vec); // cause particle_handles to be populated in the shape builder
 
-            AdjacentSticks::new(Stick::default().set_stiffness_factor(10.0).clone(), 1, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect adjacent points
-            AdjacentSticks::new(Stick::default().set_stiffness_factor(10.0).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
+            AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 1, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect adjacent points
+            AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
             // // builder.apply_operation(AdjacentSticks::new(Stick::default().clone(), 1, true)); // connect adjacent points
             // builder.apply_operation(AdjacentSticks::new(Stick::default().clone(), 6, true)); // connect every n points for extra stability during collisions
 
@@ -99,7 +99,7 @@ impl CarWheel {
                 let length = (particle_vec[hub_particle_handle].pos - particle_vec[*surface_particle_handle].pos).magnitude(); 
             
                 stick_vec.push(*Stick::default()
-                    .set_stiffness_factor(10.0)
+                    .set_stiffness_factor(0.3)
                     .set_length(length)
                     .set_particle_handles([hub_particle_handle, surface_particle_handle.clone()])
                 );

@@ -13,6 +13,7 @@ pub struct AdjacentSticks {
 
 impl AdjacentSticks {
     pub fn new(constraint_template: Stick, stride: usize, wrap_around: bool) -> Self {
+        debug_assert!(stride > 0); // stride of zero would be bad as it would create a stick between a particle and itself
         Self {
             constraint_template,
             stride,
@@ -36,8 +37,8 @@ impl AdjacentSticks {
             }
 
             let particle_handles = [
-                pi,
-                pi_next
+                particle_handles[pi],
+                particle_handles[pi_next]
             ];
 
             let particle_a = particle_vec[particle_handles[0]]; // shape_builder.particles[particle_handles[0]];

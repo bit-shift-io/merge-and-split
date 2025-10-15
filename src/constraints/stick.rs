@@ -7,7 +7,7 @@ use crate::{constraints::fixed_point_spring::compute_velocity_to_spring_to_targe
 pub struct Stick {
     pub particle_indicies: [usize; 2],
     pub length: f32,
-    pub stiffness_factor: f32, // stiffness_factor. 0 = fully stiff, any value > 0 is a % per second?
+    pub stiffness_factor: f32, // stiffness_factor. Higher is stiffer, values around 0.1-0.3 often work well to avoid overshoot or instability.
     pub is_enabled: bool
 }
 
@@ -20,7 +20,7 @@ impl Stick {
         Self {
             particle_indicies: [particle_handles[0], particle_handles[1]],
             length,
-            stiffness_factor: 0.0,
+            stiffness_factor: 1.0,
             is_enabled: true,
         }
     }
@@ -193,7 +193,7 @@ impl StickVec {
             let (delta_vel_a, delta_vel_b) = compute_velocity_corrections(
                 particle_a.pos, particle_b.pos, particle_a.vel, particle_b.vel, 
                 particle_a.mass, particle_b.mass,
-                stick.length, time_delta, 0.2);
+                stick.length, time_delta, stick.stiffness_factor);
 
             // // todo: change this to consider the weight of each particle
             // let (a_movement_weight, b_movement_weight) = compute_movement_weight(particle_a.is_static, particle_b.is_static);

@@ -29,8 +29,8 @@
 //         // add a jellow cube to the scene
 //         ShapeBuilder::new()
 //             .set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_color(Color::from(LinearRgba::RED)).clone())
-//             //.set_constraint_template(StickConstraint::default().set_stiffness_factor(20.0).clone())// this ignores mass
-//             .apply_operation(RectangleStickGrid::from_rectangle(StickConstraint::default().set_stiffness_factor(20.0).clone(), 
+//             //.set_constraint_template(StickConstraint::default().set_stiffness_factor(1.0).clone())// this ignores mass
+//             .apply_operation(RectangleStickGrid::from_rectangle(StickConstraint::default().set_stiffness_factor(1.0).clone(), 
 //                 Rectangle::from_center_size(origin + vec2(0.0, 0.5), vec2(0.4, 0.8))))//                 //.add_stick_grid(2, 5, particle_radius * 2.2, Vec2::new(-3.0, cm_to_m(50.0)))
 //             .create_in_particle_sim(level_builder_context.particle_sim);
 //     }
