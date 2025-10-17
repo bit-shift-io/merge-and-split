@@ -1,6 +1,7 @@
 use cgmath::InnerSpace;
+use winit::keyboard::KeyCode;
 
-use crate::{constraints::stick::{Stick, StickVec}, entity::entity::{Entity, UpdateContext}, math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}}};
+use crate::{constraints::stick::{Stick, StickVec}, entity::entity::{Entity, UpdateContext}, math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}}};
 
 
 pub struct CarWheel {
@@ -116,16 +117,16 @@ impl CarWheel {
 
     fn rotate(&mut self, direction: f32, particle_vec: &mut ParticleVec) {
         
-        // let hub_particle = particle_vec.get_particle(self.hub_particle_handle);
-        // let centre = hub_particle.pos;
-        // let force_magnitude = 60.0;
+        let hub_particle = particle_vec[self.hub_particle_handle];
+        let centre = hub_particle.pos;
+        let force_magnitude = 0.1;
 
-        // let particle_manipulator = ParticleManipulator::new();
+        let particle_manipulator = ParticleManipulator::new();
 
-        // // todo: instead of rotating the points to the wheel tangent. Try moving points towards the next point in the wheel (or where it would be in a perfect wheel).
-        // // this will stop the wheels expanding outwards as you accelerate
-        // particle_manipulator.add_rotational_force_around_point(particle_vec, &self.surface_particle_handles, centre, force_magnitude * direction);
-        // //particle_manipulator.add_rotational_force_around_point(particle_vec, &self.interior_particle_handles, centre, force_magnitude * direction);
+        // todo: instead of rotating the points to the wheel tangent. Try moving points towards the next point in the wheel (or where it would be in a perfect wheel).
+        // this will stop the wheels expanding outwards as you accelerate
+        particle_manipulator.add_rotational_force_around_point(particle_vec, &self.surface_particle_handles, centre, force_magnitude * direction);
+        //particle_manipulator.add_rotational_force_around_point(particle_vec, &self.interior_particle_handles, centre, force_magnitude * direction);
     }
 
     fn update(&mut self, context: &mut UpdateContext) {
@@ -137,6 +138,8 @@ const NUM_WHEELS: usize = 2;
 
 pub struct CarEntity {
     pub wheels: [CarWheel; NUM_WHEELS],
+    is_left_pressed: bool,
+    is_right_pressed: bool,
 }
 
 impl CarEntity {
@@ -160,14 +163,16 @@ impl CarEntity {
 
         Self {
             wheels: [wheel_1, wheel_2],
+            is_left_pressed: false,
+            is_right_pressed: false,
         }
     }
 
-    // fn rotate_wheels(&mut self, direction: f32, particle_vec: &mut ParticleVec) {
-    //     for wheel in self.wheels.iter_mut() { 
-    //         wheel.rotate(direction, particle_vec);
-    //     }
-    // }
+    fn rotate_wheels(&mut self, direction: f32, particle_vec: &mut ParticleVec) {
+        for wheel in self.wheels.iter_mut() { 
+            wheel.rotate(direction, particle_vec);
+        }
+    }
 
     // pub fn update(&mut self, particle_vec: &mut ParticleVec, keys: Res<ButtonInput<KeyCode>>) {
     //     if keys.pressed(KeyCode::KeyZ) {
@@ -178,23 +183,50 @@ impl CarEntity {
     //     }
     // }
 
-    // pub fn get_camera_look_at_position(&self, particle_vec: &ParticleVec) -> Vec2 {
-    //     let mut pos = Vec2::new(0.0, 0.0);
+    pub fn get_camera_look_at_position(&self, particle_vec: &ParticleVec) -> Vec2 {
+        let mut pos = Vec2::new(0.0, 0.0);
         
-    //     for wheel in self.wheels.iter() {
-    //         pos += particle_vec.get_particle(wheel.hub_particle_handle).pos;
-    //     }
-    //     pos /= NUM_WHEELS as f32;
-    //     //pos.extend(1.0); // homogeneous coordinate
+        for wheel in self.wheels.iter() {
+            pos += particle_vec[wheel.hub_particle_handle].pos;
+        }
+        pos /= NUM_WHEELS as f32;
+        //pos.extend(1.0); // homogeneous coordinate
         
-    //     pos
-    // }
+        pos
+    }
 }
 
 impl Entity for CarEntity {
     fn update(&mut self, context: &mut UpdateContext) {
+        // Update wheel contraints
         for wheel in self.wheels.iter_mut() {
             wheel.update(context);
+        }
+
+        // Apply input to wheels
+        if self.is_left_pressed {
+            self.rotate_wheels(1.0, context.particle_vec); // ccw
+        }
+        if self.is_right_pressed {
+            self.rotate_wheels(-1.0, context.particle_vec); // clockwise
+        }
+
+        // Update the camera to follow the car
+        let look_at_pos = self.get_camera_look_at_position(context.particle_vec);
+        context.camera.target = cgmath::Point3::new(look_at_pos.x, look_at_pos.y, 0.0);
+    }
+
+    fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool {
+        match key {
+            KeyCode::KeyZ => {
+                self.is_left_pressed = is_pressed;
+                true
+            }
+            KeyCode::KeyX => {
+                self.is_right_pressed = is_pressed;
+                true
+            }
+            _ => false,
         }
     }
 }

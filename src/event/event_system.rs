@@ -21,11 +21,12 @@
 // 	void			*evPtr;			// this must be manually freed if not NULL
 // } sysEvent_t;
 
-use crate::{entity::entity::{Entity, UpdateContext}, particles::particle_vec::ParticleVec};
-
+// Ideally we map from WindowEvent to our own custom event to hide winit from the rest of the codebase
+// but for now we will just store WindowEvents directly. This may change when we need joystick/gamepad support for example, or network events.
+use winit::event::{self, WindowEvent};
 
 pub struct EventSystem {
-    pub events: Vec<Box<dyn Entity>>,
+    pub events: Vec<WindowEvent>,
 }
 
 impl EventSystem {
@@ -35,8 +36,40 @@ impl EventSystem {
         }
     }
 
-    pub fn push<T: Entity + 'static>(&mut self, entity: T) -> &mut Self {
-        self.events.push(Box::new(entity));
-        self
+    // pub fn push<T: Entity + 'static>(&mut self, entity: T) -> &mut Self {
+    //     self.events.push(Box::new(entity));
+    //     self
+    // }
+
+    pub fn queue_window_event(&mut self, event: WindowEvent) {
+        match event {
+            WindowEvent::CloseRequested => {
+                self.events.push(event)
+            },
+            WindowEvent::Resized(size) => {
+                self.events.push(event)
+            },
+            WindowEvent::RedrawRequested => {
+                self.events.push(event);
+            }
+            WindowEvent::MouseInput { .. } => {
+                self.events.push(event);
+            },
+            WindowEvent::KeyboardInput { .. } => {
+                self.events.push(event);
+            },
+            _ => {}
+        }
+    }
+
+    pub fn process_events(&mut self) {
+        for event in self.events.iter() {
+            self.process_event(event);
+        }
+        self.events.clear();
+    }
+
+    pub fn process_event(&self, event: &WindowEvent) {
+
     }
 }

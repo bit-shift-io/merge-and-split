@@ -185,6 +185,15 @@ impl ApplicationHandler<State> for App {
             None => return,
         };
 
+        // {
+        //     // Take the plugins out temporarily to avoid double mutable borrow
+        //     let mut plugins = std::mem::take(&mut self.plugins);
+        //     for plugin in plugins.iter_mut() {
+        //         plugin.window_event(self, event.clone());
+        //     }
+        //     self.plugins = plugins;
+        // }
+
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => {

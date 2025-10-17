@@ -1,7 +1,7 @@
 use std::{thread, time::Duration};
 
 use cgmath::Rotation3;
-use winit::keyboard::KeyCode;
+use winit::{event::WindowEvent, keyboard::KeyCode};
 
 use crate::{constraints::{fixed_point_spring::FixedPointSpringVec, stick::{Stick, StickVec}}, entity::{entities::{car_entity::CarEntity, fixed_point_spring_vec_entity::FixedPointSpringVecEntity, stick_vec_entity::StickVecEntity}, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, line_segment::LineSegment, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
@@ -302,8 +302,15 @@ impl Plugin for BasicParticles {
         }
     }
 
+    fn window_event(&mut self, app: &mut App, event: WindowEvent) {
+        self.event_system.queue_window_event(event);
+    }
+
     fn handle_key(&mut self, app: &mut App, key: KeyCode, pressed: bool) {
         self.camera_controller.handle_key(key, pressed);
+
+        // todo: this should occur when we handle window events in the event system
+        self.entity_system.handle_key(key, pressed);
     }
 
     fn update(&mut self, app: &mut App) {
@@ -355,9 +362,6 @@ impl Plugin for BasicParticles {
             //met.execute(&mut self.particle_vec);
         }
 
-        // Apply constraints
-        self.entity_system.update(&mut self.particle_vec, time_delta);
-
         // Update camera, then apply the camera matrix to the particle instance renderer.
         let state = match &mut app.state {
             Some(s) => s,
@@ -369,6 +373,11 @@ impl Plugin for BasicParticles {
             None => return,
         };
         self.camera_controller.update_camera(camera);
+
+
+        // Apply constraints
+        self.entity_system.update(&mut self.particle_vec, camera, time_delta);
+
 
         let particle_instance_renderer = match &mut self.particle_instance_renderer {
             Some(p) => p,

@@ -133,6 +133,13 @@ impl Particle {
         self.is_merged = is_merged;
         self
     }
+
+    pub fn add_force(&mut self, force: Vec2) -> &mut Self {
+        let acceleration = force / self.mass;
+        let new_vel = self.vel + acceleration;
+        self.set_vel(new_vel);
+        self
+    }
 }
 
 impl Default for Particle {

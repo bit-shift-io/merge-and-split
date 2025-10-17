@@ -1,3 +1,5 @@
+use winit::keyboard::KeyCode;
+
 use crate::{constraints::fixed_point_spring::FixedPointSpringVec, entity::entity::{Entity, UpdateContext}};
 
 
@@ -17,4 +19,7 @@ impl Entity for FixedPointSpringVecEntity {
     fn update(&mut self, context: &mut UpdateContext) {
         self.fixed_point_spring_vec.execute(context.particle_vec, context.time_delta);
     }
+
+    // ughly!
+    fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool { false }
 }

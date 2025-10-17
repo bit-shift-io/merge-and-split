@@ -1,3 +1,5 @@
+use winit::keyboard::KeyCode;
+
 use crate::{constraints::stick::StickVec, entity::entity::{Entity, UpdateContext}};
 
 
@@ -17,4 +19,7 @@ impl Entity for StickVecEntity {
     fn update(&mut self, context: &mut UpdateContext) {
         self.stick_vec.execute(context.particle_vec, context.time_delta);
     }
+
+    // ughly!
+    fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool { false }
 }

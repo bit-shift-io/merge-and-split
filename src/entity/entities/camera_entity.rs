@@ -1,3 +1,5 @@
+use winit::keyboard::KeyCode;
+
 use crate::{constraints::fixed_point_spring::FixedPointSpringVec, entity::entity::{Entity, UpdateContext}};
 
 
@@ -15,4 +17,7 @@ impl Entity for CameraEntity {
     fn update(&mut self, context: &mut UpdateContext) {
         // todo:
     }
+
+    // ughly!
+    fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool { false }
 }
