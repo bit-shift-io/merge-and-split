@@ -23,7 +23,6 @@ impl AdjacentSticks {
 
     pub fn apply_to_particle_handles(&self, particle_vec: &ParticleVec, particle_handles: &Vec<ParticleHandle>, stick_vec: &mut StickVec) {
         let radius = particle_vec[particle_handles[0]].radius; //shape_builder.particle_radius();
-
         let particle_count = particle_handles.len(); //shape_builder.particles.len();
 
         for pi in 0..particle_count {

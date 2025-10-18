@@ -19,7 +19,7 @@ impl CarWheel {
         // wheel hub - this is on mask layer zero which is a special no collisions layer
         let hub_particle_handle = {
             let mask = 0x0;
-            let particle_radius = cm_to_m(4.0);
+            let particle_radius = cm_to_m(6.0);
             let mut builder = ShapeBuilder::new();
             builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(green).clone());
 
@@ -34,7 +34,7 @@ impl CarWheel {
             let mask = 0x1;
             let divisions = 20;
             let circle_radius = cm_to_m(35.0); // around a typical car tyre size - 17-18" (once you account for particle radius)
-            let particle_radius = cm_to_m(4.0);
+            let particle_radius = cm_to_m(10.0);
             let mut builder = ShapeBuilder::new();
             builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(green).clone());
 
@@ -44,10 +44,8 @@ impl CarWheel {
             builder.create_in_particle_vec(particle_vec); // cause particle_handles to be populated in the shape builder
 
             AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 1, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect adjacent points
-            AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
-            // // builder.apply_operation(AdjacentSticks::new(Stick::default().clone(), 1, true)); // connect adjacent points
-            // builder.apply_operation(AdjacentSticks::new(Stick::default().clone(), 6, true)); // connect every n points for extra stability during collisions
-
+            //AdjacentSticks::new(Stick::default().set_stiffness_factor(0.5).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
+            
 
             builder.particle_handles.clone()
         };
@@ -100,7 +98,7 @@ impl CarWheel {
                 let length = (particle_vec[hub_particle_handle].pos - particle_vec[*surface_particle_handle].pos).magnitude(); 
             
                 stick_vec.push(*Stick::default()
-                    .set_stiffness_factor(0.3)
+                    .set_stiffness_factor(0.5)
                     .set_length(length)
                     .set_particle_handles([hub_particle_handle, surface_particle_handle.clone()])
                 );
@@ -119,14 +117,14 @@ impl CarWheel {
         
         let hub_particle = particle_vec[self.hub_particle_handle];
         let centre = hub_particle.pos;
-        let force_magnitude = 0.1;
+        let torque = 0.01; // Nm
 
         let particle_manipulator = ParticleManipulator::new();
 
         // todo: instead of rotating the points to the wheel tangent. Try moving points towards the next point in the wheel (or where it would be in a perfect wheel).
         // this will stop the wheels expanding outwards as you accelerate
-        particle_manipulator.add_rotational_force_around_point(particle_vec, &self.surface_particle_handles, centre, force_magnitude * direction);
-        //particle_manipulator.add_rotational_force_around_point(particle_vec, &self.interior_particle_handles, centre, force_magnitude * direction);
+        particle_manipulator.add_torque_around_point(particle_vec, &self.surface_particle_handles, centre, torque * direction);
+        //particle_manipulator.add_torque_around_point(particle_vec, &self.interior_particle_handles, centre, torque * direction);
     }
 
     fn update(&mut self, context: &mut UpdateContext) {
@@ -134,7 +132,7 @@ impl CarWheel {
     }
 }
 
-const NUM_WHEELS: usize = 2;
+const NUM_WHEELS: usize = 1;
 
 pub struct CarEntity {
     pub wheels: [CarWheel; NUM_WHEELS],
@@ -147,7 +145,7 @@ impl CarEntity {
         let wheel_spacing = 1.0 * 0.5; // metres
 
         let wheel_1 = CarWheel::new(origin + Vec2::new(wheel_spacing, 0.0), particle_vec);
-        let wheel_2 = CarWheel::new(origin - Vec2::new(wheel_spacing, 0.0), particle_vec);
+        //let wheel_2 = CarWheel::new(origin - Vec2::new(wheel_spacing, 0.0), particle_vec);
 
         // // axle stick to connect the two wheel hubs
         // {
@@ -162,7 +160,7 @@ impl CarEntity {
         // }
 
         Self {
-            wheels: [wheel_1, wheel_2],
+            wheels: [wheel_1],//, wheel_2],
             is_left_pressed: false,
             is_right_pressed: false,
         }

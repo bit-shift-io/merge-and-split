@@ -182,8 +182,8 @@ impl BasicParticles {
     pub fn new() -> Self {
         let camera_controller = CameraController::new(0.2);
 
-        let mut entity_system = EntitySystem::new();
-        let mut particle_vec = ParticleVec::new();
+        let entity_system = EntitySystem::new();
+        let particle_vec = ParticleVec::new();
         
         //setup_circular_contained_liquid(&mut entity_system, &mut particle_vec);
         //setup_3_particles(&mut particle_vec);
@@ -277,7 +277,7 @@ impl Plugin for BasicParticles {
         LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec);
 
         // Add car to the scene.
-        let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 0.5));
+        let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
         self.entity_system.push(car);
 
 
@@ -341,7 +341,7 @@ impl Plugin for BasicParticles {
             let mut m = Merge::default();
             m.execute(&mut self.particle_vec);
 
-            let mut i = *VerletIntegration::default().set_time_delta(time_delta);
+            let mut i = *VerletIntegration::default().set_time_delta(time_delta).set_gravity(Vec2::new(0.0, 0.0));
             i.execute(&mut self.particle_vec);
 
             // This should split particle.
