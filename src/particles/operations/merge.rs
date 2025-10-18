@@ -10,8 +10,100 @@ pub const LARGE_MASS: f32 = 1.0; //100000000.0; // This might cause problems if 
 pub struct Merge {
 }
 
+fn do_collide(p1: &Particle, p2: &Particle) -> bool {
+    // Two static particles cannot merge.
+    if p1.is_static && p2.is_static {
+        return false;
+    }
+    
+    // Collision Rule 1: |x2 − x1| < r1 + r2 (page 5).
+    // See if two particles will collide. Continue if they do not collide.
+    let dist_sqrd = (p1.pos - p2.pos).magnitude2();
+    let r1_plus_r2 = p1.radius + p2.radius;
+    let r12_sqrd = r1_plus_r2 * r1_plus_r2;
+    if dist_sqrd >= r12_sqrd {
+        return false;
+    }
+
+    // Collision Rule 2: n · (v2 − v1) < 0 (page 5).
+    let n = p2.pos - p1.pos;
+    let rel_v = p2.vel - p1.vel;
+    let d = n.dot(rel_v);
+    if d >= 0.0 {
+        return false;
+    }
+
+    return true;
+}
+
+
+// Trying with a more robust collision detection that considers motion over the timestep.
+fn do_collide_2(particle1: &Particle, particle2: &Particle, dt: f32) -> bool {
+    /* 
+    Checks if two particles will collide within the next timestep dt.
+    
+    Parameters:
+    - p1, p2: positions (lists, tuples, or numpy arrays; e.g., [x, y] for 2D or [x, y, z] for 3D)
+    - v1, v2: velocities (same format as positions)
+    - r1, r2: radii (floats)
+    - dt: timestep duration (float)
+    
+    Returns:
+    - True if the particles will be within collision distance at any point in [0, dt], False otherwise.
+    */
+
+    let p1 = particle1.pos;
+    let p2 = particle2.pos;
+    let v1 = particle1.vel;
+    let v2 = particle2.vel;
+    let r1 = particle1.radius;
+    let r2 = particle2.radius;
+    
+    let dr = p2 - p1;
+    let dv = v2 - v1;
+    
+    let dr_sq = dr.dot(dr);
+    let r_sum = r1 + r2;
+    let r_sq = r_sum.powi(2);
+    
+    // Already colliding
+    if dr_sq <= r_sq {
+        return true
+    }
+    
+    let dv_sq = dv.dot(dv);
+    
+    // No relative motion
+    if dv_sq == 0.0 {
+        return false
+    }
+    
+    let dr_dv = dr.dot(dv);
+    
+    // Separating or parallel (no approach)
+    if dr_dv >= 0.0 {
+        return false
+    }
+    
+    // Approaching: calculate time of closest approach
+    let t_closest = -dr_dv / dv_sq;
+    
+    if t_closest > dt {
+        // Closest approach after dt; check distance at dt
+        let dr_at_dt = dr + dt * dv;
+        let dr_at_dt_sq = dr_at_dt.dot(dr_at_dt);
+        return dr_at_dt_sq <= r_sq;
+    }
+    else {
+        // Closest approach within [0, dt]; check min distance
+        let min_sq = dr_sq - (dr_dv.powi(2)) / dv_sq;
+        return min_sq <= r_sq;
+    }
+}
+
+
 impl Merge {
-    pub fn compute_collisions(&self, ps: &ParticleVec) -> Vec<Vec<usize>> {
+    pub fn compute_collisions(&self, ps: &ParticleVec, dt: f32) -> Vec<Vec<usize>> {
         //let mut collisions = Vec::with_capacity(ps.len());
 
         // start off colliding with "self", such that all particles are converted to a metaparticle.
@@ -23,25 +115,11 @@ impl Merge {
                 let p1 = &ps[ai];
                 let p2 = &ps[bi];
 
-                // Two static particles cannot merge.
-                if p1.is_static && p2.is_static {
-                    continue;
-                }
-                
-                // Collision Rule 1: |x2 − x1| < r1 + r2 (page 5).
-                // See if two particles will collide. Continue if they do not collide.
-                let dist_sqrd = (p1.pos - p2.pos).magnitude2();
-                let r1_plus_r2 = p1.radius + p2.radius;
-                let r12_sqrd = r1_plus_r2 * r1_plus_r2;
-                if dist_sqrd >= r12_sqrd {
-                    continue;
-                }
+                // if !do_collide(p1, p2) {
+                //     continue;
+                // }
 
-                // Collision Rule 2: n · (v2 − v1) < 0 (page 5).
-                let n = p2.pos - p1.pos;
-                let rel_v = p2.vel - p1.vel;
-                let d = n.dot(rel_v);
-                if d >= 0.0 {
+                if !do_collide_2(p1, p2, dt) {
                     continue;
                 }
 
@@ -132,15 +210,22 @@ fn build_meta_tree(indices: &[usize], ps: &mut ParticleVec) -> Particle {
     }
 }
 
-impl Operation for Merge {
 
-    fn execute(&mut self, ps: &mut ParticleVec) {
-        let collisions = self.compute_collisions(ps); // to help us test/debug
+impl Merge {
+    pub fn execute_2(&mut self, ps: &mut ParticleVec, dt: f32) {
+        let collisions = self.compute_collisions(ps, dt); // to help us test/debug
         for ci in 0..collisions.len() {
             let particle_collisions = &collisions[ci];
             build_meta_tree(particle_collisions, ps);
         }
     }
+}
+
+impl Operation for Merge {
+
+    fn execute(&mut self, ps: &mut ParticleVec) {
+    }
+
 
     // fn execute_old(&mut self, ps: &mut ParticleVec) {
     //     let collisions = self.compute_collisions(ps); // to help us test/debug

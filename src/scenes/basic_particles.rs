@@ -79,9 +79,12 @@ fn setup_stick_test_2(entity_system: &mut EntitySystem, particle_vec: &mut Parti
 
         let mut stick_vec = StickVec::new();
 
-        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
-        let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
-        let p3 = *Particle::default().set_pos(Vec2::new(0.5, 1.5)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
+        let particle_radius = 0.2;
+        let particle_mass = 10.0;
+
+        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
+        let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
+        let p3 = *Particle::default().set_pos(Vec2::new(0.5, 1.5)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
         
         let start_index = particle_vec.len();
         particle_vec.push(p1);
@@ -139,7 +142,7 @@ fn setup_stick_test_3(entity_system: &mut EntitySystem, particle_vec: &mut Parti
 fn setup_circular_contained_liquid(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
     let particle_radius = 0.1;
-    let static_large_mass = 100.0; //10000.0;
+    let static_large_mass = 1.0; //10000.0;
 
     // static
     let red = Vec4::new(1.0, 0.0,0.0, 1.0);
@@ -274,16 +277,16 @@ impl Plugin for BasicParticles {
         ));
 
         // Generate a procedural level.
-        LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec);
+        // LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec);
 
-        // Add car to the scene.
-        let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
-        self.entity_system.push(car);
+        // // Add car to the scene.
+        // let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
+        // self.entity_system.push(car);
 
 
         //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);
-        //setup_stick_test_2(&mut self.entity_system, &mut self.particle_vec);
+        setup_stick_test_2(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test_3(&mut self.entity_system, &mut self.particle_vec);
     }
 
@@ -326,7 +329,7 @@ impl Plugin for BasicParticles {
         //     println!("slow frame?")
         // }
 
-        let time_delta: f32 = 0.01;
+        let time_delta: f32 = 0.005;
 
         // Update particle system
         // todo: Need a ParticlePipeline to apply any number of Operations.
@@ -339,9 +342,9 @@ impl Plugin for BasicParticles {
             //met.execute(&mut self.particle_vec);
 
             let mut m = Merge::default();
-            m.execute(&mut self.particle_vec);
+            m.execute_2(&mut self.particle_vec, time_delta);
 
-            let mut i = *VerletIntegration::default().set_time_delta(time_delta).set_gravity(Vec2::new(0.0, 0.0));
+            let mut i = *VerletIntegration::default().set_time_delta(time_delta);//.set_gravity(Vec2::new(0.0, 0.0));
             i.execute(&mut self.particle_vec);
 
             // This should split particle.
@@ -352,7 +355,7 @@ impl Plugin for BasicParticles {
             // Second merge and split - this fixes some particle penetration
             {
                 let mut m = Merge::default();
-                m.execute(&mut self.particle_vec);
+                m.execute_2(&mut self.particle_vec, time_delta);
 
                 let mut s = Split::default().set_restitution_coefficient(1.0).clone();
                 s.execute(&mut self.particle_vec);
