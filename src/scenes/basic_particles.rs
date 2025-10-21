@@ -3,7 +3,7 @@ use std::{thread, time::Duration};
 use cgmath::Rotation3;
 use winit::{event::WindowEvent, keyboard::KeyCode};
 
-use crate::{constraints::{fixed_point_spring::FixedPointSpringVec, stick::{Stick, StickVec}}, entity::{entities::{car_entity::CarEntity, fixed_point_spring_vec_entity::FixedPointSpringVecEntity, stick_vec_entity::StickVecEntity}, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, line_segment::LineSegment, rectangle::Rectangle, shape_builder::ShapeBuilder}}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
+use crate::{constraints::{fixed_point_spring::FixedPointSpringVec, stick::{Stick, StickVec}}, entity::{entities::{car_entity::CarEntity, fixed_point_spring_vec_entity::FixedPointSpringVecEntity, stick_vec_entity::StickVecEntity}, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder, math::{vec2::Vec2, vec4::Vec4}, particles::{operations::{euler_integration::EulerIntegration, merge::Merge, metrics::Metrics, operation::Operation, split::Split, verlet_integration::VerletIntegration}, particle::Particle, particle_vec::ParticleVec, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, line_segment::LineSegment, rectangle::Rectangle, shape_builder::ShapeBuilder}, simulation::Simulation}, platform::{app::App, camera::{Camera, CameraController}, instance_renderer::{Instance, InstanceRaw, InstanceRenderer, Vertex, QUAD_INDICES, QUAD_VERTICES}, model::{Material, Mesh}, plugin::Plugin, shader::Shader, texture}};
 
 
 pub struct BasicParticles {
@@ -18,6 +18,8 @@ pub struct BasicParticles {
     frame_idx: u128,
     entity_system: EntitySystem,
     event_system: EventSystem,
+
+    simulation: Simulation
 }
 
 
@@ -203,6 +205,8 @@ impl BasicParticles {
             frame_idx: 0,
             entity_system,
             event_system: EventSystem::new(),
+
+            simulation: Simulation::new(),
         }
     }
 
@@ -330,6 +334,8 @@ impl Plugin for BasicParticles {
         // }
 
         let time_delta: f32 = 0.005;
+
+        self.simulation.tick(time_delta);
 
         // Update particle system
         // todo: Need a ParticlePipeline to apply any number of Operations.

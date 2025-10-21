@@ -1,7 +1,7 @@
 
 use std::{fmt, usize};
 
-use cgmath::Array;
+use cgmath::{Array, InnerSpace};
 
 use crate::math::{vec2::Vec2, vec4::Vec4};
 
@@ -9,6 +9,13 @@ use crate::math::{vec2::Vec2, vec4::Vec4};
 pub enum ParticleType {
     Particle,
     MetaParticle,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Phase {
+    Solid,
+    Fluid,
+    Gas,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -35,6 +42,18 @@ pub struct Particle {
 
     pub v_left_initial: Vec2,
     pub v_right_initial: Vec2,
+
+    // vars for new impl:
+    pub phase: Phase,
+    pub pos_guess: Vec2,
+    pub force: Vec2,
+    pub body: usize, // body (if any) this particle belongs to, for disabling collisions
+
+    pub imass: f32, // inverse mass
+    pub tmass: f32, // temporary height-scaled mass
+    pub s_friction: f32, // coeffs of friction
+    pub k_friction: f32, // coeffs of friction
+    pub t: f32,
 }
 
 impl Particle {
@@ -140,6 +159,33 @@ impl Particle {
         self.set_vel(new_vel);
         self
     }
+
+
+    pub fn guess(&self, time_delta: f32) -> Vec2 {
+        if self.imass == 0.0 {
+            self.pos
+        } else {
+            self.pos + time_delta * self.vel
+        }
+    }
+
+    pub fn confirm_guess(&mut self) {
+        let delta = self.pos_guess - self.pos;
+        let len = delta.magnitude(); // todo: replace with magnitude2
+        if len < f32::EPSILON {
+            self.vel = Vec2::new(0.0 ,0.0); 
+            return;
+        }
+        self.pos = self.pos_guess;
+    }
+
+    pub fn scale_mass(&mut self) {
+        if self.imass != 0.0 {
+            self.tmass = 1. / ((1. / self.imass) * -self.pos.y.exp());
+        } else {
+            self.tmass = 0.0;
+        }
+    }
 }
 
 impl Default for Particle {
@@ -165,7 +211,18 @@ impl Default for Particle {
             right_index: usize::MAX,
 
             v_left_initial: Vec2::new(0.0, 0.0),
-            v_right_initial: Vec2::new(0.0, 0.0)
+            v_right_initial: Vec2::new(0.0, 0.0),
+
+            phase: Phase::Solid,
+            pos_guess: Vec2::new(0.0, 0.0),
+            force: Vec2::new(0.0, 0.0),
+            body: usize::MAX,
+
+            imass: 0.0,
+            tmass: 0.0,
+            s_friction: 0.0,
+            k_friction: 0.0,
+            t: 4.0,
         }
     }
 }

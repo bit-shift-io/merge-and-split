@@ -6,3 +6,5 @@ pub mod shape_builder;
 pub mod particle_manipulator;
 
 pub mod merge_and_split_test;
+
+pub mod simulation;
