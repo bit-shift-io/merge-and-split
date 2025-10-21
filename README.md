@@ -1,7 +1,9 @@
 # Merge & Split
 
+
 ## References
 
+Unified Particle Physics for Real-Time Applications: https://mmacklin.com/uppfrta_preprint.pdf
 Merge and split paper: https://www.cemyuksel.com/research/papers/particle_merging-and-splitting_tvcg2021.pdf
 wgpu: https://wgpu.rs/
 wgpu tutorials: https://sotrh.github.io/learn-wgpu/#what-is-wgpu
