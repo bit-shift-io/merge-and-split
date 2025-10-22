@@ -12,6 +12,8 @@ pub struct Body {
     pub angle: f32,
     pub rs: HashMap<usize, Vec2>, // map from global particles index to r vector
     pub sdf: HashMap<usize, SdfData>, // map from global particles index to SDF data
+
+    pub stiffness: f32, // for the TotalShapeConstraint
 }
 
 impl Body {
@@ -23,6 +25,8 @@ impl Body {
             angle: 0.0,
             rs: HashMap::new(),
             sdf: HashMap::new(),
+
+            stiffness: 1.0,
         }
     }
 

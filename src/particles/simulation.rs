@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 
-use crate::{constraints2::boundary_constraint::BoundaryConstraint, math::vec2::Vec2, particles::{sdf_data::SdfData, body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, total_shape_constraint::TotalShapeConstraint}, math::vec2::Vec2, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -36,8 +36,15 @@ impl Simulation {
         // https://github.com/ebirenbaum/ParticleSolver/blob/master/cpu/src/simulation.cpp
 
         // Add all rigid body shape constraints
+        // FM: doesn't need to occur as we do this dynamically as required - see how I use TotalShapeConstraint below.
 
         // Add all other global constraints
+        // for (int i = 0; i < m_globalConstraints.size(); i++) {
+        //     QList<Constraint *> group = m_globalConstraints[(ConstraintGroup) i];
+        //     for (int j = 0; j < group.size(); j++) {
+        //         constraints[(ConstraintGroup) i].append(group.at(j));
+        //     }
+        // }
 
         let mut counts = Vec::<usize>::new();
         let particle_count = self.particles.len();
@@ -135,8 +142,16 @@ impl Simulation {
 
         // (17) For constraint group
         for c in self.contact_boundary_constraints.iter_mut() {
-            c.update_counts(&mut counts)
+            c.update_counts(&mut counts);
         }
+        {
+            let c = TotalShapeConstraint::new();
+            for i in 0..self.bodies.len() {
+                let body = &self.bodies[i];
+                c.update_counts(&mut counts, body);
+            }
+        }
+
         // for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
         //     ConstraintGroup g = (ConstraintGroup) j;
 
@@ -161,6 +176,13 @@ impl Simulation {
             //  (18, 19, 20) Solve constraints in g and update ep
             for c in self.contact_boundary_constraints.iter_mut() {
                 c.project(&mut self.particles, &counts)
+            }
+            {
+                let c = TotalShapeConstraint::new();
+                for i in 0..self.bodies.len() {
+                    let body = &mut self.bodies[i];
+                    c.project(&mut self.particles, &counts, body);
+                }
             }
 
         //     for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
