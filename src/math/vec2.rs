@@ -1,6 +1,6 @@
 use std::fmt;
 
-use cgmath::InnerSpace;
+use cgmath::{Basis2, Deg, InnerSpace, Rotation2, Rotation};
 
 pub(crate) type Vec2 = cgmath::Vector2<f32>;
 
@@ -28,3 +28,10 @@ pub fn reflect_vector_a_around_b(a: Vec2, b: Vec2) -> Vec2 {
 // pub fn fmt_vec_2(v: Vec2, f: &mut fmt::Formatter<'_>) -> fmt::Result {
 //     write!(f, "({}, {})", v[0], v[1])
 // }
+
+
+pub fn rotate_vector_deg(vec: Vec2, angle_deg: f32) -> Vec2 {
+    let rotation: Basis2<f32> = Rotation2::from_angle(Deg(angle_deg));
+    let rotated_vector = rotation.rotate_vector(vec);
+    rotated_vector
+}

@@ -3,7 +3,7 @@ use std::{fmt, usize};
 
 use cgmath::{Array, InnerSpace};
 
-use crate::math::{vec2::Vec2, vec4::Vec4};
+use crate::{math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, sdf_data::SdfData}};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ParticleType {
@@ -196,6 +196,29 @@ impl Particle {
         }
         self.tmass = self.imass;
         self
+    }
+
+    pub fn get_sdf_data(&self, bodies: &Vec<Body>, idx: usize) -> SdfData {
+        if self.phase != Phase::Solid || self.body < 0 {
+            return SdfData::new(Vec2::new(0.0, 0.0), 0.0);
+        }
+
+        let body = &bodies[self.body];
+        let mut out = match body.sdf.get(&idx) {
+            Some(value) => *value,
+            None => SdfData::new(Vec2::new(0.0, 0.0), 0.0)
+        };
+
+        out.rotate(body.angle);
+        return out;
+    }
+
+    pub fn get_p(&self, stable: bool) -> Vec2 { 
+        if stable {
+            self.pos
+        } else {
+            self.pos_guess
+        }
     }
 }
 

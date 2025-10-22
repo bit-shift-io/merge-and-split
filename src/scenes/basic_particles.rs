@@ -244,8 +244,8 @@ impl BasicParticles {
                             cgmath::Deg(0.0),
                         );
 
-            let colour = self.particle_vec[i].colour;
-            let radius = self.particle_vec[i].radius;
+            let colour = particles[i].colour;
+            let radius = particles[i].radius;
 
             instances.push(Instance { position, rotation, colour, radius });
         }
@@ -293,7 +293,7 @@ impl Plugin for BasicParticles {
         // self.entity_system.push(car);
 
 
-        self.simulation.init_friction();
+        self.simulation.init_boxes();
 
         //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);

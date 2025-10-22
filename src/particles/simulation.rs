@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 
-use crate::{constraints2::{boundary_constraint::BoundaryConstraint, total_shape_constraint::TotalShapeConstraint}, math::vec2::Vec2, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, rigid_contact_constraint::RigidContactConstraint, total_shape_constraint::TotalShapeConstraint}, math::vec2::Vec2, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -14,6 +14,7 @@ pub struct Simulation {
     pub bodies: Vec<Body>,
 
     pub contact_boundary_constraints: Vec<BoundaryConstraint>,
+    pub contact_rigid_contact_constraints: Vec<RigidContactConstraint>,
 }
 
 impl Simulation {
@@ -29,6 +30,7 @@ impl Simulation {
 
             // CONTACT group:
             contact_boundary_constraints: vec![],
+            contact_rigid_contact_constraints: vec![],
         }
     }
 
@@ -97,7 +99,7 @@ impl Simulation {
 
                         // Rigid contact constraints (which include friction) apply to solid-solid contact
                         if p.phase == Phase::Solid && p2.phase == Phase::Solid {
-    //                         constraints[CONTACT].append(new RigidContactConstraint(i, j, &m_bodies));
+                            self.contact_rigid_contact_constraints.push(RigidContactConstraint::new(i, j, false)); // constraints[CONTACT].append(new RigidContactConstraint(i, j, &m_bodies));
     // #ifdef USE_STABILIZATION
     //                         constraints[STABILIZATION].append(new RigidContactConstraint(i, j, &m_bodies, true));
     // #endif
@@ -151,6 +153,9 @@ impl Simulation {
                 c.update_counts(&mut counts, body);
             }
         }
+        for c in self.contact_rigid_contact_constraints.iter_mut() {
+            c.update_counts(&mut counts);
+        }
 
         // for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
         //     ConstraintGroup g = (ConstraintGroup) j;
@@ -183,6 +188,9 @@ impl Simulation {
                     let body = &mut self.bodies[i];
                     c.project(&mut self.particles, &counts, body);
                 }
+            }
+            for c in self.contact_rigid_contact_constraints.iter_mut() {
+                c.project(&mut self.particles, &counts, &self.bodies);
             }
 
         //     for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
@@ -260,7 +268,6 @@ impl Simulation {
         self.x_boundaries = Vec2::new(-20.0,20.0);
         self.y_boundaries = Vec2::new(0.0,1000000.0);
 
-
         let particle_diam = 0.5;
         let particle_rad = particle_diam / 2.0;
 
@@ -291,5 +298,61 @@ impl Simulation {
         }
 
         self.create_rigid_body(&mut particles, &sdf_data);
+    }
+
+    pub fn init_boxes(&mut self) {
+        self.x_boundaries = Vec2::new(-20.0,20.0);
+        self.y_boundaries = Vec2::new(0.0,1000000.0);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+        
+        let num_boxes = 25;
+        let num_columns = 2;
+        
+        let root2 = f32::sqrt(2.0);
+
+        let mut sdf_data = Vec::<SdfData>::new();
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
+        
+        for j in -num_columns..num_columns {
+            let x_max = 3;
+            let y_max = 2;
+
+            for i in (0..(num_boxes-1)).rev() {
+                let mut particles = ParticleVec::new();
+                for x in 0..x_max {
+                    let x_val = j as f32 * 4.0 + particle_diam * ((x % x_max) as f32 - x_max as f32 / 2.0);
+                    for y in 0..y_max {
+                        let y_val = ((2.0 * i as f32 + 1.0) * y_max as f32 + (y % y_max) as f32 + 1.0) as f32 * particle_diam;
+                        let mass = 4.0;
+                        let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x_val, y_val)).set_mass_2(mass);
+                        part.k_friction = 1.0;
+                        part.s_friction = 1.0;
+                        particles.push(part);
+                    }
+                }
+
+                self.create_rigid_body(&mut particles, &sdf_data);
+
+                // for (int x = 0; x < dim.x; x++) {
+                //     double xVal = j * 4 + PARTICLE_DIAM * ((x % dim.x) - dim.x / 2);
+                //     for (int y = 0; y < dim.y; y++) {
+                //         double yVal = ((2 * i + 1) * dim.y + (y % dim.y) + 1) * PARTICLE_DIAM;
+                //         Particle *part = new Particle(glm::dvec2(xVal, yVal), 4.);
+                //         part->sFriction = 1.;
+                //         part->kFriction = 1.;
+                //         particles.push(part);
+                //     }
+                // }
+                // Body *body = createRigidBody(&vertices, &data);
+                // vertices.clear();
+            }
+        }
     }
 }
