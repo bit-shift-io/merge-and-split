@@ -105,6 +105,7 @@ impl Simulation {
     // #endif
                         // Regular contact constraints (which have no friction) apply to other solid-other contact
                         } else if p.phase == Phase::Solid || p2.phase == Phase::Solid {
+                            debug_assert!(false);
                             // constraints[CONTACT].append(new ContactConstraint(i, j));
                         }
                     }
@@ -143,9 +144,6 @@ impl Simulation {
 
 
         // (17) For constraint group
-        for c in self.contact_boundary_constraints.iter_mut() {
-            c.update_counts(&mut counts);
-        }
         {
             let c = TotalShapeConstraint::new();
             for i in 0..self.bodies.len() {
@@ -154,6 +152,9 @@ impl Simulation {
             }
         }
         for c in self.contact_rigid_contact_constraints.iter_mut() {
+            c.update_counts(&mut counts);
+        }
+        for c in self.contact_boundary_constraints.iter_mut() {
             c.update_counts(&mut counts);
         }
 
@@ -179,9 +180,6 @@ impl Simulation {
  
             // (17) For constraint group
             //  (18, 19, 20) Solve constraints in g and update ep
-            for c in self.contact_boundary_constraints.iter_mut() {
-                c.project(&mut self.particles, &counts)
-            }
             {
                 let c = TotalShapeConstraint::new();
                 for i in 0..self.bodies.len() {
@@ -191,6 +189,9 @@ impl Simulation {
             }
             for c in self.contact_rigid_contact_constraints.iter_mut() {
                 c.project(&mut self.particles, &counts, &self.bodies);
+            }
+            for c in self.contact_boundary_constraints.iter_mut() {
+                c.project(&mut self.particles, &counts)
             }
 
         //     for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
@@ -307,7 +308,7 @@ impl Simulation {
         let particle_diam = 0.5;
         let particle_rad = particle_diam / 2.0;
         
-        let num_boxes = 25;
+        let num_boxes = 5;
         let num_columns = 2;
         
         let root2 = f32::sqrt(2.0);
@@ -320,7 +321,7 @@ impl Simulation {
         sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
         sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
         
-        for j in -num_columns..num_columns {
+        for j in -(num_columns/2)..(num_columns/2) {
             let x_max = 3;
             let y_max = 2;
 

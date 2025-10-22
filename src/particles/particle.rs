@@ -199,7 +199,7 @@ impl Particle {
     }
 
     pub fn get_sdf_data(&self, bodies: &Vec<Body>, idx: usize) -> SdfData {
-        if self.phase != Phase::Solid || self.body < 0 {
+        if self.phase != Phase::Solid || self.body == usize::MAX {
             return SdfData::new(Vec2::new(0.0, 0.0), 0.0);
         }
 

@@ -24,8 +24,8 @@ impl RigidContactConstraint {
     }
 
     pub fn project(&mut self, estimates: &mut ParticleVec, counts: &Vec<usize>, bodies: &Vec<Body>) {
-        let p1 = &mut estimates[self.i1];
-        let p2 = &mut estimates[self.i2];
+        let mut p1 = estimates[self.i1]; // todo: use ref's, but has safety issues
+        let mut p2 = estimates[self.i2];
         let dat1 = p1.get_sdf_data(bodies, self.i1);
         let dat2 = p2.get_sdf_data(bodies, self.i2);
 
@@ -47,7 +47,7 @@ impl RigidContactConstraint {
             }
 
             if self.d < (p1.radius + p2.radius) + f32::EPSILON {
-                if self.init_boundary(p1, p2) {
+                if self.init_boundary(&p1, &p2) {
                     return;
                 }
             }
@@ -61,10 +61,17 @@ impl RigidContactConstraint {
         if !self.stable {
             p1.pos_guess += dp1;
             p2.pos_guess += dp2;
+
+            estimates[self.i1].pos_guess = p1.pos_guess; // copy changes to copies back into estimates (hack to work around unsafe for now)
+            estimates[self.i2].pos_guess = p2.pos_guess;
         } else {
             p1.pos += dp1;
             p2.pos += dp2;
+
+            estimates[self.i1].pos = p1.pos; // copy changes to copies back into estimates (hack to work around unsafe for now)
+            estimates[self.i2].pos = p2.pos;
         }
+
 
         // Apply friction
         let nf = self.n.normalize();
@@ -81,17 +88,29 @@ impl RigidContactConstraint {
             if self.stable {
                 p1.pos -= dpt * p1.tmass / w_sum;
                 p2.pos += dpt * p2.tmass / w_sum;
+
+                estimates[self.i1].pos = p1.pos; // copy changes to copies back into estimates (hack to work around unsafe for now)
+                estimates[self.i2].pos = p2.pos;
             }
             p1.pos_guess -= dpt * p1.tmass / w_sum;
             p2.pos_guess += dpt * p2.tmass / w_sum;
+
+            estimates[self.i1].pos_guess = p1.pos_guess; // copy changes to copies back into estimates (hack to work around unsafe for now)
+            estimates[self.i2].pos_guess = p2.pos_guess;
         } else {
             let delta = dpt * f32::min(k_fric * self.d / ldpt, 1.);
             if self.stable {
                 p1.pos -= delta * p1.tmass / w_sum;
                 p2.pos += delta * p2.tmass / w_sum;
+
+                estimates[self.i1].pos = p1.pos; // copy changes to copies back into estimates (hack to work around unsafe for now)
+                estimates[self.i2].pos = p2.pos;
             }
             p1.pos_guess -= delta * p1.tmass / w_sum;
             p2.pos_guess += delta * p2.tmass / w_sum;
+
+            estimates[self.i1].pos_guess = p1.pos_guess; // copy changes to copies back into estimates (hack to work around unsafe for now)
+            estimates[self.i2].pos_guess = p2.pos_guess;
         }
     }
 
