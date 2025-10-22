@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 
-use crate::{constraints2::boundary_constraint::BoundaryConstraint, math::vec2::Vec2, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}};
+use crate::{constraints2::boundary_constraint::BoundaryConstraint, math::vec2::Vec2, particles::{sdf_data::SdfData, body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec}};
 
 
 
@@ -10,6 +10,8 @@ pub struct Simulation {
 
     pub x_boundaries: Vec2,
     pub y_boundaries: Vec2,
+
+    pub bodies: Vec<Body>,
 
     pub contact_boundary_constraints: Vec<BoundaryConstraint>,
 }
@@ -22,6 +24,8 @@ impl Simulation {
 
             x_boundaries: Vec2::new(-20.0,20.0),
             y_boundaries: Vec2::new(0.0,1000000.0),
+
+            bodies: vec![],
 
             // CONTACT group:
             contact_boundary_constraints: vec![],
@@ -194,15 +198,18 @@ impl Simulation {
         self.contact_boundary_constraints.clear();
     }
 
-    pub fn create_rigid_body(&mut self, particles: &mut ParticleVec) {
+    pub fn create_rigid_body(&mut self, particles: &mut ParticleVec, sdf_data: &Vec<SdfData>) {
         if particles.len() <= 1 {
             assert!(false, "Rigid bodies must be at least 2 points.") 
         }
 
+        let mut body = Body::new();
+
+        let offset = self.particles.len();
         let mut total_mass = 0.0;
         for i in 0..particles.len() {
             let p = &mut particles[i];
-            p.body = 0; // todo: m_bodies.size();
+            p.body = self.bodies.len();
             p.phase = Phase::Solid;
 
             if p.imass == 0.0 {
@@ -212,17 +219,17 @@ impl Simulation {
             total_mass += 1.0 / p.imass;
 
             self.particles.push(*p);
-            // body->particles.append(i + offset);
-            // body->sdf[i + offset] = sdfData->at(i);
+            body.particle_indicies.push(i + offset);
+            body.sdf.insert(i + offset, sdf_data[i]);
         }
 
-        // // Update the body's global properties, including initial r_i vectors
-        // body->imass = 1.0 / totalMass;
-        // body->updateCOM(&m_particles, false);
-        // body->computeRs(&m_particles);
+        // Update the body's global properties, including initial r_i vectors
+        body.imass = 1.0 / total_mass;
+        body.update_com(&self.particles, false);
+        body.compute_rs(&self.particles);
         // body->shape = new TotalShapeConstraint(body);
 
-        // m_bodies.append(body);
+        self.bodies.push(body);
         // return body;
     }
 
@@ -232,20 +239,20 @@ impl Simulation {
         self.y_boundaries = Vec2::new(0.0,1000000.0);
 
 
-        // double root2 = sqrt(2);
-        // QList<Particle *> vertices;
-        // QList<SDFData> data;
-        // data.append(SDFData(glm::normalize(glm::dvec2(-1,-1)), PARTICLE_RAD * root2));
-        // data.append(SDFData(glm::normalize(glm::dvec2(-1,1)), PARTICLE_RAD * root2));
-        // data.append(SDFData(glm::normalize(glm::dvec2(0,-1)), PARTICLE_RAD));
-        // data.append(SDFData(glm::normalize(glm::dvec2(0,1)), PARTICLE_RAD));
-        // data.append(SDFData(glm::normalize(glm::dvec2(1,-1)), PARTICLE_RAD * root2));
-        // data.append(SDFData(glm::normalize(glm::dvec2(1,1)), PARTICLE_RAD * root2));
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
 
+        let root2 = f32::sqrt(2.0);
+        let mut sdf_data = Vec::<SdfData>::new();
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
+        
         let x_max = 3;
         let y_max = 2;
-
-        let particle_diam = 0.5;
 
         let mut particles = ParticleVec::new();
         for x in 0..x_max {
@@ -253,7 +260,7 @@ impl Simulation {
             for y in 0..y_max {
                 let y_val = (y_max + (y % y_max) + 1) as f32 * particle_diam;
                 let mass = if x == 0 && y == 0 { 1.0 } else { 1.0 };
-                let mut part = *Particle::default().set_radius(particle_diam / 2.0).set_pos(Vec2::new(x_val, y_val)).set_mass_2(mass);
+                let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x_val, y_val)).set_mass_2(mass);
                 part.vel.x = 5.0;
                 part.k_friction = 0.01;
                 part.s_friction = 0.1;
@@ -261,6 +268,6 @@ impl Simulation {
             }
         }
 
-        self.create_rigid_body(&mut particles/* , &data*/);
+        self.create_rigid_body(&mut particles, &sdf_data);
     }
 }
