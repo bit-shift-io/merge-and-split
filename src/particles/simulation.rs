@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 
-use crate::{math::vec2::Vec2, particles::{particle::Phase, particle_vec::ParticleVec}};
+use crate::{constraints2::boundary_constraint::BoundaryConstraint, math::vec2::Vec2, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}};
 
 
 
@@ -10,6 +10,8 @@ pub struct Simulation {
 
     pub x_boundaries: Vec2,
     pub y_boundaries: Vec2,
+
+    pub contact_boundary_constraints: Vec<BoundaryConstraint>,
 }
 
 impl Simulation {
@@ -20,6 +22,9 @@ impl Simulation {
 
             x_boundaries: Vec2::new(-20.0,20.0),
             y_boundaries: Vec2::new(0.0,1000000.0),
+
+            // CONTACT group:
+            contact_boundary_constraints: vec![],
         }
     }
 
@@ -30,6 +35,7 @@ impl Simulation {
 
         // Add all other global constraints
 
+        let mut counts = Vec::<usize>::new();
         let particle_count = self.particles.len();
 
         // (1) For all particles
@@ -47,8 +53,8 @@ impl Simulation {
 
             // (3) Predict positions, reset n
             p.pos_guess = p.guess(time_delta);
-            //m_counts[i] = 0;
-
+            counts.push(0);//m_counts[i] = 0;
+            
             // (4) Apply mass scaling (used by certain constraints)
             p.scale_mass();
         }
@@ -90,34 +96,32 @@ impl Simulation {
                         }
                     }
                 }
-
-                        
-                // (8) Find solid boundary contacts
-                if p.pos_guess.x < self.x_boundaries.x + p.radius {
-        //             constraints[CONTACT].append(new BoundaryConstraint(i, m_xBoundaries.x, true, true));
-        // #ifdef USE_STABILIZATION
-        //             constraints[STABILIZATION].append(new BoundaryConstraint(i, m_xBoundaries.x, true, true, true));
-        // #endif
-                } else if p.pos_guess.x > self.x_boundaries.y - p.radius {
-        //             constraints[CONTACT].append(new BoundaryConstraint(i, m_xBoundaries.y, true, false));
-        // #ifdef USE_STABILIZATION
-        //             constraints[STABILIZATION].append(new BoundaryConstraint(i, m_xBoundaries.y, true, false, true));
-        // #endif
-                }
-
-                if p.pos_guess.y < self.y_boundaries.x + p.radius {
-        //             constraints[CONTACT].append(new BoundaryConstraint(i, m_yBoundaries.x, false, true));
-        // #ifdef USE_STABILIZATION
-        //             constraints[STABILIZATION].append(new BoundaryConstraint(i, m_yBoundaries.x, false, true, true));
-        // #endif
-                } else if p.pos_guess.y > self.y_boundaries.y - p.radius {
-        //             constraints[CONTACT].append(new BoundaryConstraint(i, m_yBoundaries.y, false, false));
-        // #ifdef USE_STABILIZATION
-        //             constraints[STABILIZATION].append(new BoundaryConstraint(i, m_yBoundaries.y, false, false, true));
-        // #endif
-                }
+            }
+    
+            // (8) Find solid boundary contacts
+            if p.pos_guess.x < self.x_boundaries.x + p.radius {
+                self.contact_boundary_constraints.push(BoundaryConstraint::new(i, self.x_boundaries.x, true, true, false));
+    // #ifdef USE_STABILIZATION
+    //             constraints[STABILIZATION].append(new BoundaryConstraint(i, m_xBoundaries.x, true, true, true));
+    // #endif
+            } else if p.pos_guess.x > self.x_boundaries.y - p.radius {
+                self.contact_boundary_constraints.push(BoundaryConstraint::new(i, self.x_boundaries.y, true, false, false));
+    // #ifdef USE_STABILIZATION
+    //             constraints[STABILIZATION].append(new BoundaryConstraint(i, m_xBoundaries.y, true, false, true));
+    // #endif
             }
 
+            if p.pos_guess.y < self.y_boundaries.x + p.radius {
+                self.contact_boundary_constraints.push(BoundaryConstraint::new(i, self.y_boundaries.x, false, true, false));
+    // #ifdef USE_STABILIZATION
+    //             constraints[STABILIZATION].append(new BoundaryConstraint(i, m_yBoundaries.x, false, true, true));
+    // #endif
+            } else if p.pos_guess.y > self.y_boundaries.y - p.radius {
+                self.contact_boundary_constraints.push(BoundaryConstraint::new(i, self.y_boundaries.y, false, false, false));
+    // #ifdef USE_STABILIZATION
+    //             constraints[STABILIZATION].append(new BoundaryConstraint(i, m_yBoundaries.y, false, false, true));
+    // #endif
+            }
         }
         // (9) End for
 
@@ -125,6 +129,50 @@ impl Simulation {
 
 
 
+        // (17) For constraint group
+        for c in self.contact_boundary_constraints.iter_mut() {
+            c.update_counts(&mut counts)
+        }
+        // for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
+        //     ConstraintGroup g = (ConstraintGroup) j;
+
+        //     // Skip the stabilization constraints
+        //     if (g == STABILIZATION) {
+        //         continue;
+        //     }
+
+        //     //  (18, 19, 20) Update n based on constraints in g
+        //     for (int k = 0; k < constraints[g].size(); k++) {
+        //         constraints[g].at(k)->updateCounts(m_counts);
+        //     }
+        // }
+
+
+
+        // // (16) For solver iterations
+        let solver_iterations = 3; // user tweakable
+        for i in 0..solver_iterations {
+ 
+            // (17) For constraint group
+            //  (18, 19, 20) Solve constraints in g and update ep
+            for c in self.contact_boundary_constraints.iter_mut() {
+                c.project(&mut self.particles, &counts)
+            }
+
+        //     for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
+        //         ConstraintGroup g = (ConstraintGroup) j;
+
+        //         // Skip the stabilization constraints
+        //         if (g == STABILIZATION) {
+        //             continue;
+        //         }
+
+        //         //  (18, 19, 20) Solve constraints in g and update ep
+        //         for (int k = 0; k < constraints[g].size(); k++) {
+        //             constraints[g].at(k)->project(&m_particles, m_counts);
+        //         }
+        //     }
+        }
 
         // (23) For all particles
         for i in 0..self.particles.len() {
@@ -140,7 +188,79 @@ impl Simulation {
             p.confirm_guess();
         }
         // (28) End for
+
+
+        // Delete temporary conact constraints
+        self.contact_boundary_constraints.clear();
+    }
+
+    pub fn create_rigid_body(&mut self, particles: &mut ParticleVec) {
+        if particles.len() <= 1 {
+            assert!(false, "Rigid bodies must be at least 2 points.") 
+        }
+
+        let mut total_mass = 0.0;
+        for i in 0..particles.len() {
+            let p = &mut particles[i];
+            p.body = 0; // todo: m_bodies.size();
+            p.phase = Phase::Solid;
+
+            if p.imass == 0.0 {
+               assert!(false, "A rigid body cannot have a point of infinite mass.") 
+            }
+
+            total_mass += 1.0 / p.imass;
+
+            self.particles.push(*p);
+            // body->particles.append(i + offset);
+            // body->sdf[i + offset] = sdfData->at(i);
+        }
+
+        // // Update the body's global properties, including initial r_i vectors
+        // body->imass = 1.0 / totalMass;
+        // body->updateCOM(&m_particles, false);
+        // body->computeRs(&m_particles);
+        // body->shape = new TotalShapeConstraint(body);
+
+        // m_bodies.append(body);
+        // return body;
     }
 
 
+    pub fn init_friction(&mut self) {
+        self.x_boundaries = Vec2::new(-20.0,20.0);
+        self.y_boundaries = Vec2::new(0.0,1000000.0);
+
+
+        // double root2 = sqrt(2);
+        // QList<Particle *> vertices;
+        // QList<SDFData> data;
+        // data.append(SDFData(glm::normalize(glm::dvec2(-1,-1)), PARTICLE_RAD * root2));
+        // data.append(SDFData(glm::normalize(glm::dvec2(-1,1)), PARTICLE_RAD * root2));
+        // data.append(SDFData(glm::normalize(glm::dvec2(0,-1)), PARTICLE_RAD));
+        // data.append(SDFData(glm::normalize(glm::dvec2(0,1)), PARTICLE_RAD));
+        // data.append(SDFData(glm::normalize(glm::dvec2(1,-1)), PARTICLE_RAD * root2));
+        // data.append(SDFData(glm::normalize(glm::dvec2(1,1)), PARTICLE_RAD * root2));
+
+        let x_max = 3;
+        let y_max = 2;
+
+        let particle_diam = 0.5;
+
+        let mut particles = ParticleVec::new();
+        for x in 0..x_max {
+            let x_val = particle_diam * ((x % x_max) as f32 - x_max as f32 / 2.0);
+            for y in 0..y_max {
+                let y_val = (y_max + (y % y_max) + 1) as f32 * particle_diam;
+                let mass = if x == 0 && y == 0 { 1.0 } else { 1.0 };
+                let mut part = *Particle::default().set_radius(particle_diam / 2.0).set_pos(Vec2::new(x_val, y_val)).set_mass_2(mass);
+                part.vel.x = 5.0;
+                part.k_friction = 0.01;
+                part.s_friction = 0.1;
+                particles.push(part);
+            }
+        }
+
+        self.create_rigid_body(&mut particles/* , &data*/);
+    }
 }

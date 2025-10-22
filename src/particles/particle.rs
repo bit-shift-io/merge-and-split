@@ -186,6 +186,17 @@ impl Particle {
             self.tmass = 0.0;
         }
     }
+
+    // Version of set_mass needed for unified physics paper
+    pub fn set_mass_2(&mut self, mass: f32) -> &mut Self {
+        if mass <= 0.0 {
+            self.imass = -mass;
+        } else {
+            self.imass = 1.0 / mass;
+        }
+        self.tmass = self.imass;
+        self
+    }
 }
 
 impl Default for Particle {

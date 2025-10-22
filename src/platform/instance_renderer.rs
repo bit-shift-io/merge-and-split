@@ -404,6 +404,9 @@ impl InstanceRenderer {
     // }
 
     pub fn render(&self, render_pass: &mut wgpu::RenderPass) {
+        if self.num_instances <= 0 {
+            return
+        }
         render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
         //render_pass.set_pipeline(&self.render_pipeline);
         //render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);

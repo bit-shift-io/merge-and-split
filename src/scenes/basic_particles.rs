@@ -218,7 +218,12 @@ impl BasicParticles {
 
         // Add particles into the instance renderer
         let mut instances: Vec<Instance> = vec![]; 
-        for i in 0..self.particle_vec.len() {
+
+        // Switch between the merge-and-split particle system (old) and the new unified particle system
+        //let particles = &self.particle_vec;
+        let particles = &self.simulation.particles;
+
+        for i in 0..particles.len() {
             // Skip debug particle so we can see where it is
             // if self.particle_vec[i].debug {
             //     continue;
@@ -226,8 +231,8 @@ impl BasicParticles {
 
             // todo: Clean this up with Instance::new()
             let position = cgmath::Vector3 {
-                        x: self.particle_vec[i].pos[0],
-                        y: self.particle_vec[i].pos[1],
+                        x: particles[i].pos[0],
+                        y: particles[i].pos[1],
                         z: 0.0,
                     };
 
@@ -287,6 +292,8 @@ impl Plugin for BasicParticles {
         // let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
         // self.entity_system.push(car);
 
+
+        self.simulation.init_friction();
 
         //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);
