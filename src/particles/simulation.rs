@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 
-use crate::{constraints2::{boundary_constraint::BoundaryConstraint, rigid_contact_constraint::RigidContactConstraint, total_shape_constraint::TotalShapeConstraint}, math::vec2::Vec2, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, rigid_contact_constraint::RigidContactConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -15,6 +15,8 @@ pub struct Simulation {
 
     pub contact_boundary_constraints: Vec<BoundaryConstraint>,
     pub contact_rigid_contact_constraints: Vec<RigidContactConstraint>,
+
+    pub counts: Vec<usize>,
 }
 
 impl Simulation {
@@ -31,11 +33,17 @@ impl Simulation {
             // CONTACT group:
             contact_boundary_constraints: vec![],
             contact_rigid_contact_constraints: vec![],
+
+            counts: vec![],
         }
     }
 
     pub fn tick(self: &mut Self, time_delta: f32) {
         // https://github.com/ebirenbaum/ParticleSolver/blob/master/cpu/src/simulation.cpp
+
+        debug_assert!(self.contact_boundary_constraints.len() == 0);
+        debug_assert!(self.contact_rigid_contact_constraints.len() == 0);
+        debug_assert!(self.counts.len() == 0);
 
         // Add all rigid body shape constraints
         // FM: doesn't need to occur as we do this dynamically as required - see how I use TotalShapeConstraint below.
@@ -48,7 +56,6 @@ impl Simulation {
         //     }
         // }
 
-        let mut counts = Vec::<usize>::new();
         let particle_count = self.particles.len();
 
         // (1) For all particles
@@ -66,7 +73,7 @@ impl Simulation {
 
             // (3) Predict positions, reset n
             p.pos_guess = p.guess(time_delta);
-            counts.push(0);//m_counts[i] = 0;
+            self.counts.push(0);//m_counts[i] = 0;
             
             // (4) Apply mass scaling (used by certain constraints)
             p.scale_mass();
@@ -148,14 +155,14 @@ impl Simulation {
             let c = TotalShapeConstraint::new();
             for i in 0..self.bodies.len() {
                 let body = &self.bodies[i];
-                c.update_counts(&mut counts, body);
+                c.update_counts(&mut self.counts, body);
             }
         }
         for c in self.contact_rigid_contact_constraints.iter_mut() {
-            c.update_counts(&mut counts);
+            c.update_counts(&mut self.counts);
         }
         for c in self.contact_boundary_constraints.iter_mut() {
-            c.update_counts(&mut counts);
+            c.update_counts(&mut self.counts);
         }
 
         // for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
@@ -184,14 +191,14 @@ impl Simulation {
                 let c = TotalShapeConstraint::new();
                 for i in 0..self.bodies.len() {
                     let body = &mut self.bodies[i];
-                    c.project(&mut self.particles, &counts, body);
+                    c.project(&mut self.particles, &self.counts, body);
                 }
             }
             for c in self.contact_rigid_contact_constraints.iter_mut() {
-                c.project(&mut self.particles, &counts, &self.bodies);
+                c.project(&mut self.particles, &self.counts, &self.bodies);
             }
             for c in self.contact_boundary_constraints.iter_mut() {
-                c.project(&mut self.particles, &counts)
+                c.project(&mut self.particles, &self.counts)
             }
 
         //     for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
@@ -227,6 +234,8 @@ impl Simulation {
 
         // Delete temporary conact constraints
         self.contact_boundary_constraints.clear();
+        self.contact_rigid_contact_constraints.clear();
+        self.counts.clear();
     }
 
     pub fn create_rigid_body(&mut self, particles: &mut ParticleVec, sdf_data: &Vec<SdfData>) {
@@ -299,6 +308,31 @@ impl Simulation {
         }
 
         self.create_rigid_body(&mut particles, &sdf_data);
+    }
+
+    pub fn init_granular(&mut self) {
+        self.x_boundaries = Vec2::new(-100.0,100.0);
+        self.y_boundaries = Vec2::new(-5.0,1000.0);
+
+        let particle_rad = 0.25;
+        let particle_diam = 0.5;
+
+        for i in -10..10 {
+            for j in 0..10 {
+                let pos = Vec2::new((i as f32) * (particle_diam + f32::EPSILON), (j as f32).powf(1.2) * (particle_diam) + particle_rad + self.y_boundaries.x);
+                let mut part= *Particle::default().set_radius(particle_rad).set_pos(pos).set_mass_2(1.0); //, 1, SOLID);
+                part.phase = Phase::Solid;
+                part.s_friction = 0.35;
+                part.k_friction = 0.3;
+                self.particles.push(part);
+            }
+        }
+
+        let mut jerk = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(-25.55, 40.0)).set_mass_2(100.0);
+        jerk.phase = Phase::Solid;
+        jerk.vel.x = 8.5;
+        jerk.set_colour(Vec4::new(1.0, 0.0, 0.0, 1.0));
+        self.particles.push(jerk);
     }
 
     pub fn init_boxes(&mut self) {

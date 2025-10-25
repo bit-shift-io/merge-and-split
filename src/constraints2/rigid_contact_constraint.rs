@@ -55,8 +55,8 @@ impl RigidContactConstraint {
 
         let w_sum = p1.tmass + p2.tmass;
         let dp = (1.0 / w_sum) * self.d * self.n;
-        let dp1 = -p1.tmass * dp  / counts[self.i1] as f32;
-        let dp2 = p2.tmass * dp / counts[self.i2] as f32;
+        let dp1 = p1.tmass * dp  / counts[self.i1] as f32;
+        let dp2 = -p2.tmass * dp / counts[self.i2] as f32; // FM: I reversed (-ve) this and it seems to have stabalised things somehow.
 
         if !self.stable {
             p1.pos_guess += dp1;
