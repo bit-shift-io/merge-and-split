@@ -40,10 +40,10 @@ impl RigidContactConstraint {
         } else {
             if dat1.distance < dat2.distance {
                 self.d = dat1.distance;
-                self.n = dat1.gradient;
+                self.n = -dat1.gradient; // FM: I reversed this, to stabalise rigid bodies which use SDF's
             } else {
                 self.d = dat2.distance;
-                self.n = -dat2.gradient;
+                self.n = dat2.gradient; // FM: I reversed this, to stabalise rigid bodies which use SDF's
             }
 
             if self.d < (p1.radius + p2.radius) + f32::EPSILON {
@@ -56,7 +56,7 @@ impl RigidContactConstraint {
         let w_sum = p1.tmass + p2.tmass;
         let dp = (1.0 / w_sum) * self.d * self.n;
         let dp1 = p1.tmass * dp  / counts[self.i1] as f32;
-        let dp2 = -p2.tmass * dp / counts[self.i2] as f32; // FM: I reversed (-ve) this and it seems to have stabalised things somehow.
+        let dp2 = -p2.tmass * dp / counts[self.i2] as f32; // FM: I reversed (-ve) this and it seems to have stabalised loose particles somehow.
 
         if !self.stable {
             p1.pos_guess += dp1;

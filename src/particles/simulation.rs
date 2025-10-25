@@ -224,7 +224,7 @@ impl Simulation {
             p.vel = (p.pos_guess - p.pos) / time_delta;
 
             // (25, 26) Advect diffuse particles, apply internal forces
-            /// TODO
+            // TODO
 
             // (27) Update positions or apply sleeping
             p.confirm_guess();
@@ -427,6 +427,55 @@ impl Simulation {
                 // }
                 // Body *body = createRigidBody(&vertices, &data);
                 // vertices.clear();
+            }
+        }
+    }
+
+    pub fn init_wall(&mut self) {
+        self.x_boundaries = Vec2::new(-50.0,50.0);
+        self.y_boundaries = Vec2::new(0.0,1000000.0);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let x_max = 6;
+        let y_max = 2;
+
+        let height = 10; //11;
+        let width = 3; //5;
+
+        let root2 = f32::sqrt(2.0);
+
+        let mut particles = ParticleVec::new();
+        
+        let mut sdf_data = Vec::<SdfData>::new();
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
+
+        for i in 0..(x_max - 2) {
+            sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
+            sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
+        }
+
+        sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
+        
+
+        for j in -width..width { //(int j = -width; j <= width; j++) {
+            for i in (0..height).rev() { //(int i = height - 1; i >= 0; i--) {
+                for x in 0..x_max {
+                    let num = if i % 2 == 0 { 3.0 } else { -1.0 };
+                    let x_val = j as f32 * (f32::EPSILON + x_max as f32 / 2.0) + particle_diam * (x % x_max) as f32 - num * particle_rad;
+                    for y in 0..y_max {
+                        let y_val = (i as f32 * y_max as f32 + (y % y_max) as f32 + f32::EPSILON) * particle_diam + particle_rad;
+                        let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x_val, y_val)).set_mass_2(1.0);
+                        part.s_friction = 1.0;
+                        part.k_friction = 0.0;
+                        particles.push(part);
+                    }
+                }
+                self.create_rigid_body(&mut particles, &sdf_data);
+                particles.clear();
             }
         }
     }
