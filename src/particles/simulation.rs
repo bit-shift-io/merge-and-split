@@ -335,6 +335,46 @@ impl Simulation {
         self.particles.push(jerk);
     }
 
+
+    pub fn init_sdf(&mut self) {
+        self.x_boundaries = Vec2::new(-20.0,20.0);
+        self.y_boundaries = Vec2::new(0.0,1000000.0);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let num_boxes = 2;
+        let root2 = f32::sqrt(2.0);
+
+        let mut particles = ParticleVec::new();
+        
+        let mut sdf_data = Vec::<SdfData>::new();
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, 0.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, 0.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
+        
+        let x_max = 3;
+        let y_max = 2;
+        for i in (0..num_boxes).rev() {//for (int i = numBoxes - 1; i >= 0; i--) {
+            for x in 0..x_max { //for (int x = 0; x < dim.x; x++) {
+                let x_val = particle_diam * ((x % x_max) as f32 - x_max as f32 / 2.0) + (i as f32) * particle_rad;
+                for y in 0..y_max { //for (int y = 0; y < dim.y; y++) {
+                    let y_val = ((40.0 * i as f32) * y_max as f32 + (y % y_max) as f32 + 1.0) * particle_diam;
+                    let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x_val, y_val)).set_mass_2(4.0);
+                    if i > 0 {
+                        part.vel.y = -120.0;
+                    }
+                    particles.push(part);
+                }
+            }
+            self.create_rigid_body(&mut particles, &sdf_data);
+            particles.clear();
+        }
+    }
+
     pub fn init_boxes(&mut self) {
         self.x_boundaries = Vec2::new(-20.0,20.0);
         self.y_boundaries = Vec2::new(0.0,1000000.0);

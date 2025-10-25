@@ -28,6 +28,10 @@ impl ParticleVec {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+
     pub fn as_slice(&self) -> &[Particle] {
         self.0.as_slice()
     }

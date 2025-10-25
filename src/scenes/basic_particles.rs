@@ -293,7 +293,7 @@ impl Plugin for BasicParticles {
         // self.entity_system.push(car);
 
 
-        self.simulation.init_granular();
+        self.simulation.init_sdf();
 
         //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);
