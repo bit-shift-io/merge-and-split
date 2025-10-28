@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 
-use crate::{constraints2::{boundary_constraint::BoundaryConstraint, rigid_contact_constraint::RigidContactConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, distance_constraint::DistanceConstraint, rigid_contact_constraint::RigidContactConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -16,6 +16,8 @@ pub struct Simulation {
     pub contact_boundary_constraints: Vec<BoundaryConstraint>,
     pub contact_rigid_contact_constraints: Vec<RigidContactConstraint>,
 
+    pub global_standard_distance_constraints: Vec<DistanceConstraint>,
+    
     pub counts: Vec<usize>,
 }
 
@@ -33,6 +35,9 @@ impl Simulation {
             // CONTACT group:
             contact_boundary_constraints: vec![],
             contact_rigid_contact_constraints: vec![],
+            // CONTACT group end.
+
+            global_standard_distance_constraints: vec![],
 
             counts: vec![],
         }
@@ -158,6 +163,9 @@ impl Simulation {
                 c.update_counts(&mut self.counts, body);
             }
         }
+        for c in self.global_standard_distance_constraints.iter_mut() {
+            c.update_counts(&mut self.counts);
+        }
         for c in self.contact_rigid_contact_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
@@ -193,6 +201,9 @@ impl Simulation {
                     let body = &mut self.bodies[i];
                     c.project(&mut self.particles, &self.counts, body);
                 }
+            }
+            for c in self.global_standard_distance_constraints.iter_mut() {
+                c.project(&mut self.particles, &self.counts);
             }
             for c in self.contact_rigid_contact_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts, &self.bodies);
@@ -479,4 +490,51 @@ impl Simulation {
             }
         }
     }
+
+
+    pub fn init_pendulum(&mut self) {
+        self.x_boundaries = Vec2::new(-10.0,10.0);
+        self.y_boundaries = Vec2::new(0.0,1000000.0);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let chain_length = 3;
+        let pos = Vec2::new(0.0, chain_length as f32 * 3.0 + 6.0) * particle_diam + Vec2::new(0.0,2.0);
+        let mut particle = *Particle::default().set_radius(particle_rad).set_pos(pos).set_mass_2(0.0);
+        particle.phase = Phase::Solid;
+        self.particles.push(particle);
+        
+        let mut sdf_data = Vec::<SdfData>::new();
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad));
+
+        let mut particles = ParticleVec::new();
+        let xs = [-1.0,-1.0,0.0,0.0,1.0,1.0];
+
+        for i in (0..=chain_length).rev() { //for (int i = chain_length; i >= 0; i--) {
+            for j in 0..6 { //for (int j = 0; j < 6; j++) {
+                let y = ((i + 1) * 3 + (j % 2)) as f32 * particle_diam + 2.0;
+                let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(xs[j] * particle_diam, y)).set_mass_2(1.0);
+                part.vel.x = 3.0;
+                particles.push(part);
+            }
+            self.create_rigid_body(&mut particles, &sdf_data);
+            particles.clear();
+
+            if i < chain_length {
+                let base_prev = 1 + (chain_length - i - 1) * 6;
+                let base_cur = base_prev + 6;
+                self.global_standard_distance_constraints.push(DistanceConstraint::from_particles(base_cur + 1, base_prev, &self.particles));
+                self.global_standard_distance_constraints.push(DistanceConstraint::from_particles(base_cur + 5, base_prev + 4, &self.particles));
+            }
+        }
+
+        self.global_standard_distance_constraints.push(DistanceConstraint::from_particles(0, 4, &self.particles));
+    }
+
 }
