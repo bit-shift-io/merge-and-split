@@ -4,3 +4,4 @@ pub mod rigid_contact_constraint;
 pub mod distance_constraint;
 pub mod total_fluid_constraint;
 pub mod contact_constraint;
+pub mod gas_constraint;

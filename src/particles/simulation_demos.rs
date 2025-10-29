@@ -452,4 +452,67 @@ impl SimulationDemos {
         }
     }
 
+    pub fn init_gas(sim: &mut Simulation) {
+        let mut scale = 2.0;
+        let delta = 0.7;
+        
+        sim.x_boundaries = Vec2::new(-2.0 * scale,2.0 * scale);
+        sim.y_boundaries = Vec2::new(-2.0 * scale, 5.0 * scale);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let mut particles = ParticleVec::new();
+        let mut rng = rand::rng();
+
+        let num = 2.0;
+        let mut d = 0.0;
+        while d < num { //for (int d = 0; d < num; d++) {
+            let color = Vec4::new(rng.random(), rng.random(), rng.random(), 1.0);
+            let start = -2.0 * scale + 4.0 * scale * (d / num);
+            let mut x = start;
+            while x < start + (4.0 * scale / num) { //for(double x = start; x < start + (4 * scale / num); x += delta) {
+                let mut y = -2.0 * scale;
+                while y < 2.0 * scale { // for(double y = -2 * scale; y < 2 * scale; y += delta) {
+                    
+                    let r1: f32 = rng.random();
+                    let r2: f32 = rng.random();
+
+                    particles.push(*Particle::default().set_colour(color).set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+                    y += delta;
+                }
+
+                x += delta;
+            }
+            sim.create_gas(&particles, 0.75 + 3.0*(d), false);
+            particles.clear();
+
+            d += 1.0;
+        }
+
+        scale = 3.0;
+        let mut d = 0.0;
+        while d < num { //for (int d = 0; d < num; d++) {
+            let color = Vec4::new(rng.random(), rng.random(), rng.random(), 1.0);
+            let start = -2.0 * scale + 4.0 * scale * (d / num);
+            let mut x = start;
+            while x < start + (4.0 * scale / num) { //for(double x = start; x < start + (4 * scale / num); x += delta) {
+                let mut y = -2.0 * scale;
+                while y < 2.0 * scale { //for(double y = -2 * scale; y < 2 * scale; y += delta) {
+                    let mut rng = rand::rng();
+                    let r1: f32 = rng.random();
+                    let r2: f32 = rng.random();
+
+                    particles.push(*Particle::default().set_colour(color).set_radius(particle_rad).set_pos(Vec2::new(x,y+10.0) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+                    y += delta
+                }
+                x += delta;
+            }
+            sim.create_fluid(&particles, 4.0 + 0.75 * (d + 1.0));
+            particles.clear();
+
+            d += 1.0;
+        }
+    }
+
 }

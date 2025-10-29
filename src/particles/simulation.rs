@@ -1,7 +1,7 @@
 use cgmath::InnerSpace;
 use rand::Rng;
 
-use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::DistanceConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::DistanceConstraint, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -20,8 +20,10 @@ pub struct Simulation {
 
     pub global_standard_distance_constraints: Vec<DistanceConstraint>,
     pub global_standard_total_fluid_constraints: Vec<TotalFluidConstraint>,
+    pub global_standard_gas_constraints: Vec<GasConstraint>,
     
     pub counts: Vec<usize>,
+    pub body_count: usize,
 }
 
 impl Simulation {
@@ -43,8 +45,10 @@ impl Simulation {
 
             global_standard_distance_constraints: vec![],
             global_standard_total_fluid_constraints: vec![],
+            global_standard_gas_constraints: vec![],
 
             counts: vec![],
+            body_count: 0,
         }
     }
 
@@ -175,6 +179,9 @@ impl Simulation {
         for c in self.global_standard_total_fluid_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
+        for c in self.global_standard_gas_constraints.iter_mut() {
+            c.update_counts(&mut self.counts);
+        }
         for c in self.contact_rigid_contact_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
@@ -218,6 +225,9 @@ impl Simulation {
                 c.project(&mut self.particles, &self.counts);
             }
             for c in self.global_standard_total_fluid_constraints.iter_mut() {
+                c.project(&mut self.particles, &self.counts);
+            }
+            for c in self.global_standard_gas_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts);
             }
             for c in self.contact_rigid_contact_constraints.iter_mut() {
@@ -279,7 +289,9 @@ impl Simulation {
         let mut total_mass = 0.0;
         for i in 0..particles.len() {
             let p = &mut particles[i];
-            p.body = self.bodies.len();
+            p.body = self.body_count; //self.bodies.len();
+            self.body_count += 1;
+
             p.phase = Phase::Solid;
 
             if p.imass == 0.0 {
@@ -305,7 +317,8 @@ impl Simulation {
 
     pub fn create_fluid(&mut self, particles: &ParticleVec, density: f32) {
         let offset = self.particles.len();
-        let bod = self.global_standard_total_fluid_constraints.len(); //100 * rand::rng().random(); // assign a rnadom body number to this fluid? probably just want to avoid self collisions
+        let bod = self.body_count; //self.global_standard_total_fluid_constraints.len(); //100 * rand::rng().random(); // assign a rnadom body number to this fluid? probably just want to avoid self collisions
+        self.body_count += 1;
 
         let mut indices = vec![];
         for i in 0..particles.len() { //for (int i = 0; i < verts->size(); i++) {
@@ -324,5 +337,29 @@ impl Simulation {
         }
 
         self.global_standard_total_fluid_constraints.push(TotalFluidConstraint::new(density, &indices));
+    }
+
+    // open = false by default
+    pub fn create_gas(&mut self, particles: &ParticleVec, density: f32, open: bool) {
+        let offset = self.particles.len();
+        let bod = self.body_count; //100 * frand();
+        self.body_count += 1;
+
+        let mut indices = vec![];
+        for i in 0..particles.len() { //for (int i = 0; i < verts->size(); i++) {
+            let mut p = particles[i];
+            p.set_phase(Phase::Gas);
+            p.body = bod;
+
+            if p.imass == 0.0 {
+                assert!(false, "A gas cannot have a point of infinite mass.");
+            }
+
+            self.particles.push(p);
+            indices.push(offset + i);
+        }
+        self.global_standard_gas_constraints.push(GasConstraint::new(density, &indices, open));
+        //GasConstraint *gs = new GasConstraint(density, &indices, open);
+        //m_globalConstraints[STANDARD].append(gs);
     }
 }
