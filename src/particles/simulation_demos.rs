@@ -352,4 +352,104 @@ impl SimulationDemos {
             d += 1.0;
         }
     }
+
+
+    pub fn init_fluid_solid(sim: &mut Simulation) {
+        let scale = 3.0;
+        let delta = 0.7;
+        
+        sim.x_boundaries = Vec2::new(-2.0 * scale,2.0 * scale);
+        sim.y_boundaries = Vec2::new(-2.0 * scale, 100.0 * scale);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let mut particles = ParticleVec::new();
+
+        let blue = Vec4::new(0.0, 0.0,1.0, 1.0);
+
+        let num = 1.0;
+        let mut d = 0.0;
+        while d < num { //for (int d = 0; d < num; d++) {
+            let start = -2.0 * scale + 4.0 * scale * (d / num);
+            let mut x = start;
+            while x < start + (4.0 * scale / num) { //for(double x = start; x < start + (4 * scale / num); x += delta) {
+                let mut y = -2.0 * scale;
+                while y < 2.0 * scale { //for(double y = -2 * scale; y < 2 * scale; y += delta) {
+                    let mut rng = rand::rng();
+                    let r1: f32 = rng.random();
+                    let r2: f32 = rng.random();
+
+                    particles.push(*Particle::default().set_colour(blue).set_radius(particle_rad).set_pos(Vec2::new(x,y + 3.0) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+
+                    y += delta;
+                }
+
+                x += delta;
+            }
+            sim.create_fluid(&particles, 1.0 + 1.25 * (d + 1.0));
+            particles.clear();
+
+            d += 1.0;
+        }
+
+
+        let root2 = f32::sqrt(2.0);
+
+        if true {
+            particles.clear();
+
+            let dim_x = 5;
+            let dim_y = 2;
+
+            let mut sdf_data = Vec::<SdfData>::new();
+            sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
+            sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
+    
+            for i in 0..(dim_x - 2) { //for (int i = 0; i < dim.x - 2; i++) {
+                sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
+                sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
+            }
+            sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
+            sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
+    
+            for x in 0..dim_x { //(int x = 0; x < dim.x; x++) {
+                let xVal = particle_diam * ((x % dim_x) as f32 - dim_x as f32 / 2.0);
+                for y in 0..dim_y { //(int y = 0; y < dim.y; y++) {
+                    let yVal = (dim_y as f32 + (y % dim_y) as f32 + 1.0) * particle_diam;
+                    particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(xVal-3.0, yVal + 10.0)).set_mass_2(2.0));
+                }
+            }
+            sim.create_rigid_body(&mut particles, &sdf_data);
+        }
+
+        if true {
+            particles.clear();
+
+            let mut sdf_data = Vec::<SdfData>::new();
+            
+            let dim_x = 5;
+            let dim_y = 2;
+
+            sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
+            sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
+    
+            for i in 0..(dim_x - 2) { //(int i = 0; i < dim.x - 2; i++) {
+                sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
+                sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
+            }
+            sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
+            sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
+
+            for x in 0..dim_x { //(int x = 0; x < dim.x; x++) {
+                let xVal = particle_diam * ((x % dim_x) as f32 - dim_x as f32 / 2.0);
+                for y in 0..dim_y {//(int y = 0; y < dim.y; y++) {
+                    let yVal = (dim_y as f32 + (y % dim_y) as f32 + 1.0) * particle_diam;
+                    particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(xVal+3.0, yVal + 10.0)).set_mass_2(0.2));
+                }
+            }
+            sim.create_rigid_body(&mut particles, &sdf_data);
+        }
+    }
+
 }
