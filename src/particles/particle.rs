@@ -198,6 +198,11 @@ impl Particle {
         self
     }
 
+    pub fn set_phase(&mut self, phase: Phase) -> &mut Self {
+        self.phase = phase;
+        self
+    }
+
     pub fn get_sdf_data(&self, bodies: &Vec<Body>, idx: usize) -> SdfData {
         if self.phase != Phase::Solid || self.body == usize::MAX {
             return SdfData::new(Vec2::new(0.0, 0.0), 0.0);

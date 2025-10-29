@@ -1,4 +1,5 @@
 use cgmath::InnerSpace;
+use rand::Rng;
 
 use crate::{constraints2::{boundary_constraint::BoundaryConstraint, distance_constraint::DistanceConstraint, rigid_contact_constraint::RigidContactConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
@@ -285,6 +286,30 @@ impl Simulation {
     }
 
 
+
+    //TotalFluidConstraint *Simulation::createFluid(QList<Particle *> *verts, double density)
+    pub fn create_fluid(&mut self, particles: &ParticleVec, density: f32) {
+        // int offset = m_particles.size();
+        // int bod = 100 * frand();
+        // QList<int> indices;
+        // for (int i = 0; i < verts->size(); i++) {
+        //     Particle *p = verts->at(i);
+        //     p->ph = FLUID;
+        //     p->bod = bod;
+
+        //     if (p->imass == 0.0) {
+        //         cout << "A fluid cannot have a point of infinite mass." << endl;
+        //         exit(1);
+        //     }
+
+        //     m_particles.append(p);
+        //     indices.append(offset + i);
+        // }
+        // TotalFluidConstraint *fs = new TotalFluidConstraint(density, &indices);
+        // m_globalConstraints[STANDARD].append(fs);
+        // return fs;
+    }
+
     pub fn init_friction(&mut self) {
         self.x_boundaries = Vec2::new(-20.0,20.0);
         self.y_boundaries = Vec2::new(0.0,1000000.0);
@@ -535,6 +560,58 @@ impl Simulation {
         }
 
         self.global_standard_distance_constraints.push(DistanceConstraint::from_particles(0, 4, &self.particles));
+    }
+
+    pub fn init_rope(&mut self) {
+        let scale = 5.0;
+
+        self.x_boundaries = Vec2::new(-scale,scale);
+        self.y_boundaries = Vec2::new(0.0,1000000.0);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let top = 6.0;
+        let dist = particle_rad;
+
+        let e1 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(self.x_boundaries.x, top)).set_mass_2(0.0).set_phase(Phase::Solid);
+        //e1.body = -2; // -2?!
+        self.particles.push(e1);
+
+        let mut i = self.x_boundaries.x;
+        while i < (self.x_boundaries.y - dist) { //for (double i = m_xBoundaries.x + dist; i < m_xBoundaries.y - dist; i += dist) {
+            let part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i, top)).set_mass_2(1.0).set_phase(Phase::Solid);
+            //part->bod = -2;
+            self.particles.push(part);
+            self.global_standard_distance_constraints.push(DistanceConstraint::new(dist, self.particles.len() - 2, self.particles.len() - 1, false));
+
+            i += dist;
+        }
+
+        let e2 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(self.x_boundaries.y, top)).set_mass_2(0.0).set_phase(Phase::Solid);
+        //e2.body = -2;
+        self.particles.push(e2);
+
+        self.global_standard_distance_constraints.push(DistanceConstraint::new(dist, self.particles.len() - 2, self.particles.len() - 1, false));
+        
+        let delta = 0.7;
+        let mut particles = ParticleVec::new();
+
+        let mut x = -scale;
+        while x < scale { //for(double x = -scale; x < scale; x += delta) {
+            let mut y= 10.0;
+            while y < 10.0 + scale { //for(double y = 10; y < 10 + scale; y += delta) {
+                let mut rng = rand::rng();
+                let r1: f32 = rng.random();
+                let r2: f32 = rng.random();
+
+                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+                y += delta;
+            }
+
+            x += delta;
+        }
+        self.create_fluid(&particles, 1.75);
     }
 
 }
