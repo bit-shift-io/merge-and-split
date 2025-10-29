@@ -10,3 +10,4 @@ pub mod merge_and_split_test;
 pub mod simulation;
 pub mod body;
 pub mod sdf_data;
+pub mod simulation_demos;
