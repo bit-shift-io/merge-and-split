@@ -1,7 +1,7 @@
 use cgmath::InnerSpace;
 use rand::Rng;
 
-use crate::{constraints2::{boundary_constraint::BoundaryConstraint, distance_constraint::DistanceConstraint, rigid_contact_constraint::RigidContactConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::DistanceConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -16,8 +16,10 @@ pub struct Simulation {
 
     pub contact_boundary_constraints: Vec<BoundaryConstraint>,
     pub contact_rigid_contact_constraints: Vec<RigidContactConstraint>,
+    pub contact_contact_constraints: Vec<ContactConstraint>,
 
     pub global_standard_distance_constraints: Vec<DistanceConstraint>,
+    pub global_standard_total_fluid_constraints: Vec<TotalFluidConstraint>,
     
     pub counts: Vec<usize>,
 }
@@ -36,9 +38,11 @@ impl Simulation {
             // CONTACT group:
             contact_boundary_constraints: vec![],
             contact_rigid_contact_constraints: vec![],
+            contact_contact_constraints: vec![],
             // CONTACT group end.
 
             global_standard_distance_constraints: vec![],
+            global_standard_total_fluid_constraints: vec![],
 
             counts: vec![],
         }
@@ -49,6 +53,7 @@ impl Simulation {
 
         debug_assert!(self.contact_boundary_constraints.len() == 0);
         debug_assert!(self.contact_rigid_contact_constraints.len() == 0);
+        debug_assert!(self.contact_contact_constraints.len() == 0);
         debug_assert!(self.counts.len() == 0);
 
         // Add all rigid body shape constraints
@@ -118,7 +123,7 @@ impl Simulation {
     // #endif
                         // Regular contact constraints (which have no friction) apply to other solid-other contact
                         } else if p.phase == Phase::Solid || p2.phase == Phase::Solid {
-                            debug_assert!(false);
+                            self.contact_contact_constraints.push(ContactConstraint::new(i, j, false));
                             // constraints[CONTACT].append(new ContactConstraint(i, j));
                         }
                     }
@@ -167,7 +172,13 @@ impl Simulation {
         for c in self.global_standard_distance_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
+        for c in self.global_standard_total_fluid_constraints.iter_mut() {
+            c.update_counts(&mut self.counts);
+        }
         for c in self.contact_rigid_contact_constraints.iter_mut() {
+            c.update_counts(&mut self.counts);
+        }
+        for c in self.contact_contact_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
         for c in self.contact_boundary_constraints.iter_mut() {
@@ -206,8 +217,14 @@ impl Simulation {
             for c in self.global_standard_distance_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts);
             }
+            for c in self.global_standard_total_fluid_constraints.iter_mut() {
+                c.project(&mut self.particles, &self.counts);
+            }
             for c in self.contact_rigid_contact_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts, &self.bodies);
+            }
+            for c in self.contact_contact_constraints.iter_mut() {
+                c.project(&mut self.particles, &self.counts);
             }
             for c in self.contact_boundary_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts)
@@ -247,6 +264,7 @@ impl Simulation {
         // Delete temporary conact constraints
         self.contact_boundary_constraints.clear();
         self.contact_rigid_contact_constraints.clear();
+        self.contact_contact_constraints.clear();
         self.counts.clear();
     }
 
@@ -285,29 +303,27 @@ impl Simulation {
         // return body;
     }
 
-
-
-    //TotalFluidConstraint *Simulation::createFluid(QList<Particle *> *verts, double density)
     pub fn create_fluid(&mut self, particles: &ParticleVec, density: f32) {
-        // int offset = m_particles.size();
-        // int bod = 100 * frand();
-        // QList<int> indices;
-        // for (int i = 0; i < verts->size(); i++) {
-        //     Particle *p = verts->at(i);
-        //     p->ph = FLUID;
-        //     p->bod = bod;
+        let offset = self.particles.len();
+        let bod = self.global_standard_total_fluid_constraints.len(); //100 * rand::rng().random(); // assign a rnadom body number to this fluid? probably just want to avoid self collisions
 
-        //     if (p->imass == 0.0) {
-        //         cout << "A fluid cannot have a point of infinite mass." << endl;
-        //         exit(1);
-        //     }
+        let mut indices = vec![];
+        for i in 0..particles.len() { //for (int i = 0; i < verts->size(); i++) {
+            let mut p = particles[i];
+            p.set_phase(Phase::Fluid);
+            p.body = bod;
+            // p->ph = FLUID;
+            // p->bod = bod;
 
-        //     m_particles.append(p);
-        //     indices.append(offset + i);
-        // }
-        // TotalFluidConstraint *fs = new TotalFluidConstraint(density, &indices);
-        // m_globalConstraints[STANDARD].append(fs);
-        // return fs;
+            if p.imass == 0.0 {
+                assert!(false, "A fluid cannot have a point of infinite mass.");
+            }
+
+            self.particles.push(p);
+            indices.push(offset + i);
+        }
+
+        self.global_standard_total_fluid_constraints.push(TotalFluidConstraint::new(density, &indices));
     }
 
     pub fn init_friction(&mut self) {
@@ -596,6 +612,7 @@ impl Simulation {
         
         let delta = 0.7;
         let mut particles = ParticleVec::new();
+        let blue = Vec4::new(0.0, 0.0,1.0, 1.0);
 
         let mut x = -scale;
         while x < scale { //for(double x = -scale; x < scale; x += delta) {
@@ -605,7 +622,7 @@ impl Simulation {
                 let r1: f32 = rng.random();
                 let r2: f32 = rng.random();
 
-                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+                particles.push(*Particle::default().set_colour(blue).set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
                 y += delta;
             }
 
