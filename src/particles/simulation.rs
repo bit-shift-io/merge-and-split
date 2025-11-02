@@ -110,7 +110,7 @@ impl Simulation {
                     continue;
                 }
                 // Skip collisions betwee particles in the same rigid body
-                else if p.phase == Phase::Solid && p2.phase == Phase::Solid && p.body == p2.body && p.body != usize::MAX {
+                else if p.phase == Phase::Solid && p2.phase == Phase::Solid && p.body == p2.body && p.body != -1 {
                     continue;
                 } else {
                         
@@ -289,7 +289,7 @@ impl Simulation {
         let mut total_mass = 0.0;
         for i in 0..particles.len() {
             let p = &mut particles[i];
-            p.body = self.body_count; //self.bodies.len();
+            p.body = self.body_count as isize; //self.bodies.len();
             self.body_count += 1;
 
             p.phase = Phase::Solid;
@@ -324,7 +324,7 @@ impl Simulation {
         for i in 0..particles.len() { //for (int i = 0; i < verts->size(); i++) {
             let mut p = particles[i];
             p.set_phase(Phase::Fluid);
-            p.body = bod;
+            p.body = bod as isize;
             // p->ph = FLUID;
             // p->bod = bod;
 
@@ -349,7 +349,7 @@ impl Simulation {
         for i in 0..particles.len() { //for (int i = 0; i < verts->size(); i++) {
             let mut p = particles[i];
             p.set_phase(Phase::Gas);
-            p.body = bod;
+            p.body = bod as isize;
 
             if p.imass == 0.0 {
                 assert!(false, "A gas cannot have a point of infinite mass.");

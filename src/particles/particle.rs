@@ -47,7 +47,7 @@ pub struct Particle {
     pub phase: Phase,
     pub pos_guess: Vec2,
     pub force: Vec2,
-    pub body: usize, // body (if any) this particle belongs to, for disabling collisions
+    pub body: isize, // body (if any) this particle belongs to, for disabling collisions
 
     pub imass: f32, // inverse mass
     pub tmass: f32, // temporary height-scaled mass
@@ -204,11 +204,11 @@ impl Particle {
     }
 
     pub fn get_sdf_data(&self, bodies: &Vec<Body>, idx: usize) -> SdfData {
-        if self.phase != Phase::Solid || self.body == usize::MAX {
+        if self.phase != Phase::Solid || self.body < 0 {
             return SdfData::new(Vec2::new(0.0, 0.0), 0.0);
         }
 
-        let body = &bodies[self.body];
+        let body = &bodies[self.body as usize];
         let mut out = match body.sdf.get(&idx) {
             Some(value) => *value,
             None => SdfData::new(Vec2::new(0.0, 0.0), 0.0)
@@ -255,7 +255,7 @@ impl Default for Particle {
             phase: Phase::Solid,
             pos_guess: Vec2::new(0.0, 0.0),
             force: Vec2::new(0.0, 0.0),
-            body: usize::MAX,
+            body: -1,
 
             imass: 0.0,
             tmass: 0.0,

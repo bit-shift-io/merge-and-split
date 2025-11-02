@@ -292,7 +292,7 @@ impl Plugin for BasicParticles {
         // let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
         // self.entity_system.push(car);
 
-        SimulationDemos::init_gas(&mut self.simulation);
+        SimulationDemos::init_newtons_cradle(&mut self.simulation);
 
         //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);

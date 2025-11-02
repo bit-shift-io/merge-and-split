@@ -271,8 +271,8 @@ impl SimulationDemos {
         let top = 6.0;
         let dist = particle_rad;
 
-        let e1 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(sim.x_boundaries.x, top)).set_mass_2(0.0).set_phase(Phase::Solid);
-        //e1.body = -2; // -2?!
+        let mut e1 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(sim.x_boundaries.x, top)).set_mass_2(0.0).set_phase(Phase::Solid);
+        e1.body = -2; // -2?!
         sim.particles.push(e1);
 
         let mut i = sim.x_boundaries.x;
@@ -285,8 +285,8 @@ impl SimulationDemos {
             i += dist;
         }
 
-        let e2 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(sim.x_boundaries.y, top)).set_mass_2(0.0).set_phase(Phase::Solid);
-        //e2.body = -2;
+        let mut e2 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(sim.x_boundaries.y, top)).set_mass_2(0.0).set_phase(Phase::Solid);
+        e2.body = -2;
         sim.particles.push(e2);
 
         sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false));
@@ -515,4 +515,104 @@ impl SimulationDemos {
         }
     }
 
+
+    pub fn init_water_balloon(sim: &mut Simulation) {
+        let scale = 10.0;
+
+        sim.x_boundaries = Vec2::new(-scale,scale);
+        sim.y_boundaries = Vec2::new(-10.0, 1000000.0);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let samples = 60;
+        let da = 360.0 / samples as f32;
+
+        let blue = Vec4::new(0.0, 0.0,1.0, 1.0);
+        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+
+        for i in 0..samples { //for (int i = 0; i < samples; i++) {
+            let angle = f32::to_radians(i as f32 * da); //D2R(i * da);
+            let mut part = *Particle::default().set_colour(blue).set_radius(particle_rad).set_pos(Vec2::new(f32::sin(angle), f32::cos(angle)) * 3.0).set_mass_2(1.0);
+            part.body = -2; // ???
+            let idx = sim.particles.len();
+            sim.particles.push(part);
+
+            if i > 0 {
+                sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx - 1, &sim.particles));
+            }
+        }
+        sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(0, sim.particles.len() - 1, &sim.particles));
+        let idk = sim.particles.len();
+
+        for i in 0..samples { //(int i = 0; i < samples; i++) {
+            let angle = f32::to_radians(i as f32 * da);
+            let mut part = *Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(f32::sin(angle), f32::cos(angle) + 3.0) * 3.0).set_mass_2(1.0);
+            part.body = -3; // ?? I think this just stops collisions without having a "body" assigned
+            let idx = sim.particles.len();
+            sim.particles.push(part);
+
+            if i > 0 {
+                sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx - 1, &sim.particles));
+            }
+        }
+        sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idk, sim.particles.len() - 1, &sim.particles));
+
+        let delta = 1.5 * particle_rad;
+
+        let mut particles = ParticleVec::new();
+        let mut rng = rand::rng();
+
+        let mut x = -2.0;
+        while x <= 2.0 {
+            let mut y = -2.0;
+            while y <= 2.0 {
+                let r1: f32 = rng.random();
+                let r2: f32 = rng.random();
+
+                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+                y += delta;
+            }
+            x += delta;
+        }
+        sim.create_fluid(&particles, 1.75);
+
+        particles.clear();
+        let mut x = -2.0;
+        while x <= 2.0 {
+            let mut y = -2.0;
+            while y <= 2.0 {
+                let r1: f32 = rng.random();
+                let r2: f32 = rng.random();
+
+                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y + 9.0) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+                y += delta;
+            }
+            x += delta;
+        }
+        sim.create_fluid(&particles, 1.75);
+    }
+
+
+    pub fn init_newtons_cradle(sim: &mut Simulation) {
+        sim.x_boundaries = Vec2::new(-10.0,10.0);
+        sim.y_boundaries = Vec2::new(-5.0, 1000000.0);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let n = 2;
+
+        for i in -2..=n {
+            let idx = sim.particles.len();
+            sim.particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam, 0.0)).set_mass_2(0.0));
+            if i != -n {
+                sim.particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam, -3.0)).set_mass_2(1.0));
+            } else {
+                let part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam - 3.0, 0.0)).set_mass_2(1.0);
+                sim.particles.push(part);
+            }
+            sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx + 1, &sim.particles));
+        }
+    }
 }
