@@ -1,7 +1,7 @@
 use cgmath::InnerSpace;
 use rand::Rng;
 
-use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::DistanceConstraint, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::DistanceConstraint, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -22,6 +22,8 @@ pub struct Simulation {
     pub global_standard_total_fluid_constraints: Vec<TotalFluidConstraint>,
     pub global_standard_gas_constraints: Vec<GasConstraint>,
     
+    pub smoke_emitters: Vec<OpenSmokeEmitter>,
+
     pub counts: Vec<usize>,
     pub body_count: usize,
 }
@@ -46,6 +48,8 @@ impl Simulation {
             global_standard_distance_constraints: vec![],
             global_standard_total_fluid_constraints: vec![],
             global_standard_gas_constraints: vec![],
+
+            smoke_emitters: vec![],
 
             counts: vec![],
             body_count: 0,
@@ -276,6 +280,26 @@ impl Simulation {
         self.contact_rigid_contact_constraints.clear();
         self.contact_contact_constraints.clear();
         self.counts.clear();
+
+
+        for e in self.smoke_emitters.iter_mut() {
+            e.tick(&mut self.particles, time_delta, &mut self.global_standard_gas_constraints);
+            // (8) Find solid boundary contacts
+            for i in 0..e.particles.len() {
+                let p = &mut e.particles[i];
+
+                if p.pos.x < self.x_boundaries.x {
+                    p.pos.x = self.x_boundaries.x;
+                } else if p.pos.x > self.x_boundaries.y {
+                    p.pos.x = self.x_boundaries.y;
+                }
+                if p.pos.y < self.y_boundaries.x {
+                    p.pos.y = self.y_boundaries.x;
+                } else if p.pos.y > self.y_boundaries.y {
+                    p.pos.y = self.y_boundaries.y;
+                }
+            }
+        }
     }
 
     pub fn create_rigid_body(&mut self, particles: &mut ParticleVec, sdf_data: &Vec<SdfData>) {
@@ -339,8 +363,12 @@ impl Simulation {
         self.global_standard_total_fluid_constraints.push(TotalFluidConstraint::new(density, &indices));
     }
 
+    pub fn create_smoke_emitter(&mut self, posn: Vec2, particlesPerSec: f32, gas_index: usize /*GasConstraint *gs*/) {
+        self.smoke_emitters.push(OpenSmokeEmitter::new(posn, particlesPerSec, gas_index /*gs*/));
+    }
+
     // open = false by default
-    pub fn create_gas(&mut self, particles: &ParticleVec, density: f32, open: bool) {
+    pub fn create_gas(&mut self, particles: &ParticleVec, density: f32, open: bool) -> usize {
         let offset = self.particles.len();
         let bod = self.body_count; //100 * frand();
         self.body_count += 1;
@@ -358,8 +386,10 @@ impl Simulation {
             self.particles.push(p);
             indices.push(offset + i);
         }
+        let idx = self.global_standard_gas_constraints.len();
         self.global_standard_gas_constraints.push(GasConstraint::new(density, &indices, open));
         //GasConstraint *gs = new GasConstraint(density, &indices, open);
         //m_globalConstraints[STANDARD].append(gs);
+        return idx;
     }
 }

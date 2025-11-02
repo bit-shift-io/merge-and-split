@@ -615,4 +615,79 @@ impl SimulationDemos {
             sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx + 1, &sim.particles));
         }
     }
+
+
+
+    // I think open here means it is "open" such that more particles can be added.
+    pub fn init_smoke_open(sim: &mut Simulation) {
+        let scale = 2.0; 
+        let delta = 0.63;
+
+        sim.x_boundaries = Vec2::new(-3.0 * scale,3.0 * scale);
+        sim.y_boundaries = Vec2::new(-2.0 * scale,100.0 * scale);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let mut particles = ParticleVec::new();
+        let mut rng = rand::rng();
+
+        let start = -2.0 * scale;
+        let mut x = start;
+        while x < start + (4.0 * scale) { //for(double x = start; x < start + (4 * scale); x += delta) {
+            let mut y = -2.0 * scale;
+            while y <  2.0 * scale { //for(double y = -2 * scale; y < 2 * scale; y += delta) {
+                let r1: f32 = rng.random();
+                let r2: f32 = rng.random();
+
+                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+
+                y += delta;
+            }
+
+            x += delta;
+        }
+        //GasConstraint *gs = 
+        let gas_idx = sim.create_gas(&particles, 1.5, true);
+        particles.clear();
+
+        sim.create_smoke_emitter(Vec2::new(0.0,-2.0 * scale + 1.0), 15.0, gas_idx /*gs*/);
+    }
+
+
+    // I think closed here means it is "closed" such that no more particles can be added.
+    pub fn init_smoke_closed(sim: &mut Simulation) {
+        let scale = 2.0; 
+        let delta = 0.63;
+
+        sim.x_boundaries = Vec2::new(-3.0 * scale,3.0 * scale);
+        sim.y_boundaries = Vec2::new(-2.0 * scale,100.0 * scale);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let mut particles = ParticleVec::new();
+        let mut rng = rand::rng();
+
+        let start = -2.0 * scale;
+        let mut x = start;
+        while x < start + (4.0 * scale) { //for(double x = start; x < start + (4 * scale); x += delta) {
+            let mut y = -2.0 * scale;
+            while y <  2.0 * scale { //for(double y = -2 * scale; y < 2 * scale; y += delta) {
+                let r1: f32 = rng.random();
+                let r2: f32 = rng.random();
+
+                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+
+                y += delta;
+            }
+
+            x += delta;
+        }
+        //GasConstraint *gs = 
+        let gas_idx = sim.create_gas(&particles, 1.5, false);
+        particles.clear();
+
+        sim.create_smoke_emitter(Vec2::new(0.0,-2.0 * scale + 1.0), 15.0, usize::MAX /*gs*/);
+    }
 }

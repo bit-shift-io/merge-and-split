@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use cgmath::InnerSpace;
 use std::f32::consts::PI;
 
-use crate::{math::{vec2::Vec2, vec3::Vec3}, particles::{body::Body, particle::Phase, particle_vec::ParticleVec}};
+use crate::{math::{vec2::Vec2, vec3::Vec3}, particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec}};
 
 const h: f32 = 2.0;
 const h2: f32 = 4.0;
@@ -184,6 +184,18 @@ impl GasConstraint {
         }
 
         return out / (self.p0);
+    }
+
+    pub fn add_particle(&mut self, p: Particle, index: usize) {
+        // todo: do we need to clear and start from scratch here?
+        // delete[] neighbors;
+        // delete[] deltas;
+        // numParticles++;
+        // neighbors = new QList<int>[numParticles];
+        // deltas = new glm::dvec2[numParticles];
+        self.neighbors.push(Vec::<usize>::new());
+        self.deltas.push(Vec2::new(0.0, 0.0));
+        self.ps.push(index);
     }
 }
 
