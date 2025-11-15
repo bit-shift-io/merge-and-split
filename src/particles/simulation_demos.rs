@@ -764,46 +764,69 @@ impl SimulationDemos {
         particles2.clear();
     }
 
-    // void Simulation::initVolcano()
-    // {
-    //     double scale = 10., delta = .2;
+    
+    pub fn init_volcano(sim: &mut Simulation) {
+        let scale = 10.0;
+        let delta = 0.2;
 
-    //     for(double x = 1.; x <= scale; x+=delta) {
-    //         m_particles.append(new Particle(glm::dvec2(-x,scale-x), 0));
-    //         m_particles.append(new Particle(glm::dvec2(x,scale-x), 0));
-    //     }
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
 
-    //     m_gravity = glm::dvec2(0,-9.8);
-    //     m_xBoundaries = glm::dvec2(-2 * scale,2 * scale);
-    //     m_yBoundaries = glm::dvec2(0, 10 * scale);
-    //     QList<Particle *> particles;
+        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
 
-    //     delta = .8;
-    //     for(double y = 0.; y < scale-1.; y+=delta) {
-    //         for(double x = 0.; x < scale-y-1; x += delta) {
-    //             particles.append(new Particle(glm::dvec2(x,y) + .2 * glm::dvec2(frand() - .5, frand() - .5), 1.1));
-    //             particles.append(new Particle(glm::dvec2(-x,y) + .2 * glm::dvec2(frand() - .5, frand() - .5), 1.1));
-    //         }
-    //     }
-    //     TotalFluidConstraint *fs = createFluid(&particles, 1);
-    //     particles.clear();
+        let mut rng = rand::rng();
 
-    //     createFluidEmitter(glm::dvec2(0,0), scale*4, fs);
+        let mut x = 1.0;;
+        while x <= scale { // for(double x = 1.; x <= scale; x+=delta) {
+            sim.particles.push(*Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(-x,scale-x)).set_mass_2(0.0));
+            sim.particles.push(*Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(x,scale-x)).set_mass_2(0.0));
 
-    // //    double top = scale-.5, dist = PARTICLE_RAD;
+            x += delta;
+        }
 
-    // //    Particle *e1 = new Particle(glm::dvec2(-1-dist, top), 0, SOLID);
-    // //    e1->bod = -2;
-    // //    m_particles.append(e1);
 
-    // //    for (double i = -1; i <= 2; i += dist) {
-    // //        Particle *part = new Particle(glm::dvec2(i, top), 1, SOLID);
-    // //        part->bod = -2;
-    // //        m_particles.append(part);
-    // //        m_globalConstraints[STANDARD].append(
-    // //                    new DistanceConstraint(dist, m_particles.size() - 2, m_particles.size() - 1));
-    // //    }
-    // }
+        sim.x_boundaries = Vec2::new(-2.0 * scale,2.0 * scale);
+        sim.y_boundaries = Vec2::new(0.0 * scale,10.0 * scale);
+
+        let mut particles = ParticleVec::new(); //QList<Particle *> particles;
+
+        let delta = 0.8;
+        let mut y = 0.0;
+        while y < scale-1.0 { //for(double y = 0.; y < scale-1.; y+=delta) {
+            let mut x = 0.0;
+            while x < scale - y - 1.0 { //for(double x = 0.; x < scale-y-1; x += delta) {
+                let r1: f32 = rng.random();
+                let r2: f32 = rng.random();
+                let r3: f32 = rng.random();
+                let r4: f32 = rng.random();
+
+                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.1));
+                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(-x,y) + 0.2 * Vec2::new(r3 - 0.5, r4 - 0.5)).set_mass_2(1.1));
+
+                x += delta;
+            }
+
+            y += delta;
+        }
+        let fluid_idx = sim.create_fluid(&particles, 1.0); //TotalFluidConstraint *fs = createFluid(&particles, 1);
+        particles.clear();
+
+        sim.create_fluid_emitter(Vec2::new(0.0,0.0), scale*4.0, fluid_idx);
+
+    //    double top = scale-.5, dist = PARTICLE_RAD;
+
+    //    Particle *e1 = new Particle(glm::dvec2(-1-dist, top), 0, SOLID);
+    //    e1->bod = -2;
+    //    m_particles.append(e1);
+
+    //    for (double i = -1; i <= 2; i += dist) {
+    //        Particle *part = new Particle(glm::dvec2(i, top), 1, SOLID);
+    //        part->bod = -2;
+    //        m_particles.append(part);
+    //        m_globalConstraints[STANDARD].append(
+    //                    new DistanceConstraint(dist, m_particles.size() - 2, m_particles.size() - 1));
+    //    }
+    }
 
     // void Simulation::initWreckingBall()
     // {

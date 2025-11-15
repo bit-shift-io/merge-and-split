@@ -1,7 +1,7 @@
 use cgmath::InnerSpace;
 use rand::Rng;
 
-use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::DistanceConstraint, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::DistanceConstraint, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -23,6 +23,7 @@ pub struct Simulation {
     pub global_standard_gas_constraints: Vec<GasConstraint>,
     
     pub smoke_emitters: Vec<OpenSmokeEmitter>,
+    pub fluid_emitters: Vec<FluidEmitter>,
 
     pub counts: Vec<usize>,
     pub body_count: usize,
@@ -50,6 +51,7 @@ impl Simulation {
             global_standard_gas_constraints: vec![],
 
             smoke_emitters: vec![],
+            fluid_emitters: vec![],
 
             counts: vec![],
             body_count: 0,
@@ -300,6 +302,10 @@ impl Simulation {
                 }
             }
         }
+
+        for e in self.fluid_emitters.iter_mut() {
+            e.tick(&mut self.particles, time_delta, &mut self.global_standard_total_fluid_constraints);
+        }
     }
 
     pub fn create_rigid_body(&mut self, particles: &mut ParticleVec, sdf_data: &Vec<SdfData>) {
@@ -339,7 +345,7 @@ impl Simulation {
         // return body;
     }
 
-    pub fn create_fluid(&mut self, particles: &ParticleVec, density: f32) {
+    pub fn create_fluid(&mut self, particles: &ParticleVec, density: f32) -> usize {
         let offset = self.particles.len();
         let bod = self.body_count; //self.global_standard_total_fluid_constraints.len(); //100 * rand::rng().random(); // assign a rnadom body number to this fluid? probably just want to avoid self collisions
         self.body_count += 1;
@@ -360,11 +366,17 @@ impl Simulation {
             indices.push(offset + i);
         }
 
+        let idx = self.global_standard_total_fluid_constraints.len();
         self.global_standard_total_fluid_constraints.push(TotalFluidConstraint::new(density, &indices));
+        return idx;
     }
 
     pub fn create_smoke_emitter(&mut self, posn: Vec2, particlesPerSec: f32, gas_index: usize /*GasConstraint *gs*/) {
         self.smoke_emitters.push(OpenSmokeEmitter::new(posn, particlesPerSec, gas_index /*gs*/));
+    }
+
+    pub fn create_fluid_emitter(&mut self, posn: Vec2, particlesPerSec: f32, fluid_index: usize /*TotalFluidConstraint *fs*/) {
+        self.fluid_emitters.push(FluidEmitter::new(posn, particlesPerSec, fluid_index));
     }
 
     // open = false by default

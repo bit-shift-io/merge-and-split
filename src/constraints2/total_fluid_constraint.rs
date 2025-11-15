@@ -27,19 +27,33 @@ pub struct TotalFluidConstraint {
     pub lambdas: HashMap<usize, f32>,
 }
 
+fn init_neighbours_and_deltas_for_size(size: usize) -> (Vec<Vec<usize>>, Vec<Vec2>) {
+    let mut neighbors = Vec::<Vec<usize>>::new(); //[particles->size()];
+    let mut deltas = Vec::<Vec2>::new(); //new glm::dvec2[particles->size()];
+
+    for _ in 0..size { //for (int i = 0; i < particles->size(); i++) {
+        neighbors.push(Vec::<usize>::new());
+        deltas.push(Vec2::new(0.0, 0.0));
+    }
+
+    (neighbors, deltas)
+}
+
 impl TotalFluidConstraint {
     pub fn new(density: f32, particles: &Vec<usize>) -> Self {
-        let mut neighbors = Vec::<Vec<usize>>::new(); //[particles->size()];
-        let mut deltas = Vec::<Vec2>::new(); //new glm::dvec2[particles->size()];
+        // let mut neighbors = Vec::<Vec<usize>>::new(); //[particles->size()];
+        // let mut deltas = Vec::<Vec2>::new(); //new glm::dvec2[particles->size()];
 
         let num_particles = particles.len();
 
         let mut ps= Vec::<usize>::new();
         for i in 0..num_particles { //for (int i = 0; i < particles->size(); i++) {
             ps.push(particles[i]);
-            neighbors.push(Vec::<usize>::new());
-            deltas.push(Vec2::new(0.0, 0.0));
+            // neighbors.push(Vec::<usize>::new());
+            // deltas.push(Vec2::new(0.0, 0.0));
         }
+
+        let (neighbors, deltas) = init_neighbours_and_deltas_for_size(num_particles);
 
         Self {
             p0: density,
@@ -165,6 +179,35 @@ impl TotalFluidConstraint {
         }
 
         return out / (self.p0);
+    }
+
+
+    pub fn add_particle(&mut self, index: usize) {
+        // self.neighbors.clear(); //delete[] neighbors;
+        // self.deltas.clear(); //delete[] deltas;
+        // //numParticles++;
+        // neighbors = new QList<int>[numParticles];
+        // deltas = new glm::dvec2[numParticles];
+        self.ps.push(index);
+
+        let (neighbors, deltas) = init_neighbours_and_deltas_for_size(self.ps.len());
+        self.neighbors = neighbors;
+        self.deltas = deltas;
+    }
+
+    pub fn remove_particle(&mut self, index: usize) {
+    //     self.neighbors.clear(); //delete[] neighbors;
+    //     self.deltas.clear(); //delete[] deltas;
+    // //    if(ps.contains(index)) {
+    //         //numParticles--;
+    //         neighbors = new QList<int>[numParticles];
+    //         deltas = new glm::dvec2[numParticles];
+            self.ps.remove(index);
+
+            let (neighbors, deltas) = init_neighbours_and_deltas_for_size(self.ps.len());
+            self.neighbors = neighbors;
+            self.deltas = deltas;
+    //    }
     }
 }
 

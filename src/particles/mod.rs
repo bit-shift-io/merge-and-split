@@ -11,4 +11,5 @@ pub mod simulation;
 pub mod body;
 pub mod sdf_data;
 pub mod open_smoke_emitter;
+pub mod fluid_emitter;
 pub mod simulation_demos;
