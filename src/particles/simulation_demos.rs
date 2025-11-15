@@ -690,4 +690,187 @@ impl SimulationDemos {
 
         sim.create_smoke_emitter(Vec2::new(0.0,-2.0 * scale + 1.0), 15.0, usize::MAX /*gs*/);
     }
+
+
+    pub fn init_rope_gas(sim: &mut Simulation) {
+        let scale = 2.0;
+        let delta = 0.63;
+
+        sim.x_boundaries = Vec2::new(-4.0 * scale,4.0 * scale);
+        sim.y_boundaries = Vec2::new(-2.0 * scale,100.0 * scale);
+
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
+
+        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+
+        //let mut particles = ParticleVec::new();
+        let mut rng = rand::rng();
+
+        let top = 12.0;
+        let dist = particle_rad;
+
+        let mut e1 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(0.0, top)).set_mass_2(0.0).set_phase(Phase::Solid);
+        e1.body = -2;
+        sim.particles.push(e1);
+
+        let mut i = 0.0 + dist;
+        while i < 4.0 * scale - dist { //for (double i = 0 + dist; i < 4*scale - dist; i += dist) {
+            let mut part = *Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(i, top)).set_mass_2( 2.0).set_phase(Phase::Solid);
+            part.body = -2;
+            sim.particles.push(part);
+
+            sim.global_standard_distance_constraints.push(
+                DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false)
+            );
+            // m_globalConstraints[STANDARD].append(
+            //             new DistanceConstraint(dist, m_particles.size() - 2, m_particles.size() - 1));
+
+            i += dist;
+        }
+
+    //    Particle *e2 = new Particle(glm::dvec2(2*scale, top), 0, SOLID);
+    //    e2->bod = -2;
+    //    m_particles.append(e2);
+
+        sim.global_standard_distance_constraints.push(
+            DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false)
+        );
+        // m_globalConstraints[STANDARD].append(
+        //             new DistanceConstraint(dist, m_particles.size() - 2, m_particles.size() - 1));
+
+        let mut particles2 = ParticleVec::new(); //QList<Particle *> particles;
+
+        let start = -0.5 * scale;
+        let mut x = start;
+        while x < start + (1.0 * scale) { //for(double x = start; x < start + (1 * scale); x += delta) {
+            let mut y = -0.5 * scale;
+            while y < 0.5 * scale { //for(double y = -.5 * scale; y < .5 * scale; y += delta) {
+                let r1: f32 = rng.random();
+                let r2: f32 = rng.random();
+
+                particles2.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2( 1.0));
+                y += delta;
+            }
+
+            x += delta;
+        }
+
+        let gas_idx = sim.create_gas(&particles2, 1.5, true);
+        //GasConstraint *gs = createGas(&particles2, 1.5, true);
+
+        sim.create_smoke_emitter(Vec2::new(0.0, 0.0), 15.0, gas_idx /*gs*/);
+        // createSmokeEmitter(glm::dvec2(0,0), 15, gs);
+        particles2.clear();
+    }
+
+    // void Simulation::initVolcano()
+    // {
+    //     double scale = 10., delta = .2;
+
+    //     for(double x = 1.; x <= scale; x+=delta) {
+    //         m_particles.append(new Particle(glm::dvec2(-x,scale-x), 0));
+    //         m_particles.append(new Particle(glm::dvec2(x,scale-x), 0));
+    //     }
+
+    //     m_gravity = glm::dvec2(0,-9.8);
+    //     m_xBoundaries = glm::dvec2(-2 * scale,2 * scale);
+    //     m_yBoundaries = glm::dvec2(0, 10 * scale);
+    //     QList<Particle *> particles;
+
+    //     delta = .8;
+    //     for(double y = 0.; y < scale-1.; y+=delta) {
+    //         for(double x = 0.; x < scale-y-1; x += delta) {
+    //             particles.append(new Particle(glm::dvec2(x,y) + .2 * glm::dvec2(frand() - .5, frand() - .5), 1.1));
+    //             particles.append(new Particle(glm::dvec2(-x,y) + .2 * glm::dvec2(frand() - .5, frand() - .5), 1.1));
+    //         }
+    //     }
+    //     TotalFluidConstraint *fs = createFluid(&particles, 1);
+    //     particles.clear();
+
+    //     createFluidEmitter(glm::dvec2(0,0), scale*4, fs);
+
+    // //    double top = scale-.5, dist = PARTICLE_RAD;
+
+    // //    Particle *e1 = new Particle(glm::dvec2(-1-dist, top), 0, SOLID);
+    // //    e1->bod = -2;
+    // //    m_particles.append(e1);
+
+    // //    for (double i = -1; i <= 2; i += dist) {
+    // //        Particle *part = new Particle(glm::dvec2(i, top), 1, SOLID);
+    // //        part->bod = -2;
+    // //        m_particles.append(part);
+    // //        m_globalConstraints[STANDARD].append(
+    // //                    new DistanceConstraint(dist, m_particles.size() - 2, m_particles.size() - 1));
+    // //    }
+    // }
+
+    // void Simulation::initWreckingBall()
+    // {
+    //     m_xBoundaries = glm::dvec2(-15,100);
+    //     m_yBoundaries = glm::dvec2(0,1000000);
+
+    //     glm::dvec2 dim = glm::dvec2(6,2);
+    //     int height = 8, width = 2;
+    //     double root2 = sqrt(2);
+    //     QList<Particle *> vertices;
+    //     QList<SDFData> data;
+    //     data.append(SDFData(glm::normalize(glm::dvec2(-1,-1)), PARTICLE_RAD * root2));
+    //     data.append(SDFData(glm::normalize(glm::dvec2(-1,1)), PARTICLE_RAD * root2));
+
+    //     for (int i = 0; i < dim.x - 2; i++) {
+    //         data.append(SDFData(glm::normalize(glm::dvec2(0,-1)), PARTICLE_RAD));
+    //         data.append(SDFData(glm::normalize(glm::dvec2(0,1)), PARTICLE_RAD));
+    //     }
+
+    //     data.append(SDFData(glm::normalize(glm::dvec2(1,-1)), PARTICLE_RAD * root2));
+    //     data.append(SDFData(glm::normalize(glm::dvec2(1,1)), PARTICLE_RAD * root2));
+
+    //     for (int j = -width; j <= width; j++) {
+    //         for (int i = height - 1; i >= 0; i--) {
+    //             for (int x = 0; x < dim.x; x++) {
+    //                 double num = (i % 2 == 0 ? 3 : -1);
+    //                 double xVal = j * (EPSILON + dim.x / 2.) + PARTICLE_DIAM * (x % (int)dim.x) - num * PARTICLE_RAD;
+    //                 for (int y = 0; y < dim.y; y++) {
+    //                     double yVal = (i * dim.y + (y % (int)dim.y) + EPSILON) * PARTICLE_DIAM + PARTICLE_RAD;
+    //                     Particle *part = new Particle(glm::dvec2(xVal, yVal), 30.);
+    //                     part->sFriction = 1;
+    //                     part->kFriction = 1;
+    //                     vertices.append(part);
+    //                 }
+    //             }
+    //             Body *body = createRigidBody(&vertices, &data);
+    //             vertices.clear();
+    //         }
+    //     }
+
+    //     double scale = 6., delta = .4;
+    //     QList<Particle *> particles;
+
+    //     double num = 1.;
+    //     double start = m_xBoundaries.x + 1;
+    //     for(double x = start; x < start + (scale / num); x += delta) {
+    //         for(double y = 0; y < 1.2 * scale; y += delta) {
+    //             particles.append(new Particle(glm::dvec2(x,y) + .2 * glm::dvec2(frand() - .5, frand() - .5), 1));
+    //         }
+    //     }
+    //     createFluid(&particles, 2.5);
+    //     particles.clear();
+
+    //     int idx = m_particles.size();
+    //     m_particles.append(new Particle(glm::dvec2(10, 50), 0));
+    //     data.clear();
+
+    //     glm::dvec2 base = glm::dvec2(57, 50);
+    //     particles.append(new Particle(base, 1000));
+    //     for (double a = 0; a <= 360; a+=30) {
+    //         glm::dvec2 vec = glm::dvec2(cos(D2R(a)), sin(D2R(a)));
+    //         particles.append(new Particle(vec * PARTICLE_RAD + base, 1000));
+    //         data.append(SDFData(vec, PARTICLE_RAD * 1.5));
+    //     }
+    //     data.append(SDFData());
+    //     createRigidBody(&particles, &data);
+
+    //     m_globalConstraints[STANDARD].append(new DistanceConstraint(idx, idx + 1, &m_particles));
+    // }
 }

@@ -11,6 +11,8 @@ pub struct DistanceConstraint {
 }
 
 impl DistanceConstraint {
+
+    // stable default = false
     pub fn new(d: f32, i1: usize, i2: usize, stable: bool) -> Self {
         Self {
             d,
