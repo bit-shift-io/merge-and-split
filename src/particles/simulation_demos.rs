@@ -828,72 +828,123 @@ impl SimulationDemos {
     //    }
     }
 
-    // void Simulation::initWreckingBall()
-    // {
-    //     m_xBoundaries = glm::dvec2(-15,100);
-    //     m_yBoundaries = glm::dvec2(0,1000000);
+    pub fn init_wrecking_ball(sim: &mut Simulation) {
+        let particle_diam = 0.5;
+        let particle_rad = particle_diam / 2.0;
 
-    //     glm::dvec2 dim = glm::dvec2(6,2);
-    //     int height = 8, width = 2;
-    //     double root2 = sqrt(2);
-    //     QList<Particle *> vertices;
-    //     QList<SDFData> data;
-    //     data.append(SDFData(glm::normalize(glm::dvec2(-1,-1)), PARTICLE_RAD * root2));
-    //     data.append(SDFData(glm::normalize(glm::dvec2(-1,1)), PARTICLE_RAD * root2));
+        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
 
-    //     for (int i = 0; i < dim.x - 2; i++) {
-    //         data.append(SDFData(glm::normalize(glm::dvec2(0,-1)), PARTICLE_RAD));
-    //         data.append(SDFData(glm::normalize(glm::dvec2(0,1)), PARTICLE_RAD));
-    //     }
+        let mut rng = rand::rng();
 
-    //     data.append(SDFData(glm::normalize(glm::dvec2(1,-1)), PARTICLE_RAD * root2));
-    //     data.append(SDFData(glm::normalize(glm::dvec2(1,1)), PARTICLE_RAD * root2));
+        sim.x_boundaries = Vec2::new(-15.0,100.0);
+        sim.y_boundaries = Vec2::new(0.0,1000000.0);
 
-    //     for (int j = -width; j <= width; j++) {
-    //         for (int i = height - 1; i >= 0; i--) {
-    //             for (int x = 0; x < dim.x; x++) {
-    //                 double num = (i % 2 == 0 ? 3 : -1);
-    //                 double xVal = j * (EPSILON + dim.x / 2.) + PARTICLE_DIAM * (x % (int)dim.x) - num * PARTICLE_RAD;
-    //                 for (int y = 0; y < dim.y; y++) {
-    //                     double yVal = (i * dim.y + (y % (int)dim.y) + EPSILON) * PARTICLE_DIAM + PARTICLE_RAD;
-    //                     Particle *part = new Particle(glm::dvec2(xVal, yVal), 30.);
-    //                     part->sFriction = 1;
-    //                     part->kFriction = 1;
-    //                     vertices.append(part);
-    //                 }
-    //             }
-    //             Body *body = createRigidBody(&vertices, &data);
-    //             vertices.clear();
-    //         }
-    //     }
+        let dim = Vec2::new(6.0,2.0);
+        let height = 8;
+        let width = 2;
+        
+        let root2 = f32::sqrt(2.0);
 
-    //     double scale = 6., delta = .4;
-    //     QList<Particle *> particles;
+       let mut particles = ParticleVec::new(); //QList<Particle *> vertices;
+        //QList<SDFData> data;
 
-    //     double num = 1.;
-    //     double start = m_xBoundaries.x + 1;
-    //     for(double x = start; x < start + (scale / num); x += delta) {
-    //         for(double y = 0; y < 1.2 * scale; y += delta) {
-    //             particles.append(new Particle(glm::dvec2(x,y) + .2 * glm::dvec2(frand() - .5, frand() - .5), 1));
-    //         }
-    //     }
-    //     createFluid(&particles, 2.5);
-    //     particles.clear();
+        let mut sdf_data = Vec::<SdfData>::new();
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
+        // data.append(SDFData(glm::normalize(glm::dvec2(-1,-1)), PARTICLE_RAD * root2));
+        // data.append(SDFData(glm::normalize(glm::dvec2(-1,1)), PARTICLE_RAD * root2));
 
-    //     int idx = m_particles.size();
-    //     m_particles.append(new Particle(glm::dvec2(10, 50), 0));
-    //     data.clear();
+        let mut i = 0;;
+        while i < (dim.x as i32 - 2) { //for (int i = 0; i < dim.x - 2; i++) {
+            sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
+            sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
+            // data.append(SDFData(glm::normalize(glm::dvec2(0,-1)), PARTICLE_RAD));
+            // data.append(SDFData(glm::normalize(glm::dvec2(0,1)), PARTICLE_RAD));
 
-    //     glm::dvec2 base = glm::dvec2(57, 50);
-    //     particles.append(new Particle(base, 1000));
-    //     for (double a = 0; a <= 360; a+=30) {
-    //         glm::dvec2 vec = glm::dvec2(cos(D2R(a)), sin(D2R(a)));
-    //         particles.append(new Particle(vec * PARTICLE_RAD + base, 1000));
-    //         data.append(SDFData(vec, PARTICLE_RAD * 1.5));
-    //     }
-    //     data.append(SDFData());
-    //     createRigidBody(&particles, &data);
+            i += 1;
+        }
 
-    //     m_globalConstraints[STANDARD].append(new DistanceConstraint(idx, idx + 1, &m_particles));
-    // }
+        sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
+        sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
+        // data.append(SDFData(glm::normalize(glm::dvec2(1,-1)), PARTICLE_RAD * root2));
+        // data.append(SDFData(glm::normalize(glm::dvec2(1,1)), PARTICLE_RAD * root2));
+
+        let mut j = -width;
+        while j <= width { //for (int j = -width; j <= width; j++) {
+
+            let mut i = height - 1;
+            while i >= 0 { //for (int i = height - 1; i >= 0; i--) {
+
+                let mut x = 0;
+                while x < dim.x as i32 { //for (int x = 0; x < dim.x; x++) {
+                    let num = if i % 2 == 0 { 3 } else { -1 }; //(i % 2 == 0 ? 3 : -1);
+                    let xVal = j as f32 * (f32::EPSILON + dim.x / 2.0) + particle_diam * (x % dim.x as i32) as f32 - num as f32 * particle_rad;
+
+                    let mut y = 0;
+                    while y < dim.y as i32 { //for (int y = 0; y < dim.y; y++) {
+                        let yVal = (i as f32 * dim.y + (y % dim.y as i32) as f32 + f32::EPSILON) * particle_diam + particle_rad;
+                        let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(xVal, yVal)).set_mass_2(30.0);
+                        part.s_friction = 1.0;
+                        part.k_friction = 1.0;
+                        particles.push(part);
+
+                        y += 1;
+                    }
+
+                    x += 1;
+                }
+                sim.create_rigid_body(&mut particles, &sdf_data); //createRigidBody(&vertices, &data);
+                particles.clear();
+
+                i -= 1;
+            }
+
+            j += 1;
+        }
+
+        let scale = 6.0;
+        let delta = 0.4;
+        particles.clear(); //QList<Particle *> particles;
+
+        let num = 1.;
+        let start = sim.x_boundaries.x + 1.0;
+        let mut x = start;
+        while x < start + (scale / num) { //for(double x = start; x < start + (scale / num); x += delta) {
+            let mut y = 0.0;
+             while y < 1.2 * scale { //for(double y = 0; y < 1.2 * scale; y += delta) {
+                let r1: f32 = rng.random();
+                let r2: f32 = rng.random();
+
+                particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x,y) + 0.2 * Vec2::new(r1 - 0.5, r2 - 0.5)).set_mass_2(1.0));
+
+                y += delta;
+            }
+
+            x += delta;
+        }
+        sim.create_fluid(&particles, 2.5);
+        particles.clear();
+
+        let idx = sim.particles.len();
+        sim.particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(10.0, 50.0)).set_mass_2(0.0));
+        sdf_data.clear();
+
+        let base = Vec2::new(57.0, 50.0);
+        particles.push(*Particle::default().set_radius(particle_rad).set_pos(base).set_mass_2(1000.0));
+        let mut a: f32 = 0.0;
+        while a <= 360.0 { // for (double a = 0; a <= 360; a+=30) {
+            let vec = Vec2::new(f32::cos(a.to_radians() /*D2R(a)*/), f32::sin(a.to_radians() /*D2R(a)*/));
+            particles.push(*Particle::default().set_radius(particle_rad).set_pos(vec * particle_rad + base).set_mass_2(1000.0));
+            sdf_data.push(SdfData::new(vec, particle_rad * 1.5));
+        
+            a+=30.0;
+        }
+        sdf_data.push(SdfData::new(Vec2::new(0.0, 0.0), 0.0));
+        sim.create_rigid_body(&mut particles, &sdf_data);
+
+        //m_globalConstraints[STANDARD].append(new DistanceConstraint(idx, idx + 1, &m_particles));
+        sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx + 1, &sim.particles));
+            
+
+    }
 }

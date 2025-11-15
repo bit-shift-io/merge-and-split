@@ -1,3 +1,5 @@
+use std::isize;
+
 use cgmath::InnerSpace;
 use rand::Rng;
 
@@ -319,7 +321,7 @@ impl Simulation {
         let mut total_mass = 0.0;
         for i in 0..particles.len() {
             let p = &mut particles[i];
-            p.body = self.body_count as isize; //self.bodies.len();
+            p.body = self.bodies.len() as isize; //self.body_count as isize; //self.bodies.len();
             self.body_count += 1;
 
             p.phase = Phase::Solid;
@@ -347,7 +349,11 @@ impl Simulation {
 
     pub fn create_fluid(&mut self, particles: &ParticleVec, density: f32) -> usize {
         let offset = self.particles.len();
-        let bod = self.body_count; //self.global_standard_total_fluid_constraints.len(); //100 * rand::rng().random(); // assign a rnadom body number to this fluid? probably just want to avoid self collisions
+
+        // todo: BUGGY!? probably want to just assign body id's 
+        //let mut rng = rand::rng();
+        //let r1: f32 = rng.random();
+        let bod = isize::MAX - self.body_count as isize; //(r1 * 100.0) as isize; //self.body_count; //self.global_standard_total_fluid_constraints.len(); //100 * rand::rng().random(); // assign a rnadom body number to this fluid? probably just want to avoid self collisions
         self.body_count += 1;
 
         let mut indices = vec![];
