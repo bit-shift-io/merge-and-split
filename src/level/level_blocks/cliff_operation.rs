@@ -30,7 +30,7 @@ impl LevelBuilderOperation for CliffOperation {
         sb.set_particle_template(level_builder_context.particle_template)
             .apply_operation(LineSegment::new(level_builder_context.cursor, cursor_end)) 
             .apply_operation(LineSegment::new(cursor_end, cursor_end))
-            .create_in_particle_vec(level_builder_context.particle_vec);
+            .create_in_simulation(level_builder_context.sim); //.create_in_particle_vec(level_builder_context.particle_vec);
 
         level_builder_context.cursor = cursor_end;
     }

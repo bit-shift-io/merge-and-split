@@ -59,6 +59,9 @@ pub struct Particle {
 impl Particle {
     pub fn set_static(&mut self, is_static: bool) -> &mut Self {
         self.is_static = is_static;
+        if is_static {
+            self.set_mass(0.0);
+        }
         self
     }
 

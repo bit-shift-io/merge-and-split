@@ -19,7 +19,7 @@ impl LevelBuilderOperation for SaggyBridgeOperation {
         let width = rng.random_range(2.0..=5.0);
         let height = 0.0;
 
-        let rect_height = level_builder_context.particle_template.radius * 4.0;
+        let rect_height = level_builder_context.particle_template.radius * 8.0; //4.0; 4 = 2 particle thickness
 
         let cursor_start = level_builder_context.cursor;
         let cursor_end = cursor_start + Vec2::new(width * level_builder_context.x_direction, height);

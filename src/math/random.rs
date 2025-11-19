@@ -22,4 +22,9 @@ impl Random {
         let rng: Pcg64 = Seeder::from(beginning_of_day).into_rng();
         rng
     }
+
+    pub fn seed_from_now() -> Pcg64 {
+        let rng: Pcg64 = Seeder::from(Utc::now()).into_rng();
+        rng
+    }
 }
