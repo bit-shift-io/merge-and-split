@@ -39,15 +39,15 @@ impl LevelBuilderOperation for FinishOperation {
         let particle_vec_start_index = level_builder_context.particle_vec.len();
         
         let mut sb = ShapeBuilder::new();
-        sb.set_particle_template(level_builder_context.particle_template)
+        sb.set_particle_template(*level_builder_context.particle_template.set_mass(0.0))
             .apply_operation(LineSegment::new(level_builder_context.cursor, cursor_end)) 
             .apply_operation(LineSegment::new(cursor_end, cursor_end + Vec2::new(0.0, 1.5)))
-            .create_in_particle_vec(level_builder_context.particle_vec);
+            .create_in_simulation(level_builder_context.sim); //.create_in_particle_vec(level_builder_context.particle_vec);
         
         // Now we have pushed in more particles that have proper particle indicies, we take a slice of the new particles
         // and hand them off to create an array of fixed springs constraints for this slice of particles
-        let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&level_builder_context.particle_vec.0[particle_vec_start_index..]);
-        level_builder_context.entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
+        // let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&level_builder_context.particle_vec.0[particle_vec_start_index..]);
+        // level_builder_context.entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
 
         level_builder_context.cursor = cursor_end;
     }

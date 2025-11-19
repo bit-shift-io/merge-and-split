@@ -1,5 +1,14 @@
 # Merge & Split
 
+# Future work
+
+Unified Particle Physics for Real-Time Applications: https://mmacklin.com/uppfrta_preprint.pdf
+Impl of above paper: https://github.com/ebirenbaum/ParticleSolver
+
+The above implementation which I have ported to rust is PBD.
+In future I want to impleent XPBD. The above implmentation has gradient functions I can use for this.
+Then start working in porting the particle system to the GPU.
+
 
 ## References
 

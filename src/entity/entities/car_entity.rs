@@ -1,7 +1,7 @@
 use cgmath::InnerSpace;
 use winit::keyboard::KeyCode;
 
-use crate::{constraints::stick::{Stick, StickVec}, entity::entity::{Entity, UpdateContext}, math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}}};
+use crate::{constraints::stick::{Stick, StickVec}, constraints2::distance_constraint::DistanceConstraint, entity::entity::{Entity, UpdateContext}, math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}};
 
 
 pub struct CarWheel {
@@ -11,7 +11,7 @@ pub struct CarWheel {
 }
 
 impl CarWheel {
-    pub fn new(origin: Vec2, particle_vec: &mut ParticleVec) -> Self {
+    pub fn new(origin: Vec2, particle_vec: &mut ParticleVec, sim: &mut Simulation) -> Self {
         let particle_mass = 1.0; //g_to_kg(10.0);
         let green = Vec4::new(0.0, 1.0, 0.0, 1.0);
         let mut stick_vec = StickVec::new();
@@ -24,7 +24,7 @@ impl CarWheel {
             builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(green).clone());
 
             builder.add_particle(builder.create_particle().set_pos(origin).clone())
-                .create_in_particle_vec(particle_vec);
+                .create_in_simulation(sim);//.create_in_particle_vec(particle_vec);
 
             builder.particle_handles.first().unwrap().clone()
         };
@@ -34,16 +34,17 @@ impl CarWheel {
             let mask = 0x1;
             let divisions = 20;
             let circle_radius = cm_to_m(35.0); // around a typical car tyre size - 17-18" (once you account for particle radius)
-            let particle_radius = cm_to_m(10.0);
+            let particle_radius = cm_to_m(8.0);
             let mut builder = ShapeBuilder::new();
             builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(green).clone());
 
             builder.apply_operation(Circle::new(origin, circle_radius));
 
 
-            builder.create_in_particle_vec(particle_vec); // cause particle_handles to be populated in the shape builder
+            builder.create_in_simulation(sim); //.create_in_particle_vec(particle_vec); // cause particle_handles to be populated in the shape builder
 
-            AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 1, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect adjacent points
+            AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 1, true)
+                .apply_to_particle_handles(sim, &builder.particle_handles); // connect adjacent points
             //AdjacentSticks::new(Stick::default().set_stiffness_factor(0.5).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
             
 
@@ -95,13 +96,15 @@ impl CarWheel {
             //let mut constraint_container = particle_vec.constraint_container.as_ref().write().unwrap();
 
             for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
-                let length = (particle_vec[hub_particle_handle].pos - particle_vec[*surface_particle_handle].pos).magnitude(); 
+                let dist = (sim.particles[hub_particle_handle].pos - sim.particles[*surface_particle_handle].pos).magnitude(); 
             
-                stick_vec.push(*Stick::default()
-                    .set_stiffness_factor(0.5)
-                    .set_length(length)
-                    .set_particle_handles([hub_particle_handle, surface_particle_handle.clone()])
-                );
+                sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
+
+                // stick_vec.push(*Stick::default()
+                //     .set_stiffness_factor(0.5)
+                //     .set_length(length)
+                //     .set_particle_handles([hub_particle_handle, surface_particle_handle.clone()])
+                // );
             }
         }
 
@@ -128,11 +131,11 @@ impl CarWheel {
     }
 
     fn update(&mut self, context: &mut UpdateContext) {
-        self.stick_vec.execute(context.particle_vec, context.time_delta);
+        //self.stick_vec.execute(&mut context.sim.particles, context.time_delta);
     }
 }
 
-const NUM_WHEELS: usize = 1;
+const NUM_WHEELS: usize = 2;
 
 pub struct CarEntity {
     pub wheels: [CarWheel; NUM_WHEELS],
@@ -141,26 +144,28 @@ pub struct CarEntity {
 }
 
 impl CarEntity {
-    pub fn new(particle_vec: &mut ParticleVec, origin: Vec2) -> Self {
+    pub fn new(particle_vec: &mut ParticleVec, sim: &mut Simulation, origin: Vec2) -> Self {
         let wheel_spacing = 1.0 * 0.5; // metres
 
-        let wheel_1 = CarWheel::new(origin + Vec2::new(wheel_spacing, 0.0), particle_vec);
-        //let wheel_2 = CarWheel::new(origin - Vec2::new(wheel_spacing, 0.0), particle_vec);
+        let wheel_1 = CarWheel::new(origin + Vec2::new(wheel_spacing, 0.0), particle_vec, sim);
+        let wheel_2 = CarWheel::new(origin - Vec2::new(wheel_spacing, 0.0), particle_vec, sim);
 
-        // // axle stick to connect the two wheel hubs
-        // {
-        //     let length = (particle_vec.get_particle(wheel_1.hub_particle_handle).pos - particle_vec.get_particle(wheel_2.hub_particle_handle).pos).length(); 
-        //     //particle_vec.create_stick([&wheel_1.hub_particle_handle, &wheel_2.hub_particle_handle], length, 0.0);
+        // axle stick to connect the two wheel hubs
+        {
+            let dist = (sim.particles[wheel_1.hub_particle_handle].pos - sim.particles[wheel_2.hub_particle_handle].pos).magnitude(); 
+            //particle_vec.create_stick([&wheel_1.hub_particle_handle, &wheel_2.hub_particle_handle], length, 0.0);
 
-        //     let mut constraint_container = particle_vec.constraint_container.as_ref().write().unwrap();
-        //     constraint_container.add(StickConstraint::default()
-        //         .set_length(length)
-        //         .set_particle_handles([wheel_1.hub_particle_handle, wheel_2.hub_particle_handle]).box_clone()
-        //     );
-        // }
+            // let mut constraint_container = particle_vec.constraint_container.as_ref().write().unwrap();
+            // constraint_container.add(StickConstraint::default()
+            //     .set_length(length)
+            //     .set_particle_handles([wheel_1.hub_particle_handle, wheel_2.hub_particle_handle]).box_clone()
+            // );
+
+            sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false));
+        }
 
         Self {
-            wheels: [wheel_1],//, wheel_2],
+            wheels: [wheel_1, wheel_2],
             is_left_pressed: false,
             is_right_pressed: false,
         }
@@ -203,14 +208,14 @@ impl Entity for CarEntity {
 
         // Apply input to wheels
         if self.is_left_pressed {
-            self.rotate_wheels(1.0, context.particle_vec); // ccw
+            self.rotate_wheels(1.0, &mut context.sim.particles); // ccw
         }
         if self.is_right_pressed {
-            self.rotate_wheels(-1.0, context.particle_vec); // clockwise
+            self.rotate_wheels(-1.0, &mut context.sim.particles); // clockwise
         }
 
         // Update the camera to follow the car
-        let look_at_pos = self.get_camera_look_at_position(context.particle_vec);
+        let look_at_pos = self.get_camera_look_at_position(&mut context.sim.particles);
         context.camera.target = cgmath::Point3::new(look_at_pos.x, look_at_pos.y, 0.0);
     }
 

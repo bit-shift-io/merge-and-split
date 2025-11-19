@@ -4,7 +4,7 @@
 
 use cgmath::InnerSpace;
 
-use crate::{math::{aabb2d::Aabb2d, vec2::Vec2}, particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}}};
+use crate::{math::{aabb2d::Aabb2d, vec2::Vec2}, particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}, simulation::Simulation}};
 
 
 
@@ -131,6 +131,11 @@ impl ShapeBuilder {
         }
         // let mut particle_handles = (*particle_vec).extend(&self.particles);
         // self.particle_handles.append(&mut particle_handles);
+        self
+    }
+
+    pub fn create_in_simulation(&mut self, sim: &mut Simulation) -> &mut Self {
+        self.create_in_particle_vec(&mut sim.particles);
         self
     }
 /* 

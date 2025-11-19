@@ -1,10 +1,11 @@
 use winit::keyboard::KeyCode;
 
-use crate::{particles::particle_vec::ParticleVec, platform::camera::Camera};
+use crate::{particles::{particle_vec::ParticleVec, simulation::Simulation}, platform::camera::Camera};
 
 
 pub struct UpdateContext<'a> {
     pub particle_vec: &'a mut ParticleVec, //pub particle_sim: &'a mut ParticleSim,
+    pub sim: &'a mut Simulation,
    // pub level: &'a mut Level,
     pub time_delta: f32,
     pub camera: &'a mut Camera,

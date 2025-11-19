@@ -101,44 +101,44 @@ fn setup_stick_test_2(entity_system: &mut EntitySystem, particle_vec: &mut Parti
 }
 
 
-fn setup_stick_test_3(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
-    // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-    let particle_radius = 0.1;
-    let static_large_mass = 100.0; //10000.0;
+// fn setup_stick_test_3(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
+//     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
+//     let particle_radius = 0.1;
+//     let static_large_mass = 100.0; //10000.0;
 
-    // static
-    {
-        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
-        let mut builder = ShapeBuilder::new();
-        builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-            .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
-            .create_in_particle_vec(particle_vec);
+//     // static
+//     {
+//         let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+//         let mut builder = ShapeBuilder::new();
+//         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
+//             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
+//             .create_in_particle_vec(particle_vec);
 
-        let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
-        entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
-    }
+//         let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
+//         entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
+//     }
 
-    // stick of circles
-    {
-        let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
+//     // stick of circles
+//     {
+//         let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
 
-        let mut stick_vec = StickVec::new();
+//         let mut stick_vec = StickVec::new();
 
-        let origin = Vec2::new(0.0, 2.0);
-        let circle_radius = 1.0;
-        let particle_radius = 0.1;
+//         let origin = Vec2::new(0.0, 2.0);
+//         let circle_radius = 1.0;
+//         let particle_radius = 0.1;
 
-        let mut builder = ShapeBuilder::new();
-        builder.set_particle_template(Particle::default().set_colour(blue).set_radius(particle_radius).clone());
-        builder.apply_operation(Circle::new(origin, circle_radius))
-            .create_in_particle_vec(particle_vec);
+//         let mut builder = ShapeBuilder::new();
+//         builder.set_particle_template(Particle::default().set_colour(blue).set_radius(particle_radius).clone());
+//         builder.apply_operation(Circle::new(origin, circle_radius))
+//             .create_in_particle_vec(particle_vec);
 
-        AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 1, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect adjacent points
-        AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
+//         AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 1, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect adjacent points
+//         AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
  
-        entity_system.push(StickVecEntity::new(stick_vec));
-    }
-}
+//         entity_system.push(StickVecEntity::new(stick_vec));
+//     }
+// }
 
 
 fn setup_circular_contained_liquid(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
@@ -286,17 +286,17 @@ impl Plugin for BasicParticles {
         ));
 
         // Generate a procedural level.
-        // LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec);
+        LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec, &mut self.simulation);
 
         // // Add car to the scene.
-        // let car = CarEntity::new(&mut self.particle_vec, Vec2::new(0.0, 1.0));
-        // self.entity_system.push(car);
+        let car = CarEntity::new(&mut self.particle_vec, &mut self.simulation, Vec2::new(0.0, 1.0));
+        self.entity_system.push(car);
 
-        SimulationDemos::init_wrecking_ball(&mut self.simulation);
+        //SimulationDemos::init_wrecking_ball(&mut self.simulation);
 
         //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);
-        setup_stick_test_2(&mut self.entity_system, &mut self.particle_vec);
+        //setup_stick_test_2(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test_3(&mut self.entity_system, &mut self.particle_vec);
     }
 
@@ -343,39 +343,39 @@ impl Plugin for BasicParticles {
 
         self.simulation.tick(time_delta);
 
-        // Update particle system
-        // todo: Need a ParticlePipeline to apply any number of Operations.
-        // todo: The paper talks about doing this whole merge and split twice to avoid some problems.
-        // todo: The paper also talks about limiting the depth of recursion on merge and split to avoid the whole thing becoming too ridgid.
-        // todo: The paper mentions time step based such that a particle will not more more than its radius in 1 step due to the simple collision detection.
-        {
-            // Measure system metrics
-            //let mut met = Metrics::default();
-            //met.execute(&mut self.particle_vec);
+        // // Update particle system
+        // // todo: Need a ParticlePipeline to apply any number of Operations.
+        // // todo: The paper talks about doing this whole merge and split twice to avoid some problems.
+        // // todo: The paper also talks about limiting the depth of recursion on merge and split to avoid the whole thing becoming too ridgid.
+        // // todo: The paper mentions time step based such that a particle will not more more than its radius in 1 step due to the simple collision detection.
+        // {
+        //     // Measure system metrics
+        //     //let mut met = Metrics::default();
+        //     //met.execute(&mut self.particle_vec);
 
-            let mut m = Merge::default();
-            m.execute_2(&mut self.particle_vec, time_delta);
+        //     let mut m = Merge::default();
+        //     m.execute_2(&mut self.particle_vec, time_delta);
 
-            let mut i = *VerletIntegration::default().set_time_delta(time_delta);//.set_gravity(Vec2::new(0.0, 0.0));
-            i.execute(&mut self.particle_vec);
+        //     let mut i = *VerletIntegration::default().set_time_delta(time_delta);//.set_gravity(Vec2::new(0.0, 0.0));
+        //     i.execute(&mut self.particle_vec);
 
-            // This should split particle.
-            let mut s = Split::default().set_restitution_coefficient(1.0).clone();
-            s.execute(&mut self.particle_vec);
+        //     // This should split particle.
+        //     let mut s = Split::default().set_restitution_coefficient(1.0).clone();
+        //     s.execute(&mut self.particle_vec);
 
 
-            // Second merge and split - this fixes some particle penetration
-            {
-                let mut m = Merge::default();
-                m.execute_2(&mut self.particle_vec, time_delta);
+        //     // Second merge and split - this fixes some particle penetration
+        //     {
+        //         let mut m = Merge::default();
+        //         m.execute_2(&mut self.particle_vec, time_delta);
 
-                let mut s = Split::default().set_restitution_coefficient(1.0).clone();
-                s.execute(&mut self.particle_vec);
-            }
+        //         let mut s = Split::default().set_restitution_coefficient(1.0).clone();
+        //         s.execute(&mut self.particle_vec);
+        //     }
 
-            // Measure metrics and see if anything has changed
-            //met.execute(&mut self.particle_vec);
-        }
+        //     // Measure metrics and see if anything has changed
+        //     //met.execute(&mut self.particle_vec);
+        // }
 
         // Update camera, then apply the camera matrix to the particle instance renderer.
         let state = match &mut app.state {
@@ -391,7 +391,7 @@ impl Plugin for BasicParticles {
 
 
         // Apply constraints
-        self.entity_system.update(&mut self.particle_vec, camera, time_delta);
+        self.entity_system.update(&mut self.particle_vec, &mut self.simulation, camera, time_delta);
 
 
         let particle_instance_renderer = match &mut self.particle_instance_renderer {

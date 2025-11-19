@@ -1,4 +1,4 @@
-use crate::{entity::entity::{Entity, UpdateContext}, particles::particle_vec::ParticleVec, platform::camera::Camera};
+use crate::{entity::entity::{Entity, UpdateContext}, particles::{particle_vec::ParticleVec, simulation::Simulation}, platform::camera::Camera};
 use winit::{keyboard::KeyCode};
 
 pub struct EntitySystem {
@@ -17,10 +17,11 @@ impl EntitySystem {
         self
     }
 
-    pub fn update(&mut self, particle_vec: &mut ParticleVec, camera: &mut Camera, time_delta: f32) {
+    pub fn update(&mut self, particle_vec: &mut ParticleVec, sim: &mut Simulation, camera: &mut Camera, time_delta: f32) {
         let mut context = UpdateContext {
             time_delta,
             particle_vec,
+            sim,
             camera,
             //level: self,
         };

@@ -1,7 +1,7 @@
 use rand_pcg::Pcg64;
 use rand::Rng;
 
-use crate::{entity::entity_system::EntitySystem, level::{level_blocks::{finish_operation::FinishOperation, spawn_operation::SpawnOperation, straight_level_block::StraightLevelBlock}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec}};
+use crate::{entity::entity_system::EntitySystem, level::{level_blocks::{finish_operation::FinishOperation, spawn_operation::SpawnOperation, straight_level_block::StraightLevelBlock}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec, simulation::Simulation}};
 
 
 pub struct LevelBuilder {
@@ -27,10 +27,11 @@ pub struct LevelBuilderContext<'a> {
     pub is_last: bool,
     pub rng: &'a mut Pcg64,
     pub entity_system: &'a mut EntitySystem,
+    pub sim: &'a mut Simulation,
 }
 
 impl<'a> LevelBuilderContext<'a> {
-    pub fn new(entity_system: &'a mut EntitySystem, particle_vec: &'a mut ParticleVec, rng: &'a mut Pcg64) -> Self {
+    pub fn new(entity_system: &'a mut EntitySystem, particle_vec: &'a mut ParticleVec, sim: &'a mut Simulation, rng: &'a mut Pcg64) -> Self {
         let particle_radius = cm_to_m(10.0); // was 4.0
 
         Self {
@@ -44,16 +45,17 @@ impl<'a> LevelBuilderContext<'a> {
             is_last: false,
             rng,
             entity_system,
+            sim
         }
     }
 }
 
 impl LevelBuilder {
-    pub fn generate_level_based_on_date(&mut self, entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
+    pub fn generate_level_based_on_date(&mut self, entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec, sim: &mut Simulation) {
         // set a random seed used for level generation based on todays date. Each day we get a new map to try
         let mut rng = Random::seed_from_beginning_of_day(); //seed_from_beginning_of_week(); //car_scene.rng;
         
-        let mut level_builder_context = LevelBuilderContext::new(entity_system, particle_vec, &mut rng);
+        let mut level_builder_context = LevelBuilderContext::new(entity_system, particle_vec, sim, &mut rng);
         self.generate(&mut level_builder_context, 3);
     }
 
@@ -82,6 +84,10 @@ impl LevelBuilder {
             let mut spawn_chance_total = 0.0;
             for (chance, _) in &spawn_chance_operations {
                 spawn_chance_total += chance;
+            }
+            if spawn_chance_total <= 0.0 {
+                // nothing to spawn!
+                continue;
             }
 
             // 4. Find the selected operation and execute it

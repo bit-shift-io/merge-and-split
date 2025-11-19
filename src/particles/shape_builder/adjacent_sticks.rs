@@ -1,6 +1,6 @@
 use cgmath::InnerSpace;
 
-use crate::{constraints::stick::{Stick, StickVec}, particles::particle_vec::{ParticleHandle, ParticleVec}};
+use crate::{constraints::stick::{Stick, StickVec}, constraints2::distance_constraint::DistanceConstraint, particles::{particle_vec::{ParticleHandle, ParticleVec}, simulation::Simulation}};
 
 use super::{circle::Circle, shape_builder::{ShapeBuilder, ShapeBuilderOperation}};
 
@@ -21,8 +21,8 @@ impl AdjacentSticks {
         }
     }
 
-    pub fn apply_to_particle_handles(&self, particle_vec: &ParticleVec, particle_handles: &Vec<ParticleHandle>, stick_vec: &mut StickVec) {
-        let radius = particle_vec[particle_handles[0]].radius; //shape_builder.particle_radius();
+    pub fn apply_to_particle_handles(&self, sim: &mut Simulation, particle_handles: &Vec<ParticleHandle>) {
+        let radius = sim.particles[particle_handles[0]].radius; //shape_builder.particle_radius();
         let particle_count = particle_handles.len(); //shape_builder.particles.len();
 
         for pi in 0..particle_count {
@@ -40,12 +40,15 @@ impl AdjacentSticks {
                 particle_handles[pi_next]
             ];
 
-            let particle_a = particle_vec[particle_handles[0]]; // shape_builder.particles[particle_handles[0]];
-            let particle_b = particle_vec[particle_handles[1]]; //shape_builder.particles[particle_handles[1]];
-            let length = (particle_b.pos - particle_a.pos).magnitude();
-            let mut stick = self.constraint_template.clone();
-            stick.set_particle_handles(particle_handles).set_length(length);
-            stick_vec.push(stick);
+            let particle_a = sim.particles[particle_handles[0]]; // shape_builder.particles[particle_handles[0]];
+            let particle_b = sim.particles[particle_handles[1]]; //shape_builder.particles[particle_handles[1]];
+            let dist = (particle_b.pos - particle_a.pos).magnitude();
+            //let mut stick = self.constraint_template.clone();
+            //stick.set_particle_handles(particle_handles).set_length(dist);
+            //stick_vec.push(stick);
+
+            sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, particle_handles[0], particle_handles[1], false));
+
         }
     }
 }

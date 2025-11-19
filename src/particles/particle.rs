@@ -82,6 +82,7 @@ impl Particle {
     pub fn set_mass(&mut self, mass: f32) -> &mut Self {
         debug_assert!(!mass.is_nan());
         self.mass = mass;
+        self.set_mass_2(mass);
         self
     }
 
@@ -229,7 +230,7 @@ impl Particle {
 
 impl Default for Particle {
     fn default() -> Self {
-        Self {
+        let mut s = Self {
             index: usize::MAX,
             debug: false,
 
@@ -262,7 +263,9 @@ impl Default for Particle {
             s_friction: 0.0,
             k_friction: 0.0,
             t: 4.0,
-        }
+        };
+        s.set_mass_2(s.mass);
+        s
     }
 }
 
