@@ -37,8 +37,8 @@ impl Simulation {
             particles: ParticleVec::new(),
             gravity: Vec2::new(0.0, -9.8),
 
-            x_boundaries: Vec2::new(-20.0,20.0),
-            y_boundaries: Vec2::new(0.0,1000000.0),
+            x_boundaries: Vec2::new(-100.0,100.0),
+            y_boundaries: Vec2::new(-100.0,100.0),
 
             bodies: vec![],
 

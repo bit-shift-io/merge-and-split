@@ -58,7 +58,7 @@ impl LevelBuilderOperation for StraightLevelBlock {
         let cursor_end = cursor_start + Vec2::new(width * level_builder_context.x_direction, height);
 
         // Get the current length of particle_vec, as we are about to push on more particles
-        let particle_vec_start_index = level_builder_context.particle_vec.len();
+        // let particle_vec_start_index = level_builder_context.particle_vec.len();
         
         let mut sb = ShapeBuilder::new();
         sb.set_particle_template(level_builder_context.particle_template.set_mass(0.0).clone())
