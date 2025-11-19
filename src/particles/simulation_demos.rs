@@ -251,12 +251,12 @@ impl SimulationDemos {
             if i < chain_length {
                 let base_prev = 1 + (chain_length - i - 1) * 6;
                 let base_cur = base_prev + 6;
-                sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(base_cur + 1, base_prev, &sim.particles));
-                sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(base_cur + 5, base_prev + 4, &sim.particles));
+                sim.add_distance_constraint(DistanceConstraint::from_particles(base_cur + 1, base_prev, &sim.particles));
+                sim.add_distance_constraint(DistanceConstraint::from_particles(base_cur + 5, base_prev + 4, &sim.particles));
             }
         }
 
-        sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(0, 4, &sim.particles));
+        sim.add_distance_constraint(DistanceConstraint::from_particles(0, 4, &sim.particles));
     }
 
     pub fn init_rope(sim: &mut Simulation) {
@@ -280,7 +280,7 @@ impl SimulationDemos {
             let part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i, top)).set_mass_2(1.0).set_phase(Phase::Solid);
             //part->bod = -2;
             sim.particles.push(part);
-            sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false));
+            sim.add_distance_constraint(DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false));
 
             i += dist;
         }
@@ -289,7 +289,7 @@ impl SimulationDemos {
         e2.body = -2;
         sim.particles.push(e2);
 
-        sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false));
+        sim.add_distance_constraint(DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false));
         
         let delta = 0.7;
         let mut particles = ParticleVec::new();
@@ -539,10 +539,10 @@ impl SimulationDemos {
             sim.particles.push(part);
 
             if i > 0 {
-                sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx - 1, &sim.particles));
+                sim.add_distance_constraint(DistanceConstraint::from_particles(idx, idx - 1, &sim.particles));
             }
         }
-        sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(0, sim.particles.len() - 1, &sim.particles));
+        sim.add_distance_constraint(DistanceConstraint::from_particles(0, sim.particles.len() - 1, &sim.particles));
         let idk = sim.particles.len();
 
         for i in 0..samples { //(int i = 0; i < samples; i++) {
@@ -553,10 +553,10 @@ impl SimulationDemos {
             sim.particles.push(part);
 
             if i > 0 {
-                sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx - 1, &sim.particles));
+                sim.add_distance_constraint(DistanceConstraint::from_particles(idx, idx - 1, &sim.particles));
             }
         }
-        sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idk, sim.particles.len() - 1, &sim.particles));
+        sim.add_distance_constraint(DistanceConstraint::from_particles(idk, sim.particles.len() - 1, &sim.particles));
 
         let delta = 1.5 * particle_rad;
 
@@ -612,7 +612,7 @@ impl SimulationDemos {
                 let part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam - 3.0, 0.0)).set_mass_2(1.0);
                 sim.particles.push(part);
             }
-            sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx + 1, &sim.particles));
+            sim.add_distance_constraint(DistanceConstraint::from_particles(idx, idx + 1, &sim.particles));
         }
     }
 
@@ -720,7 +720,7 @@ impl SimulationDemos {
             part.body = -2;
             sim.particles.push(part);
 
-            sim.global_standard_distance_constraints.push(
+            sim.add_distance_constraint(
                 DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false)
             );
             // m_globalConstraints[STANDARD].append(
@@ -733,7 +733,7 @@ impl SimulationDemos {
     //    e2->bod = -2;
     //    m_particles.append(e2);
 
-        sim.global_standard_distance_constraints.push(
+        sim.add_distance_constraint(
             DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false)
         );
         // m_globalConstraints[STANDARD].append(
@@ -943,7 +943,7 @@ impl SimulationDemos {
         sim.create_rigid_body(&mut particles, &sdf_data);
 
         //m_globalConstraints[STANDARD].append(new DistanceConstraint(idx, idx + 1, &m_particles));
-        sim.global_standard_distance_constraints.push(DistanceConstraint::from_particles(idx, idx + 1, &sim.particles));
+        sim.add_distance_constraint(DistanceConstraint::from_particles(idx, idx + 1, &sim.particles));
             
 
     }

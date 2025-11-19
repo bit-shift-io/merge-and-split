@@ -54,3 +54,27 @@ impl DistanceConstraint {
         counts[self.i2] += 1;
     }
 }
+
+pub struct DistanceConstraintVec(pub Vec<DistanceConstraint>);
+
+impl DistanceConstraintVec {
+    pub fn new() -> Self {
+        Self(vec![])
+    }
+
+    pub fn update_counts(&self, counts: &mut Vec<usize>) {
+        for c in &self.0 {
+            c.update_counts(counts);
+        }
+    }
+
+    pub fn solve(&self, particles: &mut ParticleVec, counts: &Vec<usize>) {
+        for c in &self.0 {
+            c.project(particles, counts);
+        }
+    }
+
+    pub fn push(&mut self, c: DistanceConstraint) {
+        self.0.push(c);
+    }
+}

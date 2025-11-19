@@ -53,7 +53,7 @@ impl LevelBuilderOperation for SaggyBridgeOperation {
             .compute_particle_pairs(sb.particle_radius(), particle_vec_start_index)
             .iter()
             .for_each(|particle_handles| {
-                level_builder_context.sim.global_standard_distance_constraints.push(
+                level_builder_context.sim.add_distance_constraint(
                     DistanceConstraint::from_particles(particle_handles[0], particle_handles[1], &level_builder_context.sim.particles)
                 );
             });

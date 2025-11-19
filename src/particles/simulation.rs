@@ -3,7 +3,7 @@ use std::isize;
 use cgmath::InnerSpace;
 use rand::Rng;
 
-use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::DistanceConstraint, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{constraints2::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, math::{vec2::Vec2, vec4::Vec4}, particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -20,7 +20,7 @@ pub struct Simulation {
     pub contact_rigid_contact_constraints: Vec<RigidContactConstraint>,
     pub contact_contact_constraints: Vec<ContactConstraint>,
 
-    pub global_standard_distance_constraints: Vec<DistanceConstraint>,
+    pub distance_constraints: DistanceConstraintVec,
     pub global_standard_total_fluid_constraints: Vec<TotalFluidConstraint>,
     pub global_standard_gas_constraints: Vec<GasConstraint>,
     
@@ -48,7 +48,7 @@ impl Simulation {
             contact_contact_constraints: vec![],
             // CONTACT group end.
 
-            global_standard_distance_constraints: vec![],
+            distance_constraints: DistanceConstraintVec::new(),
             global_standard_total_fluid_constraints: vec![],
             global_standard_gas_constraints: vec![],
 
@@ -181,9 +181,7 @@ impl Simulation {
                 c.update_counts(&mut self.counts, body);
             }
         }
-        for c in self.global_standard_distance_constraints.iter_mut() {
-            c.update_counts(&mut self.counts);
-        }
+        self.distance_constraints.update_counts(&mut self.counts);
         for c in self.global_standard_total_fluid_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
@@ -229,9 +227,7 @@ impl Simulation {
                     c.project(&mut self.particles, &self.counts, body);
                 }
             }
-            for c in self.global_standard_distance_constraints.iter_mut() {
-                c.project(&mut self.particles, &self.counts);
-            }
+            self.distance_constraints.solve(&mut self.particles, &self.counts);
             for c in self.global_standard_total_fluid_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts);
             }
@@ -409,5 +405,9 @@ impl Simulation {
         //GasConstraint *gs = new GasConstraint(density, &indices, open);
         //m_globalConstraints[STANDARD].append(gs);
         return idx;
+    }
+
+    pub fn add_distance_constraint(&mut self, c: DistanceConstraint) {
+        self.distance_constraints.push(c);
     }
 }

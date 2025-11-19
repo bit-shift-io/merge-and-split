@@ -285,14 +285,14 @@ impl Plugin for BasicParticles {
             state.config.format,
         ));
 
-        // Generate a procedural level.
-        LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec, &mut self.simulation);
+        // // Generate a procedural level.
+        // LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec, &mut self.simulation);
 
-        // // Add car to the scene.
-        let car = CarEntity::new(&mut self.particle_vec, &mut self.simulation, Vec2::new(0.0, 1.0));
-        self.entity_system.push(car);
+        // // // Add car to the scene.
+        // let car = CarEntity::new(&mut self.particle_vec, &mut self.simulation, Vec2::new(0.0, 1.0));
+        // self.entity_system.push(car);
 
-        //SimulationDemos::init_wrecking_ball(&mut self.simulation);
+        SimulationDemos::init_rope(&mut self.simulation);
 
         //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);

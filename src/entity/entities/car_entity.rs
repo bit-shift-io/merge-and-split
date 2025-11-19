@@ -98,7 +98,7 @@ impl CarWheel {
             for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
                 let dist = (sim.particles[hub_particle_handle].pos - sim.particles[*surface_particle_handle].pos).magnitude(); 
             
-                sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
+                sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
 
                 // stick_vec.push(*Stick::default()
                 //     .set_stiffness_factor(0.5)
@@ -161,7 +161,7 @@ impl CarEntity {
             //     .set_particle_handles([wheel_1.hub_particle_handle, wheel_2.hub_particle_handle]).box_clone()
             // );
 
-            sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false));
+            sim.add_distance_constraint(DistanceConstraint::new(dist, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false));
         }
 
         Self {

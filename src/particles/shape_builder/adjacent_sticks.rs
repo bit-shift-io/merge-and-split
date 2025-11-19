@@ -47,7 +47,7 @@ impl AdjacentSticks {
             //stick.set_particle_handles(particle_handles).set_length(dist);
             //stick_vec.push(stick);
 
-            sim.global_standard_distance_constraints.push(DistanceConstraint::new(dist, particle_handles[0], particle_handles[1], false));
+            sim.add_distance_constraint(DistanceConstraint::new(dist, particle_handles[0], particle_handles[1], false));
 
         }
     }
