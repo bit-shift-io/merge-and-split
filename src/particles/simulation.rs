@@ -306,7 +306,7 @@ impl Simulation {
         }
     }
 
-    pub fn create_rigid_body(&mut self, particles: &mut ParticleVec, sdf_data: &Vec<SdfData>) {
+    pub fn create_rigid_body(&mut self, particles: &mut ParticleVec, sdf_data: &Vec<SdfData>) -> usize {
         if particles.len() <= 1 {
             assert!(false, "Rigid bodies must be at least 2 points.") 
         }
@@ -339,7 +339,9 @@ impl Simulation {
         body.compute_rs(&self.particles);
         // body->shape = new TotalShapeConstraint(body);
 
+        let idx = self.bodies.len();
         self.bodies.push(body);
+        idx
         // return body;
     }
 

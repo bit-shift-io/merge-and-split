@@ -34,7 +34,7 @@ impl OpenSmokeEmitter {
 
             let mut p = *Particle::default().set_radius(particle_rad).set_pos(self.posn).set_mass_2(0.1).set_phase(Phase::Gas);
             self.particles.push(p);
-            if (self.gas_index != usize::MAX) { //m_gs != NULL) {
+            if self.gas_index != usize::MAX { //m_gs != NULL) {
                 p = *Particle::default().set_radius(particle_rad).set_pos(self.posn).set_mass_2(1.0).set_phase(Phase::Gas);
                 global_standard_gas_constraints[self.gas_index].add_particle(p, estimates.len()); //m_gs->addParticle(p, estimates->size());
                 estimates.push(p);

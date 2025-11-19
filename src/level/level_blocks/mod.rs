@@ -6,3 +6,4 @@ pub mod saggy_bridge_operation;
 pub mod spawn_operation;
 pub mod straight_level_block;
 pub mod finish_operation;
+pub mod elevator;
