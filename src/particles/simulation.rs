@@ -410,4 +410,8 @@ impl Simulation {
     pub fn add_distance_constraint(&mut self, c: DistanceConstraint) {
         self.distance_constraints.push(c);
     }
+
+    pub fn add_particle(&mut self, p: Particle) {
+        self.particles.push(p);
+    }
 }

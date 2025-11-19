@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{env, thread, time::Duration};
 
 use cgmath::Rotation3;
 use winit::{event::WindowEvent, keyboard::KeyCode};
@@ -285,14 +285,36 @@ impl Plugin for BasicParticles {
             state.config.format,
         ));
 
-        // // Generate a procedural level.
-        // LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec, &mut self.simulation);
+        // Determine what "scene" to load based on command line argument.
+        let args: Vec<String> = env::args().collect();
+        let scene = if args.len() >= 2 { args[1].clone() } else { String::from("") };
+        match scene.as_str() {
+            "friction" => SimulationDemos::init_friction(&mut self.simulation),
+            "granular" => SimulationDemos::init_granular(&mut self.simulation),
+            "sdf" => SimulationDemos::init_sdf(&mut self.simulation),
+            "boxes" => SimulationDemos::init_boxes(&mut self.simulation),
+            "wall" => SimulationDemos::init_wall(&mut self.simulation),
+            "pendulum" => SimulationDemos::init_pendulum(&mut self.simulation),
+            "rope" => SimulationDemos::init_rope(&mut self.simulation),
+            "fluid" => SimulationDemos::init_fluid(&mut self.simulation),
+            "fluid_solid" => SimulationDemos::init_fluid_solid(&mut self.simulation),
+            "gas" => SimulationDemos::init_gas(&mut self.simulation),
+            "water_balloon" => SimulationDemos::init_water_balloon(&mut self.simulation),
+            "newtons_cradle" => SimulationDemos::init_newtons_cradle(&mut self.simulation),
+            "smoke_open" => SimulationDemos::init_smoke_open(&mut self.simulation),
+            "smoke_closed" => SimulationDemos::init_smoke_closed(&mut self.simulation),
+            "rope_gas" => SimulationDemos::init_rope_gas(&mut self.simulation),
+            "volcano" => SimulationDemos::init_volcano(&mut self.simulation),
+            "wrecking_ball" => SimulationDemos::init_wrecking_ball(&mut self.simulation),
+            _ => {
+                // Generate a procedural level.
+                LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec, &mut self.simulation);
 
-        // // // Add car to the scene.
-        // let car = CarEntity::new(&mut self.particle_vec, &mut self.simulation, Vec2::new(0.0, 1.0));
-        // self.entity_system.push(car);
-
-        SimulationDemos::init_rope(&mut self.simulation);
+                // Add car to the scene.
+                let car = CarEntity::new(&mut self.particle_vec, &mut self.simulation, Vec2::new(0.0, 1.0));
+                self.entity_system.push(car);
+            }
+        }
 
         //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
         //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);

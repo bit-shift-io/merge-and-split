@@ -57,7 +57,7 @@ impl SimulationDemos {
                 part.phase = Phase::Solid;
                 part.s_friction = 0.35;
                 part.k_friction = 0.3;
-                sim.particles.push(part);
+                sim.add_particle(part);
             }
         }
 
@@ -65,7 +65,7 @@ impl SimulationDemos {
         jerk.phase = Phase::Solid;
         jerk.vel.x = 8.5;
         jerk.set_colour(Vec4::new(1.0, 0.0, 0.0, 1.0));
-        sim.particles.push(jerk);
+        sim.add_particle(jerk);
     }
 
 
@@ -225,7 +225,7 @@ impl SimulationDemos {
         let pos = Vec2::new(0.0, chain_length as f32 * 3.0 + 6.0) * particle_diam + Vec2::new(0.0,2.0);
         let mut particle = *Particle::default().set_radius(particle_rad).set_pos(pos).set_mass_2(0.0);
         particle.phase = Phase::Solid;
-        sim.particles.push(particle);
+        sim.add_particle(particle);
         
         let mut sdf_data = Vec::<SdfData>::new();
         sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad));
@@ -273,13 +273,13 @@ impl SimulationDemos {
 
         let mut e1 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(sim.x_boundaries.x, top)).set_mass_2(0.0).set_phase(Phase::Solid);
         e1.body = -2; // -2?!
-        sim.particles.push(e1);
+        sim.add_particle(e1);
 
         let mut i = sim.x_boundaries.x;
         while i < (sim.x_boundaries.y - dist) { //for (double i = m_xBoundaries.x + dist; i < m_xBoundaries.y - dist; i += dist) {
             let part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i, top)).set_mass_2(1.0).set_phase(Phase::Solid);
             //part->bod = -2;
-            sim.particles.push(part);
+            sim.add_particle(part);
             sim.add_distance_constraint(DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false));
 
             i += dist;
@@ -287,7 +287,7 @@ impl SimulationDemos {
 
         let mut e2 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(sim.x_boundaries.y, top)).set_mass_2(0.0).set_phase(Phase::Solid);
         e2.body = -2;
-        sim.particles.push(e2);
+        sim.add_particle(e2);
 
         sim.add_distance_constraint(DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false));
         
@@ -536,7 +536,7 @@ impl SimulationDemos {
             let mut part = *Particle::default().set_colour(blue).set_radius(particle_rad).set_pos(Vec2::new(f32::sin(angle), f32::cos(angle)) * 3.0).set_mass_2(1.0);
             part.body = -2; // ???
             let idx = sim.particles.len();
-            sim.particles.push(part);
+            sim.add_particle(part);
 
             if i > 0 {
                 sim.add_distance_constraint(DistanceConstraint::from_particles(idx, idx - 1, &sim.particles));
@@ -550,7 +550,7 @@ impl SimulationDemos {
             let mut part = *Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(f32::sin(angle), f32::cos(angle) + 3.0) * 3.0).set_mass_2(1.0);
             part.body = -3; // ?? I think this just stops collisions without having a "body" assigned
             let idx = sim.particles.len();
-            sim.particles.push(part);
+            sim.add_particle(part);
 
             if i > 0 {
                 sim.add_distance_constraint(DistanceConstraint::from_particles(idx, idx - 1, &sim.particles));
@@ -605,12 +605,12 @@ impl SimulationDemos {
 
         for i in -2..=n {
             let idx = sim.particles.len();
-            sim.particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam, 0.0)).set_mass_2(0.0));
+            sim.add_particle(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam, 0.0)).set_mass_2(0.0));
             if i != -n {
-                sim.particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam, -3.0)).set_mass_2(1.0));
+                sim.add_particle(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam, -3.0)).set_mass_2(1.0));
             } else {
                 let part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(i as f32 * particle_diam - 3.0, 0.0)).set_mass_2(1.0);
-                sim.particles.push(part);
+                sim.add_particle(part);
             }
             sim.add_distance_constraint(DistanceConstraint::from_particles(idx, idx + 1, &sim.particles));
         }
@@ -712,13 +712,13 @@ impl SimulationDemos {
 
         let mut e1 = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(0.0, top)).set_mass_2(0.0).set_phase(Phase::Solid);
         e1.body = -2;
-        sim.particles.push(e1);
+        sim.add_particle(e1);
 
         let mut i = 0.0 + dist;
         while i < 4.0 * scale - dist { //for (double i = 0 + dist; i < 4*scale - dist; i += dist) {
             let mut part = *Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(i, top)).set_mass_2( 2.0).set_phase(Phase::Solid);
             part.body = -2;
-            sim.particles.push(part);
+            sim.add_particle(part);
 
             sim.add_distance_constraint(
                 DistanceConstraint::new(dist, sim.particles.len() - 2, sim.particles.len() - 1, false)
@@ -778,8 +778,8 @@ impl SimulationDemos {
 
         let mut x = 1.0;;
         while x <= scale { // for(double x = 1.; x <= scale; x+=delta) {
-            sim.particles.push(*Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(-x,scale-x)).set_mass_2(0.0));
-            sim.particles.push(*Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(x,scale-x)).set_mass_2(0.0));
+            sim.add_particle(*Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(-x,scale-x)).set_mass_2(0.0));
+            sim.add_particle(*Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(x,scale-x)).set_mass_2(0.0));
 
             x += delta;
         }
@@ -926,7 +926,7 @@ impl SimulationDemos {
         particles.clear();
 
         let idx = sim.particles.len();
-        sim.particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(10.0, 50.0)).set_mass_2(0.0));
+        sim.add_particle(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(10.0, 50.0)).set_mass_2(0.0));
         sdf_data.clear();
 
         let base = Vec2::new(57.0, 50.0);
