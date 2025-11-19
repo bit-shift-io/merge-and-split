@@ -1,4 +1,4 @@
-use std::{ops::{Deref, DerefMut, Index, IndexMut, RangeBounds}, ptr::NonNull, slice::Iter, vec::ExtractIf};
+use std::{ops::{Deref, DerefMut, Index, IndexMut, RangeBounds}, ptr::NonNull, slice::{Iter, IterMut}, vec::ExtractIf};
 
 use crate::particles::particle::Particle;
 
@@ -64,6 +64,10 @@ impl ParticleVec {
 
     pub fn iter(&self) -> Iter<'_, Particle> {
         self.0.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> IterMut<'_, Particle> {
+        self.0.iter_mut()
     }
 
     // pub fn extract_if<F, R>(&mut self, range: R, filter: F) -> ExtractIf<'_, T, F, A>

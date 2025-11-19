@@ -4,6 +4,14 @@ use cgmath::{Basis2, Deg, InnerSpace, Rad, Rotation, Rotation2};
 
 pub(crate) type Vec2 = cgmath::Vector2<f32>;
 
+pub fn vec2_min(a: Vec2, b: Vec2) -> Vec2 {
+    Vec2::new(a.x.min(b.x), a.y.min(b.y))
+}
+
+pub fn vec2_max(a: Vec2, b: Vec2) -> Vec2 {
+    Vec2::new(a.x.max(b.x), a.y.max(b.y))
+}
+
 pub fn reflect_vector_a_around_b(a: Vec2, b: Vec2) -> Vec2 {
     // 1. Find a vector perpendicular to b
     let b_perp = Vec2::new(-b.y, b.x); // Perpendicular vector

@@ -2,9 +2,9 @@
 
 //use crate::v5::{particle::Particle, particle_handle::ParticleHandle, particle_system::ParticleSystem, particle_vec::SharedParticleVec};
 
-use cgmath::InnerSpace;
+use cgmath::{Bounded, InnerSpace};
 
-use crate::{math::{aabb2d::Aabb2d, vec2::Vec2}, particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}, simulation::Simulation}};
+use crate::{math::{aabb2d::Aabb2d, vec2::{Vec2, vec2_max, vec2_min}}, particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}, simulation::Simulation}};
 
 
 
@@ -185,23 +185,23 @@ impl ShapeBuilder {
         self
     }
 
-    // pub fn get_aabb(&self) -> Aabb2d {
-    //     // extracted from Aabb2d::from_point_cloud
-    //     let mut points_iter = self.particles.iter().map(|particle| particle.pos);//.collect::<Vec<Vec2>>();//.try_into().unwrap();
+    pub fn get_aabb(&self) -> Aabb2d {
+        // extracted from Aabb2d::from_point_cloud
+        let mut points_iter = self.particles.iter().map(|particle| particle.pos);//.collect::<Vec<Vec2>>();//.try_into().unwrap();
         
-    //     let first = points_iter
-    //         .next()
-    //         .expect("point cloud must contain at least one point for Aabb2d construction");
+        let first = points_iter
+            .next()
+            .expect("point cloud must contain at least one point for Aabb2d construction");
 
-    //     let (min, max) = points_iter.fold((first, first), |(prev_min, prev_max), point| {
-    //         (point.min(prev_min), point.max(prev_max))
-    //     });
+        let (min, max) = points_iter.fold((first, first), |(prev_min, prev_max), point| {
+            (vec2_min(point, prev_min), vec2_max(point, prev_max))
+        });
 
-    //     Aabb2d {
-    //         min,
-    //         max
-    //     }
-    // }
+        Aabb2d {
+            min,
+            max
+        }
+    }
 
     // pub fn extract_left_most_particles(&mut self) -> ShapeBuilder {
     //     let aabb = self.get_aabb();

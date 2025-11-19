@@ -4,6 +4,7 @@ use crate::math::{rect::Rect, vec2::Vec2};
 
 use super::shape_builder::{radius_divisions_between_points, ShapeBuilder, ShapeBuilderOperation};
 
+#[derive(Clone)]
 pub struct Rectangle {
     pub rect: Rect
 }

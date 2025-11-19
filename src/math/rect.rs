@@ -2,6 +2,7 @@
 
 use crate::math::vec2::Vec2;
 
+#[derive(Clone)]
 #[repr(C)]
 pub struct Rect {
     pub min: Vec2,

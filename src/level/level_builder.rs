@@ -1,7 +1,7 @@
 use rand_pcg::Pcg64;
 use rand::Rng;
 
-use crate::{entity::entity_system::EntitySystem, level::{level_blocks::{finish_operation::FinishOperation, spawn_operation::SpawnOperation, straight_level_block::StraightLevelBlock}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec, simulation::Simulation}};
+use crate::{entity::entity_system::EntitySystem, level::{level_blocks::{finish_operation::FinishOperation, saggy_bridge_operation::SaggyBridgeOperation, spawn_operation::SpawnOperation, straight_level_block::StraightLevelBlock}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}, math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, particles::{particle::Particle, particle_vec::ParticleVec, simulation::Simulation}};
 
 
 pub struct LevelBuilder {
@@ -129,7 +129,7 @@ impl Default for LevelBuilder {
         // we should keep a bounding box for each operation applied to help work out if a block can be used instead of using x_direction_changed for example
         registry.register(SpawnOperation {});
         registry.register(FinishOperation {});
-        // //registry.register(SaggyBridgeOperation {});
+        registry.register(SaggyBridgeOperation {});
         registry.register(StraightLevelBlock {});
         // registry.register(CliffOperation {});
         // registry.register(FluidFunnel {});
