@@ -96,4 +96,13 @@ impl Body {
         }
         self.imass = 1.0 / imass;
     }
+
+    pub fn for_each_particle<F>(&self, mut f: F)
+    where
+        F: FnMut(usize),
+    {
+        for i in 0..self.particle_indicies.len() {
+            f(self.particle_indicies[i]);
+        }
+    }
 }

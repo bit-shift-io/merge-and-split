@@ -60,7 +60,10 @@ impl Simulation {
         }
     }
 
-    pub fn tick(self: &mut Self, time_delta: f32) {
+    pub fn tick<F>(&mut self, time_delta: f32, mut solve_constraints_callback: F)
+    where
+        F: FnMut(&mut Self, f32),
+    {
         // https://github.com/ebirenbaum/ParticleSolver/blob/master/cpu/src/simulation.cpp
 
         debug_assert!(self.contact_boundary_constraints.len() == 0);
@@ -197,6 +200,7 @@ impl Simulation {
         for c in self.contact_boundary_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
+        solve_constraints_callback(self, time_delta);
 
         // for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
         //     ConstraintGroup g = (ConstraintGroup) j;
@@ -375,12 +379,12 @@ impl Simulation {
         return idx;
     }
 
-    pub fn create_smoke_emitter(&mut self, posn: Vec2, particlesPerSec: f32, gas_index: usize /*GasConstraint *gs*/) {
-        self.smoke_emitters.push(OpenSmokeEmitter::new(posn, particlesPerSec, gas_index /*gs*/));
+    pub fn create_smoke_emitter(&mut self, posn: Vec2, particles_per_sec: f32, gas_index: usize /*GasConstraint *gs*/) {
+        self.smoke_emitters.push(OpenSmokeEmitter::new(posn, particles_per_sec, gas_index /*gs*/));
     }
 
-    pub fn create_fluid_emitter(&mut self, posn: Vec2, particlesPerSec: f32, fluid_index: usize /*TotalFluidConstraint *fs*/) {
-        self.fluid_emitters.push(FluidEmitter::new(posn, particlesPerSec, fluid_index));
+    pub fn create_fluid_emitter(&mut self, posn: Vec2, particles_per_sec: f32, fluid_index: usize /*TotalFluidConstraint *fs*/) {
+        self.fluid_emitters.push(FluidEmitter::new(posn, particles_per_sec, fluid_index));
     }
 
     // open = false by default

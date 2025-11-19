@@ -5,13 +5,13 @@ use crate::{constraints2::total_fluid_constraint::TotalFluidConstraint, math::ve
 
 pub struct FluidEmitter {
     posn: Vec2,
-    particlesPerSec: f32,
+    particles_per_sec: f32,
     timer: f32,
     totalTimer: f32,
     fluid_index: usize, // TotalFluidConstraint *m_fs;
     grains: ParticleVec,
     // glm::dvec2 m_posn;
-    // double m_particlesPerSec;
+    // double m_particles_per_sec;
     // double timer;
     // double totalTimer;
     // TotalFluidConstraint *m_fs;
@@ -19,10 +19,10 @@ pub struct FluidEmitter {
 }
 
 impl FluidEmitter {
-    pub fn new(posn: Vec2, particlesPerSec: f32, fluid_index: usize /*TotalFluidConstraint *fs*/) -> Self {
+    pub fn new(posn: Vec2, particles_per_sec: f32, fluid_index: usize /*TotalFluidConstraint *fs*/) -> Self {
         Self {
             posn,
-            particlesPerSec,
+            particles_per_sec,
             timer: 0.0,
             totalTimer: 0.0,
             fluid_index,
@@ -101,8 +101,8 @@ impl FluidEmitter {
         self.timer += secs;
         self.totalTimer += secs;
 
-        while self.totalTimer < 5.0 && self.timer >= 1.0/self.particlesPerSec {
-            self.timer -= 1.0/self.particlesPerSec;
+        while self.totalTimer < 5.0 && self.timer >= 1.0/self.particles_per_sec {
+            self.timer -= 1.0/self.particles_per_sec;
             if self.fluid_index != usize::MAX { // if (m_fs != NULL) {
 
                 let particle_diam = 0.5;

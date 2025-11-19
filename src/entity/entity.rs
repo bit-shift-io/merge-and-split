@@ -27,3 +27,7 @@ pub trait Entity {
 // pub trait EntityInput {
 //     fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool;
 // }
+
+pub trait EntityConstraintSolver {
+    fn solve_constraints(&mut self, sim: &mut Simulation, time_delta: f32);
+}

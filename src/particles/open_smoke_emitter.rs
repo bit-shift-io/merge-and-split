@@ -6,17 +6,17 @@ use crate::{constraints2::gas_constraint::GasConstraint, math::vec2::Vec2, parti
 pub struct OpenSmokeEmitter {
 
     pub posn: Vec2,
-    pub particlesPerSec: f32,
+    pub particles_per_sec: f32,
     pub particles: ParticleVec,
     pub timer: f32,
     pub gas_index: usize, // GasConstraint *m_gs;
 }
 
 impl OpenSmokeEmitter {
-    pub fn new(posn: Vec2, particlesPerSec: f32, gas_index: usize /*GasConstraint *gs*/) -> Self {
+    pub fn new(posn: Vec2, particles_per_sec: f32, gas_index: usize /*GasConstraint *gs*/) -> Self {
         Self {
             posn,
-            particlesPerSec,
+            particles_per_sec,
             particles: ParticleVec::new(),
             timer: 0.0,
             gas_index
@@ -29,8 +29,8 @@ impl OpenSmokeEmitter {
         let particle_diam = 0.5;
         let particle_rad = particle_diam / 2.0;
 
-        while self.timer >= 1./self.particlesPerSec {
-            self.timer -= 1./self.particlesPerSec;
+        while self.timer >= 1./self.particles_per_sec {
+            self.timer -= 1./self.particles_per_sec;
 
             let mut p = *Particle::default().set_radius(particle_rad).set_pos(self.posn).set_mass_2(0.1).set_phase(Phase::Gas);
             self.particles.push(p);

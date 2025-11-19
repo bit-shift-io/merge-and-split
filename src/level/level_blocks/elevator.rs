@@ -1,7 +1,7 @@
 use cgmath::InnerSpace;
 use rand::Rng;
 
-use crate::{entity::entity::Entity, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, math::vec2::Vec2, particles::{particle::Particle, particle_vec::ParticleVec, sdf_data::SdfData, shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}}};
+use crate::{entity::entity::{Entity, EntityConstraintSolver}, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, math::vec2::Vec2, particles::{particle::Particle, particle_vec::ParticleVec, sdf_data::SdfData, shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}}};
 
 
 pub struct ElevatorOperation {
@@ -72,31 +72,98 @@ impl LevelBuilderOperation for ElevatorOperation {
         let body_idx = level_builder_context.sim.create_rigid_body(&mut particles, &sdf_data);
 
 
-        level_builder_context.entity_system.push(ElevatorEntity {
+        level_builder_context.entity_system.add_constraint_solver(ElevatorEntity {
             body_idx,
             start: cursor_start,
             end: cursor_start + vertical_movement,
             speed: rng.random_range(0.5..=1.5),
+            state: ElevatorState::MovingUp,
         });
 
         level_builder_context.cursor = cursor_end;
     }
 }
 
+enum ElevatorState {
+    MovingUp,
+    MovingDown,
+}
 
 pub struct ElevatorEntity {
     body_idx: usize,
     start: Vec2,
     end: Vec2,
     speed: f32,
+    state: ElevatorState,
 }
 
-impl Entity for ElevatorEntity {
-    fn update(&mut self, context: &mut crate::entity::entity::UpdateContext) {
-        todo!()
-    }
+// impl Entity for ElevatorEntity {
+//     fn update(&mut self, context: &mut crate::entity::entity::UpdateContext) {
+//         let pos = context.sim.bodies[self.body_idx].center;
 
-    fn handle_key(&mut self, key: winit::keyboard::KeyCode, is_pressed: bool) -> bool {
-        todo!()
+//         // todo: support horizontal movement too
+//         let movement = match self.state {
+//             ElevatorState::MovingUp => {
+//                 if pos.y >= self.end.y {
+//                     self.state = ElevatorState::MovingDown;
+//                     Vec2::new(0.0, -self.speed)
+//                 } else {
+//                     Vec2::new(0.0, self.speed)
+//                 }
+//             }
+//             ElevatorState::MovingDown => {
+//                 if pos.y <= self.start.y {
+//                     self.state = ElevatorState::MovingUp;
+//                     Vec2::new(0.0, self.speed)
+//                 } else {
+//                     Vec2::new(0.0, -self.speed)
+//                 }
+//             }
+//         };
+
+//         let velocity = movement * context.time_delta;
+
+//         context.sim.bodies[self.body_idx].for_each_particle(|particle_idx| {
+//             let particle = &mut context.sim.particles[particle_idx];
+//             particle.vel = velocity;
+//         });
+//     }
+
+//     fn handle_key(&mut self, key: winit::keyboard::KeyCode, is_pressed: bool) -> bool {
+//         // No key handling for now
+//         false
+//     }
+// }
+
+impl EntityConstraintSolver for ElevatorEntity {
+    fn solve_constraints(&mut self, sim: &mut crate::particles::simulation::Simulation, time_delta: f32) {
+        let pos = sim.bodies[self.body_idx].center;
+
+        // todo: support horizontal movement too
+        let movement = match self.state {
+            ElevatorState::MovingUp => {
+                if pos.y >= self.end.y {
+                    self.state = ElevatorState::MovingDown;
+                    Vec2::new(0.0, -self.speed)
+                } else {
+                    Vec2::new(0.0, self.speed)
+                }
+            }
+            ElevatorState::MovingDown => {
+                if pos.y <= self.start.y {
+                    self.state = ElevatorState::MovingUp;
+                    Vec2::new(0.0, self.speed)
+                } else {
+                    Vec2::new(0.0, -self.speed)
+                }
+            }
+        };
+
+        let velocity = movement * time_delta;
+
+        sim.bodies[self.body_idx].for_each_particle(|particle_idx| {
+            let particle = &mut sim.particles[particle_idx];
+            particle.pos_guess += velocity;
+        });
     }
 }
