@@ -105,4 +105,11 @@ impl Body {
             f(self.particle_indicies[i]);
         }
     }
+
+    // Helper to add count for each particle in the body
+    pub fn update_counts(&self, counts: &mut Vec<usize>, count: usize) {
+        for i in 0..self.particle_indicies.len() {
+            counts[self.particle_indicies[i]] += count;
+        }
+    }
 }

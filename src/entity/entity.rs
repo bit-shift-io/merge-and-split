@@ -28,6 +28,11 @@ pub trait Entity {
 //     fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool;
 // }
 
-pub trait EntityConstraintSolver {
-    fn solve_constraints(&mut self, sim: &mut Simulation, time_delta: f32);
-}
+// pub trait EntityConstraintSolver {
+//     fn update_counts(&mut self, sim: &mut Simulation);
+//     fn solve_constraints(&mut self, sim: &mut Simulation, time_delta: f32);
+// }
+
+// pub trait EntityUpdate {
+//     fn update(&mut self, context: &mut UpdateContext);
+// }

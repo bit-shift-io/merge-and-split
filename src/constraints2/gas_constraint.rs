@@ -128,7 +128,7 @@ impl GasConstraint {
                 let p_j = estimates[j]; // todo: make ref
                 let r = p_i.pos_guess - p_j.pos_guess;
                 let rlen = r.magnitude(); //glm::length(r);
-                let sg = spikyGrad(&r, rlen);
+                let sg = spiky_grad(&r, rlen);
                 let lambdaCorr = -k_p * (poly6(rlen * rlen) / poly6(dq_p * dq_p * h * h)).powf(e_p); //pow(, e_p);
 
                 let lambdas_i = match self.lambdas.get(&i) {
@@ -143,7 +143,7 @@ impl GasConstraint {
                 delta += (lambdas_i + lambdas_j + lambdaCorr) * sg;
 
                 // vorticity
-                let gradient = spikyGrad(&r, r.dot(r)); //glm::dot(r,r));
+                let gradient = spiky_grad(&r, r.dot(r)); //glm::dot(r,r));
                 let w = Vec2::new(gradient.x * p_j.vel.x, gradient.y * p_j.vel.y); //gradient * p_j.vel; - is this correct? glm::dvec2(a, b) * glm::dvec2(c, d) would result in glm::dvec2(a*c, b*d)
                 let cross = Vec3::new(0.0,0.0,w.magnitude()).cross(Vec3::new(r.x, r.y, 0.0));
                 f_vort += Vec2::new(cross.x, cross.y) * poly6(r.dot(r)); //glm::dot(r,r));
@@ -171,7 +171,7 @@ impl GasConstraint {
         let r = p_i.pos_guess - p_j.pos_guess;
         let rlen = r.magnitude(); //glm::length(r);
         if p_i != p_j {
-            return -spikyGrad(&r, rlen) / (self.p0);
+            return -spiky_grad(&r, rlen) / (self.p0);
         }
 
         let mut out = Vec2::new(0.0, 0.0);
@@ -180,7 +180,7 @@ impl GasConstraint {
             let r = p_i.pos_guess - p_j.pos_guess;
             let rlen = r.magnitude(); //glm::length(r);
             let mult = 1.0; //if p_j.phase == Phase::Solid { s_solid } else { 1.0 };
-            out += mult * spikyGrad(&r, rlen);
+            out += mult * spiky_grad(&r, rlen);
         }
 
         return out / (self.p0);
@@ -210,7 +210,7 @@ pub fn poly6(r2: f32) -> f32 {
 //    return (H-r) / (H*H);
 }
 
-pub fn spikyGrad(r: &Vec2, rlen2: f32) -> Vec2 {
+pub fn spiky_grad(r: &Vec2, rlen2: f32) -> Vec2 {
     if (rlen2 >= h) {
         return Vec2::new(0.0, 0.0);
     }

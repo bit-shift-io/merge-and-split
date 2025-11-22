@@ -363,10 +363,15 @@ impl Plugin for BasicParticles {
 
         let time_delta: f32 = 0.005;
 
-        self.simulation.tick(time_delta, |sim, time_delta| {
-            // Apply constraints
-            self.entity_system.solve_constraints(sim, time_delta);
-        });
+        self.simulation.tick_1(time_delta);
+        self.entity_system.elevator_entity_system.update_counts(&mut self.simulation);
+
+        for i in 0..3 {
+            self.simulation.tick_2(time_delta, 3, i);
+            self.entity_system.elevator_entity_system.solve_constraints(&mut self.simulation, time_delta);
+        }
+
+        self.simulation.tick_3(time_delta);
 
         // // Update particle system
         // // todo: Need a ParticlePipeline to apply any number of Operations.

@@ -1,7 +1,7 @@
 use cgmath::InnerSpace;
 use rand::Rng;
 
-use crate::{entity::entity::{Entity, EntityConstraintSolver}, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, math::vec2::Vec2, particles::{particle::Particle, particle_vec::ParticleVec, sdf_data::SdfData, shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}}};
+use crate::{entity::entity::{Entity}, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, math::{vec2::Vec2, vec4::Vec4}, particles::{particle::Particle, particle_vec::ParticleVec, sdf_data::SdfData, shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}}};
 
 
 pub struct ElevatorOperation {
@@ -21,7 +21,7 @@ impl LevelBuilderOperation for ElevatorOperation {
     fn execute(&self, level_builder_context: &mut LevelBuilderContext) {
         let rng = &mut level_builder_context.rng;
 
-        let width = 1.0;
+        let width = 2.0;
         let height = rng.random_range(1.0..=4.0);
 
         let horizontal_movement = Vec2::new(width * level_builder_context.x_direction, 0.0);
@@ -30,54 +30,39 @@ impl LevelBuilderOperation for ElevatorOperation {
         let cursor_start = level_builder_context.cursor;
         let cursor_end = cursor_start + horizontal_movement + vertical_movement;
 
+        let elevator_start = cursor_start + horizontal_movement * 0.5;
+        let elevator_end = elevator_start + vertical_movement;
+
+        let vertical_diameter_offset = Vec2::new(0.0, level_builder_context.particle_template.radius * 2.0);
         let mut sb = ShapeBuilder::new();
         sb.set_particle_template(*level_builder_context.particle_template.set_static(true))
-            .apply_operation(LineSegment::new(cursor_start, cursor_start + horizontal_movement)) 
+            // Floor:
+            .apply_operation(LineSegment::new(cursor_start - vertical_diameter_offset, cursor_start + horizontal_movement - vertical_diameter_offset)) 
+            // Wall:
             .apply_operation(LineSegment::new(cursor_start + horizontal_movement, cursor_end))
             .create_in_simulation(level_builder_context.sim);
 
+        let green = Vec4::new(0.0, 1.0, 0.0, 1.0);
 
-        let particle_rad = sb.particle_radius();
-        let particle_diam = particle_rad * 2.0;
+        let mut platform = ShapeBuilder::new();
+        platform.set_particle_template(*level_builder_context.particle_template.clone().set_static(true).set_colour(green))
+            .apply_operation(LineSegment::new(cursor_start, cursor_start + horizontal_movement))
+            .create_in_simulation(level_builder_context.sim);
 
+        let first_particle_offset = platform.particles[0].pos - elevator_start;
 
-        let root2 = f32::sqrt(2.0);
-        let mut sdf_data = Vec::<SdfData>::new();
-        sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
-        sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
-        sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
-        sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
-        sdf_data.push(SdfData::new(Vec2::new(1.0, -1.0).normalize(), particle_rad * root2));
-        sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
-
-
-        let offset = cursor_start;
-        let x_max = 3;
-        let y_max = 2;
-
-        let mut particles = ParticleVec::new();
-        for x in 0..x_max {
-            let x_val = particle_diam * ((x % x_max) as f32 - x_max as f32 / 2.0);
-            for y in 0..y_max {
-                let y_val = (y_max + (y % y_max) + 1) as f32 * particle_diam;
-                let mass = if x == 0 && y == 0 { 1.0 } else { 1.0 };
-                let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x_val, y_val) + offset).set_mass(mass);
-                part.vel.x = 5.0;
-                part.k_friction = 0.01;
-                part.s_friction = 0.1;
-                particles.push(part);
-            }
-        }
-
-        let body_idx = level_builder_context.sim.create_rigid_body(&mut particles, &sdf_data);
-
-
-        level_builder_context.entity_system.add_constraint_solver(ElevatorEntity {
-            body_idx,
-            start: cursor_start,
-            end: cursor_start + vertical_movement,
-            speed: rng.random_range(0.5..=1.5),
+        level_builder_context.entity_system.elevator_entity_system.push(ElevatorEntity {
+            body_idx: 0,
+            start: elevator_start,
+            end: elevator_end,
+            speed: rng.random_range(1.0..=2.0),
             state: ElevatorState::MovingUp,
+            pos: elevator_start,
+            particle_indicies: platform.particle_handles,
+            first_particle_offset,
+            wait_time: 2.0,
+            wait_timer: 0.0,
+            particle_radius: level_builder_context.particle_template.radius,
         });
 
         level_builder_context.cursor = cursor_end;
@@ -86,7 +71,9 @@ impl LevelBuilderOperation for ElevatorOperation {
 
 enum ElevatorState {
     MovingUp,
+    AtTopWaiting,
     MovingDown,
+    AtBottomWaiting,
 }
 
 pub struct ElevatorEntity {
@@ -95,75 +82,98 @@ pub struct ElevatorEntity {
     end: Vec2,
     speed: f32,
     state: ElevatorState,
+    pos: Vec2,
+    particle_indicies: Vec<usize>,
+    first_particle_offset: Vec2,
+    wait_time: f32,
+    wait_timer: f32,
+    particle_radius: f32,
 }
 
-// impl Entity for ElevatorEntity {
-//     fn update(&mut self, context: &mut crate::entity::entity::UpdateContext) {
-//         let pos = context.sim.bodies[self.body_idx].center;
+pub struct ElevatorEntitySystem(pub Vec<ElevatorEntity>);
 
-//         // todo: support horizontal movement too
-//         let movement = match self.state {
-//             ElevatorState::MovingUp => {
-//                 if pos.y >= self.end.y {
-//                     self.state = ElevatorState::MovingDown;
-//                     Vec2::new(0.0, -self.speed)
-//                 } else {
-//                     Vec2::new(0.0, self.speed)
-//                 }
-//             }
-//             ElevatorState::MovingDown => {
-//                 if pos.y <= self.start.y {
-//                     self.state = ElevatorState::MovingUp;
-//                     Vec2::new(0.0, self.speed)
-//                 } else {
-//                     Vec2::new(0.0, -self.speed)
-//                 }
-//             }
-//         };
+impl ElevatorEntitySystem {
+    pub fn new() -> Self {
+        Self(vec![])
+    }
 
-//         let velocity = movement * context.time_delta;
+    pub fn push(&mut self, c: ElevatorEntity) {
+        self.0.push(c);
+    }
 
-//         context.sim.bodies[self.body_idx].for_each_particle(|particle_idx| {
-//             let particle = &mut context.sim.particles[particle_idx];
-//             particle.vel = velocity;
-//         });
-//     }
-
-//     fn handle_key(&mut self, key: winit::keyboard::KeyCode, is_pressed: bool) -> bool {
-//         // No key handling for now
-//         false
-//     }
-// }
-
-impl EntityConstraintSolver for ElevatorEntity {
-    fn solve_constraints(&mut self, sim: &mut crate::particles::simulation::Simulation, time_delta: f32) {
-        let pos = sim.bodies[self.body_idx].center;
-
-        // todo: support horizontal movement too
-        let movement = match self.state {
-            ElevatorState::MovingUp => {
-                if pos.y >= self.end.y {
-                    self.state = ElevatorState::MovingDown;
-                    Vec2::new(0.0, -self.speed)
-                } else {
-                    Vec2::new(0.0, self.speed)
+    pub fn update(&mut self, context: &mut crate::entity::entity::UpdateContext) {
+        for e in self.0.iter_mut() {
+            // todo: support horizontal movement too
+            match e.state {
+                ElevatorState::MovingUp => {
+                    if e.pos.y >= e.end.y {
+                        e.state = ElevatorState::AtTopWaiting;
+                        e.wait_timer = e.wait_time;
+                        e.pos = e.end;
+                    } else {
+                        e.pos += Vec2::new(0.0, e.speed) * context.time_delta;
+                    }
                 }
-            }
-            ElevatorState::MovingDown => {
-                if pos.y <= self.start.y {
-                    self.state = ElevatorState::MovingUp;
-                    Vec2::new(0.0, self.speed)
-                } else {
-                    Vec2::new(0.0, -self.speed)
+
+                ElevatorState::AtTopWaiting => {
+                    e.wait_timer -= context.time_delta;
+                    if e.wait_timer <= 0.0 {
+                        e.state = ElevatorState::MovingDown;
+                    }
                 }
+
+                ElevatorState::MovingDown => {
+                    if e.pos.y <= e.start.y {
+                        e.state = ElevatorState::AtBottomWaiting;
+                        e.wait_timer = e.wait_time;
+                        e.pos = e.start;
+                    } else {
+                        e.pos += Vec2::new(0.0, -e.speed) * context.time_delta;
+                    }
+                }
+                
+                ElevatorState::AtBottomWaiting => {
+                    e.wait_timer -= context.time_delta;
+                    if e.wait_timer <= 0.0 {
+                        e.state = ElevatorState::MovingUp;
+                    }
+                },
+            };
+        }
+    }
+
+    pub fn update_counts(&mut self, sim: &mut crate::particles::simulation::Simulation) {
+        // for e in self.0.iter_mut() {
+        //     sim.bodies[e.body_idx].update_counts(&mut sim.counts, 1);
+        // }
+
+        for e in self.0.iter_mut() {
+            for pi in e.particle_indicies.iter() {
+                sim.counts[*pi] += 1;
             }
-        };
+        }
+    }
 
-        let velocity = movement * time_delta;
+    pub fn solve_constraints(&mut self, sim: &mut crate::particles::simulation::Simulation, time_delta: f32) {
+        // for e in self.0.iter_mut() {
+        //     let body_pos = sim.bodies[e.body_idx].center;
+        //     let offset = e.pos - body_pos;
 
-        sim.bodies[self.body_idx].for_each_particle(|particle_idx| {
-            let particle = &mut sim.particles[particle_idx];
-            particle.pos_guess += velocity;
-        });
+        //     sim.bodies[e.body_idx].for_each_particle(|particle_idx| {
+        //         let particle = &mut sim.particles[particle_idx];
+        //         particle.pos_guess += offset / sim.counts[particle_idx] as f32;
+        //     });
+        // }
+
+        for e in self.0.iter_mut() {
+            for (idx, pi) in e.particle_indicies.iter().enumerate() {
+                let pos_guess = sim.particles[*pi].pos_guess;
+                let where_particle_pos_guess_should_be = e.pos + e.first_particle_offset + Vec2::new(e.particle_radius * 2.0 * (idx as f32), 0.0);
+
+                let offset = where_particle_pos_guess_should_be - pos_guess;
+
+                sim.particles[*pi].pos_guess += offset / sim.counts[*pi] as f32;
+            }
+        }
     }
 }

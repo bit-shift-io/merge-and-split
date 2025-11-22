@@ -60,10 +60,7 @@ impl Simulation {
         }
     }
 
-    pub fn tick<F>(&mut self, time_delta: f32, mut solve_constraints_callback: F)
-    where
-        F: FnMut(&mut Self, f32),
-    {
+    pub fn tick_1(&mut self, time_delta: f32) {
         // https://github.com/ebirenbaum/ParticleSolver/blob/master/cpu/src/simulation.cpp
 
         debug_assert!(self.contact_boundary_constraints.len() == 0);
@@ -200,8 +197,12 @@ impl Simulation {
         for c in self.contact_boundary_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
-        solve_constraints_callback(self, time_delta);
 
+        // update_counts_callback(self);
+    }
+
+    pub fn tick_2(&mut self, time_delta: f32, solver_iterations: i32, iteration: i32) {
+        
         // for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
         //     ConstraintGroup g = (ConstraintGroup) j;
 
@@ -219,8 +220,9 @@ impl Simulation {
 
 
         // // (16) For solver iterations
-        let solver_iterations = 3; // user tweakable
-        for i in 0..solver_iterations {
+        let i = iteration;
+        //let solver_iterations = 3; // user tweakable
+        //for i in 0..solver_iterations {
  
             // (17) For constraint group
             //  (18, 19, 20) Solve constraints in g and update ep
@@ -247,6 +249,7 @@ impl Simulation {
             for c in self.contact_boundary_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts)
             }
+            //solve_constraints_callback(self, time_delta);
 
         //     for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
         //         ConstraintGroup g = (ConstraintGroup) j;
@@ -261,8 +264,10 @@ impl Simulation {
         //             constraints[g].at(k)->project(&m_particles, m_counts);
         //         }
         //     }
-        }
+        //}
+    }
 
+    pub fn tick_3(&mut self, time_delta: f32) {
         // (23) For all particles
         for i in 0..self.particles.len() {
             let p = &mut self.particles[i];
