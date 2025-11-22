@@ -1,13 +1,7 @@
 
 #[cfg(test)]
 mod tests {
-    //use bevy::math::Vec2;
-
-    //use crate::v5::{particle::Particle, particle_vec::SharedParticleVec, shape_builder::{circle::Circle, line_segment::LineSegment, shape_builder::ShapeBuilder}};
-
-    use crate::{core::math::vec2::Vec2, simulation::particles::{particle::Particle, shape_builder::{circle::Circle, line_segment::LineSegment, shape_builder::ShapeBuilder}}};
-
-    use super::*;
+    use crate::{core::math::vec2::Vec2, simulation::particles::{particle::Particle, shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}}};
 
     #[test]
     fn set_particle_properties() {

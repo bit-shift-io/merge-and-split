@@ -1,7 +1,6 @@
 // Based on https://github.com/sotrh/learn-wgpu/blob/master/code/beginner/tutorial9-models/src/model.rs
 
 use bytemuck::NoUninit;
-use cgmath::prelude::*;
 use wgpu::{naga::proc::index, util::DeviceExt};
 use winit::{
     application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window

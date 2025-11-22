@@ -148,10 +148,10 @@ impl SimulationDemos {
                 sim.create_rigid_body(&mut particles, &sdf_data);
 
                 // for (int x = 0; x < dim.x; x++) {
-                //     double xVal = j * 4 + PARTICLE_DIAM * ((x % dim.x) - dim.x / 2);
+                //     double x_val = j * 4 + PARTICLE_DIAM * ((x % dim.x) - dim.x / 2);
                 //     for (int y = 0; y < dim.y; y++) {
-                //         double yVal = ((2 * i + 1) * dim.y + (y % dim.y) + 1) * PARTICLE_DIAM;
-                //         Particle *part = new Particle(glm::dvec2(xVal, yVal), 4.);
+                //         double y_val = ((2 * i + 1) * dim.y + (y % dim.y) + 1) * PARTICLE_DIAM;
+                //         Particle *part = new Particle(glm::dvec2(x_val, y_val), 4.);
                 //         part->sFriction = 1.;
                 //         part->kFriction = 1.;
                 //         particles.push(part);
@@ -413,10 +413,10 @@ impl SimulationDemos {
             sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
     
             for x in 0..dim_x { //(int x = 0; x < dim.x; x++) {
-                let xVal = particle_diam * ((x % dim_x) as f32 - dim_x as f32 / 2.0);
+                let x_val = particle_diam * ((x % dim_x) as f32 - dim_x as f32 / 2.0);
                 for y in 0..dim_y { //(int y = 0; y < dim.y; y++) {
-                    let yVal = (dim_y as f32 + (y % dim_y) as f32 + 1.0) * particle_diam;
-                    particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(xVal-3.0, yVal + 10.0)).set_mass_2(2.0));
+                    let y_val = (dim_y as f32 + (y % dim_y) as f32 + 1.0) * particle_diam;
+                    particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x_val-3.0, y_val + 10.0)).set_mass_2(2.0));
                 }
             }
             sim.create_rigid_body(&mut particles, &sdf_data);
@@ -441,10 +441,10 @@ impl SimulationDemos {
             sdf_data.push(SdfData::new(Vec2::new(1.0, 1.0).normalize(), particle_rad * root2));
 
             for x in 0..dim_x { //(int x = 0; x < dim.x; x++) {
-                let xVal = particle_diam * ((x % dim_x) as f32 - dim_x as f32 / 2.0);
+                let x_val = particle_diam * ((x % dim_x) as f32 - dim_x as f32 / 2.0);
                 for y in 0..dim_y {//(int y = 0; y < dim.y; y++) {
-                    let yVal = (dim_y as f32 + (y % dim_y) as f32 + 1.0) * particle_diam;
-                    particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(xVal+3.0, yVal + 10.0)).set_mass_2(0.2));
+                    let y_val = (dim_y as f32 + (y % dim_y) as f32 + 1.0) * particle_diam;
+                    particles.push(*Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x_val+3.0, y_val + 10.0)).set_mass_2(0.2));
                 }
             }
             sim.create_rigid_body(&mut particles, &sdf_data);
@@ -775,7 +775,7 @@ impl SimulationDemos {
 
         let mut rng = rand::rng();
 
-        let mut x = 1.0;;
+        let mut x = 1.0;
         while x <= scale { // for(double x = 1.; x <= scale; x+=delta) {
             sim.add_particle(*Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(-x,scale-x)).set_mass_2(0.0));
             sim.add_particle(*Particle::default().set_colour(red).set_radius(particle_rad).set_pos(Vec2::new(x,scale-x)).set_mass_2(0.0));
@@ -831,8 +831,6 @@ impl SimulationDemos {
         let particle_diam = 0.5;
         let particle_rad = particle_diam / 2.0;
 
-        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
-
         let mut rng = rand::rng();
 
         sim.x_boundaries = Vec2::new(-15.0,100.0);
@@ -853,7 +851,7 @@ impl SimulationDemos {
         // data.append(SDFData(glm::normalize(glm::dvec2(-1,-1)), PARTICLE_RAD * root2));
         // data.append(SDFData(glm::normalize(glm::dvec2(-1,1)), PARTICLE_RAD * root2));
 
-        let mut i = 0;;
+        let mut i = 0;
         while i < (dim.x as i32 - 2) { //for (int i = 0; i < dim.x - 2; i++) {
             sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
             sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
@@ -877,12 +875,12 @@ impl SimulationDemos {
                 let mut x = 0;
                 while x < dim.x as i32 { //for (int x = 0; x < dim.x; x++) {
                     let num = if i % 2 == 0 { 3 } else { -1 }; //(i % 2 == 0 ? 3 : -1);
-                    let xVal = j as f32 * (f32::EPSILON + dim.x / 2.0) + particle_diam * (x % dim.x as i32) as f32 - num as f32 * particle_rad;
+                    let x_val = j as f32 * (f32::EPSILON + dim.x / 2.0) + particle_diam * (x % dim.x as i32) as f32 - num as f32 * particle_rad;
 
                     let mut y = 0;
                     while y < dim.y as i32 { //for (int y = 0; y < dim.y; y++) {
-                        let yVal = (i as f32 * dim.y + (y % dim.y as i32) as f32 + f32::EPSILON) * particle_diam + particle_rad;
-                        let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(xVal, yVal)).set_mass_2(30.0);
+                        let y_val = (i as f32 * dim.y + (y % dim.y as i32) as f32 + f32::EPSILON) * particle_diam + particle_rad;
+                        let mut part = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(x_val, y_val)).set_mass_2(30.0);
                         part.s_friction = 1.0;
                         part.k_friction = 1.0;
                         particles.push(part);

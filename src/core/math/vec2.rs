@@ -1,7 +1,6 @@
-use std::fmt;
 use std::ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use cgmath::{Basis2, Deg, InnerSpace, MetricSpace, Rad, Rotation, Rotation2, VectorSpace, Zero};
+use cgmath::{Basis2, Deg, InnerSpace, MetricSpace, Rad, Rotation, Rotation2, Zero};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Vec2(pub cgmath::Vector2<f32>);
@@ -69,6 +68,18 @@ impl Vec2 {
 
     pub fn max(a: Vec2, b: Vec2) -> Vec2 {
         Vec2::new(a.x.max(b.x), a.y.max(b.y))
+    }
+
+    pub fn rotate_deg(vec: Vec2, angle_deg: f32) -> Vec2 {
+        let rotation: Basis2<f32> = Rotation2::from_angle(Deg(angle_deg));
+        let rotated_vector = rotation.rotate_vector(vec.0);
+        Vec2(rotated_vector)
+    }
+
+    pub fn rotate_rad(vec: Vec2, angle_rad: f32) -> Vec2 {
+        let rotation: Basis2<f32> = Rotation2::from_angle(Rad(angle_rad));
+        let rotated_vector = rotation.rotate_vector(vec.0);
+        Vec2(rotated_vector)
     }
 
 }
@@ -193,14 +204,14 @@ pub fn reflect_vector_a_around_b(a: Vec2, b: Vec2) -> Vec2 {
 // }
 
 
-pub fn rotate_vector_deg(vec: Vec2, angle_deg: f32) -> Vec2 {
-    let rotation: Basis2<f32> = Rotation2::from_angle(Deg(angle_deg));
-    let rotated_vector = rotation.rotate_vector(vec.0);
-    Vec2(rotated_vector)
-}
+// pub fn rotate_vector_deg(vec: Vec2, angle_deg: f32) -> Vec2 {
+//     let rotation: Basis2<f32> = Rotation2::from_angle(Deg(angle_deg));
+//     let rotated_vector = rotation.rotate_vector(vec.0);
+//     Vec2(rotated_vector)
+// }
 
-pub fn rotate_vector_rad(vec: Vec2, angle_rad: f32) -> Vec2 {
-    let rotation: Basis2<f32> = Rotation2::from_angle(Rad(angle_rad));
-    let rotated_vector = rotation.rotate_vector(vec.0);
-    Vec2(rotated_vector)
-}
+// pub fn rotate_vector_rad(vec: Vec2, angle_rad: f32) -> Vec2 {
+//     let rotation: Basis2<f32> = Rotation2::from_angle(Rad(angle_rad));
+//     let rotated_vector = rotation.rotate_vector(vec.0);
+//     Vec2(rotated_vector)
+// }

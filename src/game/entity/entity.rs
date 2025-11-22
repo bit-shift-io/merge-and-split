@@ -11,13 +11,13 @@ pub struct UpdateContext<'a> {
     pub camera: &'a mut Camera,
 }
 
-pub trait Entity {
-    // Ugh, having this on every entity sucks. In future add subscribers or similar.
-    fn update(&mut self, context: &mut UpdateContext);
+// pub trait Entity {
+//     // Ugh, having this on every entity sucks. In future add subscribers or similar.
+//     fn update(&mut self, context: &mut UpdateContext);
 
-    // Ugh, having this on every entity sucks. In future add subscribers or similar.
-    fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool;
-}
+//     // Ugh, having this on every entity sucks. In future add subscribers or similar.
+//     fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool;
+// }
 
 
 // pub trait EntityUpdate {

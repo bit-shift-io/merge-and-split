@@ -1,7 +1,6 @@
-use std::fmt;
 use std::ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
-use cgmath::{InnerSpace, MetricSpace, VectorSpace, Zero};
+use cgmath::{InnerSpace, Zero};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Vec4(pub cgmath::Vector4<f32>);

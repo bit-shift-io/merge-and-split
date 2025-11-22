@@ -1,6 +1,6 @@
 use crate::simulation::particles::particle_vec::ParticleHandle;
 
-use super::{rectangle::Rectangle, shape_builder::{ShapeBuilder, ShapeBuilderOperation}};
+use super::rectangle::Rectangle;
 
 /// Takes a Rectangle and created stick constraints in a grid layout between them
 pub struct RectangleStickGrid {

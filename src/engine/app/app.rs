@@ -1,7 +1,5 @@
-use std::{iter, sync::Arc};
+use std::sync::Arc;
 
-use cgmath::prelude::*;
-use wgpu::util::DeviceExt;
 use winit::{
     application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window
 };

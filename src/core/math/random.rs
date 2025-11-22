@@ -1,4 +1,4 @@
-use rand_seeder::{Seeder, SipHasher};
+use rand_seeder::Seeder;
 use rand_pcg::Pcg64;
 
 use chrono::Utc;

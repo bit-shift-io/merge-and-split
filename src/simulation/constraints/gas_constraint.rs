@@ -14,7 +14,7 @@ const relaxation: f32 = 0.01; // Epsilon in gamma correction denominator
 // Pressure terms
 const k_p: f32 = 0.1;
 const e_p: f32 = 4.0;
-const dq_p: f32 = 0.2;
+const DQ_P: f32 = 0.2;
 
 
 pub struct GasConstraint {
@@ -127,7 +127,7 @@ impl GasConstraint {
                 let r = p_i.pos_guess - p_j.pos_guess;
                 let rlen = r.magnitude(); //glm::length(r);
                 let sg = spiky_grad(&r, rlen);
-                let lambda_corr = -k_p * (poly6(rlen * rlen) / poly6(dq_p * dq_p * h * h)).powf(e_p); //pow(, e_p);
+                let lambda_corr = -k_p * (poly6(rlen * rlen) / poly6(DQ_P * DQ_P * h * h)).powf(e_p); //pow(, e_p);
 
                 let lambdas_i = match self.lambdas.get(&i) {
                     Some(value) => *value,

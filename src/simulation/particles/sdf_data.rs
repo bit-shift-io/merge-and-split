@@ -1,4 +1,4 @@
-use crate::core::math::vec2::{rotate_vector_deg, rotate_vector_rad, Vec2};
+use crate::core::math::vec2::Vec2;
 
 // Signed distance field data for rigid-body collisions
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -16,7 +16,7 @@ impl SdfData {
     }
 
     pub fn rotate(&mut self, angle_rad: f32) {
-        let rotated_vector = rotate_vector_rad(self.gradient, angle_rad);
+        let rotated_vector = Vec2::rotate_rad(self.gradient, angle_rad);
         self.gradient = rotated_vector;
     }
 }
