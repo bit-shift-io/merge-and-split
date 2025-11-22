@@ -6,14 +6,14 @@ use winit::{event::WindowEvent, keyboard::KeyCode};
 use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::Shader}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
 
 pub struct BasicParticles {
-    camera: Option<Camera>,
+    camera: Camera,
     camera_controller: CameraController,
     particle_vec: ParticleVec,
     //fixed_point_spring_vec: FixedPointSpringVec,
-    particle_instance_renderer: Option<InstanceRenderer>,
-    quad_mesh: Option<Mesh>,
-    material: Option<Material>,
-    shader: Option<Shader>,
+    particle_instance_renderer: InstanceRenderer,
+    quad_mesh: Mesh,
+    material: Material,
+    shader: Shader,
     frame_idx: u128,
     entity_system: EntitySystem,
     event_system: EventSystem,
@@ -21,200 +21,8 @@ pub struct BasicParticles {
     simulation: Simulation
 }
 
-
-// fn setup_stick_test(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
-//     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-//     let particle_radius = 0.1;
-//     let static_large_mass = 100.0; //10000.0;
-
-//     // static
-//     {
-//         let red = Vec4::RED;
-//         let mut builder = ShapeBuilder::new();
-//         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-//             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
-//             .create_in_particle_vec(particle_vec);
-
-//         let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
-//         entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
-//     }
-
-//     // stick connecting 2 particles
-//     {
-//         let blue = Vec4::BLUE;
-
-//         let mut stick_vec = StickVec::new();
-
-//         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
-//         let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
-        
-//         let start_index = particle_vec.len();
-//         particle_vec.push(p1);
-//         particle_vec.push(p2);
-
-//         stick_vec.push(Stick::from_particles(particle_vec, [start_index, start_index + 1]));
-//         entity_system.push(StickVecEntity::new(stick_vec));
-//     }
-// }
-
-// fn setup_stick_test_2(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
-//     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-//     let particle_radius = 0.1;
-//     let static_large_mass = 100.0; //10000.0;
-
-//     // static
-//     {
-//         let red = Vec4::RED;
-//         let mut builder = ShapeBuilder::new();
-//         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-//             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
-//             .create_in_particle_vec(particle_vec);
-
-//         let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
-//         entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
-//     }
-
-//     // sticks connecting 3 particles into a triangle
-//     {
-//         let blue = Vec4::BLUE;
-
-//         let mut stick_vec = StickVec::new();
-
-//         let particle_radius = 0.2;
-//         let particle_mass = 10.0;
-
-//         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
-//         let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
-//         let p3 = *Particle::default().set_pos(Vec2::new(0.5, 1.5)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
-        
-//         let start_index = particle_vec.len();
-//         particle_vec.push(p1);
-//         particle_vec.push(p2);
-//         particle_vec.push(p3);
-
-//         stick_vec.push(Stick::from_particles(particle_vec, [start_index + 0, start_index + 1]));
-//         stick_vec.push(Stick::from_particles(particle_vec, [start_index + 1, start_index + 2]));
-//         stick_vec.push(Stick::from_particles(particle_vec, [start_index + 0, start_index + 2]));
-//         entity_system.push(StickVecEntity::new(stick_vec));
-//     }
-// }
-
-
-// fn setup_stick_test_3(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
-//     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-//     let particle_radius = 0.1;
-//     let static_large_mass = 100.0; //10000.0;
-
-//     // static
-//     {
-//         let red = Vec4::RED;
-//         let mut builder = ShapeBuilder::new();
-//         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-//             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
-//             .create_in_particle_vec(particle_vec);
-
-//         let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
-//         entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
-//     }
-
-//     // stick of circles
-//     {
-//         let blue = Vec4::BLUE;
-
-//         let mut stick_vec = StickVec::new();
-
-//         let origin = Vec2::new(0.0, 2.0);
-//         let circle_radius = 1.0;
-//         let particle_radius = 0.1;
-
-//         let mut builder = ShapeBuilder::new();
-//         builder.set_particle_template(Particle::default().set_colour(blue).set_radius(particle_radius).clone());
-//         builder.apply_operation(Circle::new(origin, circle_radius))
-//             .create_in_particle_vec(particle_vec);
-
-//         AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 1, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect adjacent points
-//         AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
- 
-//         entity_system.push(StickVecEntity::new(stick_vec));
-//     }
-// }
-
-
-// fn setup_circular_contained_liquid(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
-//     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-//     let particle_radius = 0.1;
-//     let static_large_mass = 1.0; //10000.0;
-
-//     // static
-//     let red = Vec4::RED;
-//     let mut perimeter = ShapeBuilder::new();
-//     perimeter.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-//         .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 5.0))
-//         .create_in_particle_vec(particle_vec);
-
-//     let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&perimeter.particles.as_slice());
-//     entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
-
-
-//     println!("Perimiter has particles from 0 to {}", particle_vec.len());
-
-//     // some dynamic particles on the inside   
-//     let blue = Vec4::BLUE; 
-//     let mut liquid = ShapeBuilder::new();
-//     liquid
-//         .set_particle_template(Particle::default().set_colour(blue).set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
-//         .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(5.0, 5.0)))
-//         .create_in_particle_vec(particle_vec);
-
-//     // // Lets debug what happens to this particle (top left of the fluid)
-//     // particle_vec[50].set_debug(true);
-
-//     //fixed_point_spring_vec
-// }
-
-// fn setup_3_particles(particle_vec: &mut ParticleVec) {
-//     let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
-//     let p2 = *Particle::default().set_pos(Vec2::new(2.0, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
-//     particle_vec.push(p1);
-//     particle_vec.push(p2);
-
-//     let p3 = *Particle::default().set_pos(Vec2::new(1.0, 2.0)).set_vel(Vec2::new(-0.0, -0.1));
-//     particle_vec.push(p3);
-// }
-
 impl BasicParticles {
-    pub fn new() -> Self {
-        let camera_controller = CameraController::new(0.2);
-
-        let entity_system = EntitySystem::new();
-        let particle_vec = ParticleVec::new();
-        
-        //setup_circular_contained_liquid(&mut entity_system, &mut particle_vec);
-        //setup_3_particles(&mut particle_vec);
-
-        Self {
-            camera: None,
-            camera_controller,
-            particle_vec,
-            //fixed_point_spring_vec,
-            particle_instance_renderer: None,
-            quad_mesh: None,
-            material: None,
-            shader: None,
-            frame_idx: 0,
-            entity_system,
-            event_system: EventSystem::new(),
-
-            simulation: Simulation::new(),
-        }
-    }
-
     fn update_particle_instances(&mut self, queue: &wgpu::Queue, device: &wgpu::Device) {
-        let particle_instance_renderer = match &mut self.particle_instance_renderer {
-            Some(s) => s,
-            None => return,
-        };
-
         // Add particles into the instance renderer
         let mut instances: Vec<Instance> = vec![]; 
 
@@ -248,107 +56,108 @@ impl BasicParticles {
 
             instances.push(Instance { position, rotation, colour, radius });
         }
-        particle_instance_renderer.update_instances(&instances, &queue, &device);
+        self.particle_instance_renderer.update_instances(&instances, &queue, &device);
     }
 }
 
 impl Plugin for BasicParticles {
-    fn init(&mut self, app: &mut App) {
-        let state = match &mut app.state {
-            Some(s) => s,
-            None => return,
-        };
+    fn new(state: &crate::engine::app::state::State) -> Self {
+        let camera_controller = CameraController::new(0.2);
 
-        self.particle_instance_renderer = Some(InstanceRenderer::new(&state.device, &state.queue, &state.config));
-        self.update_particle_instances(&state.queue, &state.device);
+        let mut entity_system = EntitySystem::new();
+        let mut particle_vec = ParticleVec::new();
+        let mut simulation = Simulation::new();
 
-        self.quad_mesh = Some(Mesh::from_verticies_and_indicies("Quad".to_owned(), &state.device, QUAD_VERTICES, QUAD_INDICES));
-        self.material = Some(Material::from_file("marble.png".to_owned(), &state.device, &state.queue));
-
-        self.camera = Some(Camera::new(&state.device, state.config.width as f32 / state.config.height as f32));
+        let particle_instance_renderer = InstanceRenderer::new(&state.device, &state.queue, &state.config);
         
-        let camera = match &self.camera {
-            Some(c) => c,
-            None => return,
-        };
+        let quad_mesh = Mesh::from_verticies_and_indicies("Quad".to_owned(), &state.device, QUAD_VERTICES, QUAD_INDICES);
+        let material = Material::from_file("marble.png".to_owned(), &state.device, &state.queue);
 
-        let diffuse_texture = match &self.material {
-            Some(m) => &m.diffuse_texture,
-            None => return,
-        };
+        let camera = Camera::new(&state.device, state.config.width as f32 / state.config.height as f32);
+        
+        let diffuse_texture = &material.diffuse_texture;
 
-        self.shader = Some(Shader::new("particle_shader.wgsl".to_owned(), &state.device, 
-            camera,
+        let shader = Shader::new("particle_shader.wgsl".to_owned(), &state.device, 
+            &camera,
             diffuse_texture,
             &[Vertex::desc(), InstanceRaw::desc()],
             state.config.format,
-        ));
+        );
 
         // Determine what "scene" to load based on command line argument.
         let args: Vec<String> = env::args().collect();
         let scene = if args.len() >= 2 { args[1].clone() } else { String::from("") };
         match scene.as_str() {
-            "friction" => SimulationDemos::init_friction(&mut self.simulation),
-            "granular" => SimulationDemos::init_granular(&mut self.simulation),
-            "sdf" => SimulationDemos::init_sdf(&mut self.simulation),
-            "boxes" => SimulationDemos::init_boxes(&mut self.simulation),
-            "wall" => SimulationDemos::init_wall(&mut self.simulation),
-            "pendulum" => SimulationDemos::init_pendulum(&mut self.simulation),
-            "rope" => SimulationDemos::init_rope(&mut self.simulation),
-            "fluid" => SimulationDemos::init_fluid(&mut self.simulation),
-            "fluid_solid" => SimulationDemos::init_fluid_solid(&mut self.simulation),
-            "gas" => SimulationDemos::init_gas(&mut self.simulation),
-            "water_balloon" => SimulationDemos::init_water_balloon(&mut self.simulation),
-            "newtons_cradle" => SimulationDemos::init_newtons_cradle(&mut self.simulation),
-            "smoke_open" => SimulationDemos::init_smoke_open(&mut self.simulation),
-            "smoke_closed" => SimulationDemos::init_smoke_closed(&mut self.simulation),
-            "rope_gas" => SimulationDemos::init_rope_gas(&mut self.simulation),
-            "volcano" => SimulationDemos::init_volcano(&mut self.simulation),
-            "wrecking_ball" => SimulationDemos::init_wrecking_ball(&mut self.simulation),
+            "friction" => SimulationDemos::init_friction(&mut simulation),
+            "granular" => SimulationDemos::init_granular(&mut simulation),
+            "sdf" => SimulationDemos::init_sdf(&mut simulation),
+            "boxes" => SimulationDemos::init_boxes(&mut simulation),
+            "wall" => SimulationDemos::init_wall(&mut simulation),
+            "pendulum" => SimulationDemos::init_pendulum(&mut simulation),
+            "rope" => SimulationDemos::init_rope(&mut simulation),
+            "fluid" => SimulationDemos::init_fluid(&mut simulation),
+            "fluid_solid" => SimulationDemos::init_fluid_solid(&mut simulation),
+            "gas" => SimulationDemos::init_gas(&mut simulation),
+            "water_balloon" => SimulationDemos::init_water_balloon(&mut simulation),
+            "newtons_cradle" => SimulationDemos::init_newtons_cradle(&mut simulation),
+            "smoke_open" => SimulationDemos::init_smoke_open(&mut simulation),
+            "smoke_closed" => SimulationDemos::init_smoke_closed(&mut simulation),
+            "rope_gas" => SimulationDemos::init_rope_gas(&mut simulation),
+            "volcano" => SimulationDemos::init_volcano(&mut simulation),
+            "wrecking_ball" => SimulationDemos::init_wrecking_ball(&mut simulation),
             _ => {
                 // Generate a procedural level.
-                LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec, &mut self.simulation);
+                LevelBuilder::default().generate_level_based_on_date(&mut entity_system, &mut particle_vec, &mut simulation);
 
                 // Add car to the scene.
-                let car = CarEntity::new(&mut self.particle_vec, &mut self.simulation, Vec2::new(0.0, 1.0));
-                self.entity_system.car_entity_system.push(car);
+                let car = CarEntity::new(&mut particle_vec, &mut simulation, Vec2::new(0.0, 1.0));
+                entity_system.car_entity_system.push(car);
                 //self.entity_system.push(car);
             }
         }
 
-        //setup_circular_contained_liquid(&mut self.entity_system, &mut self.particle_vec);
-        //setup_stick_test(&mut self.entity_system, &mut self.particle_vec);
-        //setup_stick_test_2(&mut self.entity_system, &mut self.particle_vec);
-        //setup_stick_test_3(&mut self.entity_system, &mut self.particle_vec);
+        let mut particles = Self {
+            camera,
+            camera_controller,
+            particle_vec,
+            //fixed_point_spring_vec,
+            particle_instance_renderer,
+            quad_mesh,
+            material,
+            shader,
+            frame_idx: 0,
+            entity_system,
+            event_system: EventSystem::new(),
+
+            simulation,
+        };
+
+        particles.update_particle_instances(&state.queue, &state.device);
+        particles
     }
 
-
-    fn resize(&mut self, app: &mut App, width: u32, height: u32) {
+    fn resize(&mut self, app: &mut App<BasicParticles>, width: u32, height: u32) {
         if width > 0 && height > 0 {
             let state = match &mut app.state {
                 Some(s) => s,
                 None => return,
             };
-            let camera = match &mut self.camera {
-                Some(c) => c,
-                None => return,
-            };
-            camera.aspect = state.config.width as f32 / state.config.height as f32;
+            self.camera.aspect = state.config.width as f32 / state.config.height as f32;
         }
     }
 
-    fn window_event(&mut self, app: &mut App, event: WindowEvent) {
+    fn window_event(&mut self, app: &mut App<BasicParticles>, event: WindowEvent) {
         self.event_system.queue_window_event(event);
     }
 
-    fn handle_key(&mut self, app: &mut App, key: KeyCode, pressed: bool) {
+    fn handle_key(&mut self, app: &mut App<BasicParticles>, key: KeyCode, pressed: bool) {
         self.camera_controller.handle_key(key, pressed);
 
         // todo: this should occur when we handle window events in the event system
         self.entity_system.handle_key(key, pressed);
     }
 
-    fn update(&mut self, app: &mut App) {
+    fn update(&mut self, app: &mut App<BasicParticles>) {
         // if self.frame_idx > 140 {
         //     thread::sleep(Duration::from_millis(200));
         // }
@@ -413,23 +222,14 @@ impl Plugin for BasicParticles {
             None => return,
         };
 
-        let camera = match &mut self.camera {
-            Some(c) => c,
-            None => return,
-        };
-        self.camera_controller.update_camera(camera);
+        self.camera_controller.update_camera(&mut self.camera);
 
 
         // Apply constraints
-        self.entity_system.update(&mut self.particle_vec, &mut self.simulation, camera, time_delta);
+        self.entity_system.update(&mut self.particle_vec, &mut self.simulation, &mut self.camera, time_delta);
 
 
-        let particle_instance_renderer = match &mut self.particle_instance_renderer {
-            Some(p) => p,
-            None => return,
-        };
-
-        camera.update_camera_uniform(&state.queue);
+        self.camera.update_camera_uniform(&state.queue);
         //particle_instance_renderer.update_camera_uniform(&camera, &state.queue);
 
 
@@ -437,40 +237,23 @@ impl Plugin for BasicParticles {
         self.update_particle_instances(&state.queue, &state.device);
     }
 
-    fn render(&self, app: &mut App) {
+    fn render(&self, app: &mut App<BasicParticles>) {
         let state = match &mut app.state {
             Some(s) => s,
             None => return,
         };
 
         let render_context = state.render(|render_pass| {
-            let shader = match &self.shader {
-                Some(s) => s,
-                None => return,
-            };
-            shader.bind(render_pass);
-
-            let material = match &self.material {
-                Some(m) => m,
-                None => return,
-            };
-            material.bind(render_pass, 0);
+            self.shader.bind(render_pass);
+            self.material.bind(render_pass, 0);
 
             {
-                let particle_instance_renderer = match &self.particle_instance_renderer {
-                    Some(p) => p,
-                    None => return,
-                };
-                particle_instance_renderer.render(render_pass);
+                self.particle_instance_renderer.render(render_pass);
             }
 
             // Trying to drawn an axis so we know which way is up and down
             {
-                let quad_mesh = match &self.quad_mesh {
-                    Some(m) => m,
-                    None => return,
-                };
-                quad_mesh.render(render_pass, 0..1);
+                self.quad_mesh.render(render_pass, 0..1);
             }
         });
     }

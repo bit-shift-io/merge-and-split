@@ -9,28 +9,23 @@ use wasm_bindgen::prelude::*;
 
 use crate::engine::{app::{camera::{Camera, CameraController, CameraUniform}, plugin::Plugin, state::State}, renderer::texture};
 
-pub struct App {
+pub struct App<P: Plugin> {
     #[cfg(target_arch = "wasm32")]
     proxy: Option<winit::event_loop::EventLoopProxy<State>>,
     pub state: Option<State>,
     event_loop: Option<EventLoop<State>>,
-    plugins: Vec<Box<dyn Plugin>>,
+    plugin: Option<P>,
 }
 
-impl App {
+impl<P: Plugin> App<P> {
     pub fn new() -> Self {
         Self {
             #[cfg(target_arch = "wasm32")]
             proxy: None,
             state: None,
             event_loop: None,
-            plugins: vec![],
+            plugin: None,
         }
-    }
-
-    pub fn add_plugin(&mut self, plugin: Box<dyn Plugin>) -> &mut Self {
-        self.plugins.push(plugin);
-        self
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
@@ -60,12 +55,10 @@ impl App {
     }
 
     fn on_state_set(&mut self) {
-        // Take the plugins out temporarily to avoid double mutable borrow
-        let mut plugins = std::mem::take(&mut self.plugins);
-        for plugin in plugins.iter_mut() {
-            plugin.init(self);
+        // Initialize the plugin now that we have state
+        if let Some(state) = &self.state {
+            self.plugin = Some(P::new(state));
         }
-        self.plugins = plugins;
     }
 
     pub fn handle_key(&mut self, event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
@@ -76,22 +69,17 @@ impl App {
         };
         state.handle_key(event_loop, key, pressed);
 
-        // Take the plugins out temporarily to avoid double mutable borrow
-        let mut plugins = std::mem::take(&mut self.plugins);
-        for plugin in plugins.iter_mut() {
+        if let Some(mut plugin) = self.plugin.take() {
             plugin.handle_key(self, key, pressed);
+            self.plugin = Some(plugin);
         }
-        self.plugins = plugins;
     }
 
     pub fn render(&mut self) {
-
-        // Take the plugins out temporarily to avoid double mutable borrow
-        let mut plugins = std::mem::take(&mut self.plugins);
-        for plugin in plugins.iter_mut() {
+        if let Some(mut plugin) = self.plugin.take() {
             plugin.render(self);
+            self.plugin = Some(plugin);
         }
-        self.plugins = plugins;
 
 
         // match self.render_internal() /*state.render()*/ {
@@ -113,7 +101,7 @@ impl App {
     }
 }
 
-impl ApplicationHandler<State> for App {
+impl<P: Plugin> ApplicationHandler<State> for App<P> {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         #[allow(unused_mut)]
         let mut window_attributes = Window::default_attributes();
@@ -178,63 +166,34 @@ impl ApplicationHandler<State> for App {
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
-        let state = match &mut self.state {
-            Some(s) => s,
-            None => return,
-        };
+        if self.state.is_none() {
+            return;
+        }
 
-        // {
-        //     // Take the plugins out temporarily to avoid double mutable borrow
-        //     let mut plugins = std::mem::take(&mut self.plugins);
-        //     for plugin in plugins.iter_mut() {
-        //         plugin.window_event(self, event.clone());
-        //     }
-        //     self.plugins = plugins;
-        // }
+        if let Some(mut plugin) = self.plugin.take() {
+            plugin.window_event(self, event.clone());
+            self.plugin = Some(plugin);
+        }
 
         match event {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => {
-                state.resize(size.width, size.height);
+                if let Some(state) = &mut self.state {
+                    state.resize(size.width, size.height);
+                }
 
-                {
-                    // Take the plugins out temporarily to avoid double mutable borrow
-                    let mut plugins = std::mem::take(&mut self.plugins);
-                    for plugin in plugins.iter_mut() {
-                        plugin.resize(self, size.width, size.height);
-                    }
-                    self.plugins = plugins;
+                if let Some(mut plugin) = self.plugin.take() {
+                    plugin.resize(self, size.width, size.height);
+                    self.plugin = Some(plugin);
                 }
             },
             WindowEvent::RedrawRequested => {
-                {
-                    // Take the plugins out temporarily to avoid double mutable borrow
-                    let mut plugins = std::mem::take(&mut self.plugins);
-                    for plugin in plugins.iter_mut() {
-                        plugin.update(self);
-                    }
-                    self.plugins = plugins;
+                if let Some(mut plugin) = self.plugin.take() {
+                    plugin.update(self);
+                    self.plugin = Some(plugin);
                 }
 
-                // let state = match &mut self.state {
-                //     Some(s) => s,
-                //     None => return,
-                // };
-                // state.update();
-
                 self.render();
-
-                // match state.render() {
-                //     Ok(_) => {}
-                //     // Reconfigure the surface if it's lost or outdated
-                //     Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
-                //         let size = state.window.inner_size();
-                //         state.resize(size.width, size.height);
-                //     }
-                //     Err(e) => {
-                //         log::error!("Unable to render {}", e);
-                //     }
-                // }
             }
             WindowEvent::MouseInput { state, button, .. } => match (button, state.is_pressed()) {
                 (MouseButton::Left, true) => {}

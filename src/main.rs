@@ -6,7 +6,7 @@ use merge_and_split::game::scenes::basic_particles::BasicParticles;
 
 fn main() {
     // Follow Bevy's API
-    let _ = App::new()
-        .add_plugin(Box::new(BasicParticles::new()))
+    // Follow Bevy's API
+    let _ = App::<BasicParticles>::new()
         .run();
 }
