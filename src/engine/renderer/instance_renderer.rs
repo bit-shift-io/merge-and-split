@@ -4,7 +4,7 @@ use winit::{
     application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window
 };
 
-use crate::engine::{app::camera::Camera, renderer::texture};
+use crate::{core::math::vec4::Vec4, engine::{app::camera::Camera, renderer::texture}};
 
 
 #[repr(C)]
@@ -70,7 +70,7 @@ const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
 pub struct Instance {
     pub position: cgmath::Vector3<f32>,
     pub rotation: cgmath::Quaternion<f32>,
-    pub colour: cgmath::Vector4<f32>,
+    pub colour: Vec4,
     pub radius: f32,
 }
 
@@ -80,7 +80,7 @@ impl Instance {
             model: (cgmath::Matrix4::from_translation(self.position)
                 * cgmath::Matrix4::from(self.rotation))
             .into(),
-            colour: self.colour.into(),
+            colour: self.colour.0.into(),
             radius: self.radius,
         }
     }
