@@ -1,23 +1,25 @@
-use crate::{entity::entity::{Entity, UpdateContext}, level::level_blocks::elevator::ElevatorEntitySystem, particles::{particle_vec::ParticleVec, simulation::Simulation}, platform::camera::Camera};
+use crate::{entity::{entities::car_entity::CarEntitySystem, entity::{Entity, UpdateContext}}, level::level_blocks::elevator::ElevatorEntitySystem, particles::{particle_vec::ParticleVec, simulation::Simulation}, platform::camera::Camera};
 use winit::{keyboard::KeyCode};
 
 pub struct EntitySystem {
-    pub entities: Vec<Box<dyn Entity>>,
+    //pub entities: Vec<Box<dyn Entity>>,
     pub elevator_entity_system: ElevatorEntitySystem,
+    pub car_entity_system: CarEntitySystem,
 }
 
 impl EntitySystem {
     pub fn new() -> Self {
         Self {
-            entities: vec![],
+            //entities: vec![],
             elevator_entity_system: ElevatorEntitySystem::new(),
+            car_entity_system: CarEntitySystem::new(),
         }
     }
 
-    pub fn push<T: Entity + 'static>(&mut self, entity: T) -> &mut Self {
-        self.entities.push(Box::new(entity));
-        self
-    }
+    // pub fn push<T: Entity + 'static>(&mut self, entity: T) -> &mut Self {
+    //     self.entities.push(Box::new(entity));
+    //     self
+    // }
 
     pub fn update(&mut self, particle_vec: &mut ParticleVec, sim: &mut Simulation, camera: &mut Camera, time_delta: f32) {
         let mut context = UpdateContext {
@@ -27,17 +29,20 @@ impl EntitySystem {
             camera,
             //level: self,
         };
-        for entity in self.entities.iter_mut() {
-            entity.update(&mut context);
-        }
+        // for entity in self.entities.iter_mut() {
+        //     entity.update(&mut context);
+        // }
 
         self.elevator_entity_system.update(&mut context);
+        self.car_entity_system.update(&mut context);
     }
 
     // Gross having to call this on each entity. Should use some subscribe/listener or traits instead
     pub fn handle_key(&mut self, key: KeyCode, pressed: bool) {
-        for entity in self.entities.iter_mut() {
-            entity.handle_key(key, pressed);
-        }
+        // for entity in self.entities.iter_mut() {
+        //     entity.handle_key(key, pressed);
+        // }
+
+        self.car_entity_system.handle_key(key, pressed);
     }
 }

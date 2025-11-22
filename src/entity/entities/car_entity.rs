@@ -233,3 +233,29 @@ impl Entity for CarEntity {
         }
     }
 }
+
+
+
+pub struct CarEntitySystem(pub Vec<CarEntity>);
+
+impl CarEntitySystem {
+    pub fn new() -> Self {
+        Self(vec![])
+    }
+
+    pub fn push(&mut self, c: CarEntity) {
+        self.0.push(c);
+    }
+
+    pub fn update(&mut self, context: &mut crate::entity::entity::UpdateContext) {
+        for e in self.0.iter_mut() {
+            e.update(context);
+        }
+    }
+
+    pub fn handle_key(&mut self, key: KeyCode, is_pressed: bool) {
+        for e in self.0.iter_mut() {
+            e.handle_key(key, is_pressed);
+        }
+    }
+}

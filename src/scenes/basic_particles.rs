@@ -23,82 +23,82 @@ pub struct BasicParticles {
 }
 
 
-fn setup_stick_test(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
-    // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-    let particle_radius = 0.1;
-    let static_large_mass = 100.0; //10000.0;
+// fn setup_stick_test(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
+//     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
+//     let particle_radius = 0.1;
+//     let static_large_mass = 100.0; //10000.0;
 
-    // static
-    {
-        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
-        let mut builder = ShapeBuilder::new();
-        builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-            .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
-            .create_in_particle_vec(particle_vec);
+//     // static
+//     {
+//         let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+//         let mut builder = ShapeBuilder::new();
+//         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
+//             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
+//             .create_in_particle_vec(particle_vec);
 
-        let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
-        entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
-    }
+//         let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
+//         entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
+//     }
 
-    // stick connecting 2 particles
-    {
-        let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
+//     // stick connecting 2 particles
+//     {
+//         let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
 
-        let mut stick_vec = StickVec::new();
+//         let mut stick_vec = StickVec::new();
 
-        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
-        let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
+//         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
+//         let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(1.0).set_radius(particle_radius);
         
-        let start_index = particle_vec.len();
-        particle_vec.push(p1);
-        particle_vec.push(p2);
+//         let start_index = particle_vec.len();
+//         particle_vec.push(p1);
+//         particle_vec.push(p2);
 
-        stick_vec.push(Stick::from_particles(particle_vec, [start_index, start_index + 1]));
-        entity_system.push(StickVecEntity::new(stick_vec));
-    }
-}
+//         stick_vec.push(Stick::from_particles(particle_vec, [start_index, start_index + 1]));
+//         entity_system.push(StickVecEntity::new(stick_vec));
+//     }
+// }
 
-fn setup_stick_test_2(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
-    // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-    let particle_radius = 0.1;
-    let static_large_mass = 100.0; //10000.0;
+// fn setup_stick_test_2(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
+//     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
+//     let particle_radius = 0.1;
+//     let static_large_mass = 100.0; //10000.0;
 
-    // static
-    {
-        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
-        let mut builder = ShapeBuilder::new();
-        builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-            .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
-            .create_in_particle_vec(particle_vec);
+//     // static
+//     {
+//         let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+//         let mut builder = ShapeBuilder::new();
+//         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
+//             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
+//             .create_in_particle_vec(particle_vec);
 
-        let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
-        entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
-    }
+//         let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&builder.particles.as_slice());
+//         entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
+//     }
 
-    // sticks connecting 3 particles into a triangle
-    {
-        let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
+//     // sticks connecting 3 particles into a triangle
+//     {
+//         let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
 
-        let mut stick_vec = StickVec::new();
+//         let mut stick_vec = StickVec::new();
 
-        let particle_radius = 0.2;
-        let particle_mass = 10.0;
+//         let particle_radius = 0.2;
+//         let particle_mass = 10.0;
 
-        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
-        let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
-        let p3 = *Particle::default().set_pos(Vec2::new(0.5, 1.5)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
+//         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 2.0)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
+//         let p2 = *Particle::default().set_pos(Vec2::new(0.0, 1.0)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
+//         let p3 = *Particle::default().set_pos(Vec2::new(0.5, 1.5)).set_colour(blue).set_mass(particle_mass).set_radius(particle_radius);
         
-        let start_index = particle_vec.len();
-        particle_vec.push(p1);
-        particle_vec.push(p2);
-        particle_vec.push(p3);
+//         let start_index = particle_vec.len();
+//         particle_vec.push(p1);
+//         particle_vec.push(p2);
+//         particle_vec.push(p3);
 
-        stick_vec.push(Stick::from_particles(particle_vec, [start_index + 0, start_index + 1]));
-        stick_vec.push(Stick::from_particles(particle_vec, [start_index + 1, start_index + 2]));
-        stick_vec.push(Stick::from_particles(particle_vec, [start_index + 0, start_index + 2]));
-        entity_system.push(StickVecEntity::new(stick_vec));
-    }
-}
+//         stick_vec.push(Stick::from_particles(particle_vec, [start_index + 0, start_index + 1]));
+//         stick_vec.push(Stick::from_particles(particle_vec, [start_index + 1, start_index + 2]));
+//         stick_vec.push(Stick::from_particles(particle_vec, [start_index + 0, start_index + 2]));
+//         entity_system.push(StickVecEntity::new(stick_vec));
+//     }
+// }
 
 
 // fn setup_stick_test_3(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
@@ -141,47 +141,47 @@ fn setup_stick_test_2(entity_system: &mut EntitySystem, particle_vec: &mut Parti
 // }
 
 
-fn setup_circular_contained_liquid(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
-    // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
-    let particle_radius = 0.1;
-    let static_large_mass = 1.0; //10000.0;
+// fn setup_circular_contained_liquid(entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec) {
+//     // the ideal is particle size around diamter 1, radius = 0.5, as the spatial has has a grid size of 1!
+//     let particle_radius = 0.1;
+//     let static_large_mass = 1.0; //10000.0;
 
-    // static
-    let red = Vec4::new(1.0, 0.0,0.0, 1.0);
-    let mut perimeter = ShapeBuilder::new();
-    perimeter.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
-        .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 5.0))
-        .create_in_particle_vec(particle_vec);
+//     // static
+//     let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+//     let mut perimeter = ShapeBuilder::new();
+//     perimeter.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
+//         .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 5.0))
+//         .create_in_particle_vec(particle_vec);
 
-    let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&perimeter.particles.as_slice());
-    entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
+//     let fixed_point_spring_vec = FixedPointSpringVec::from_existing_particle_positions(&perimeter.particles.as_slice());
+//     entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
 
 
-    println!("Perimiter has particles from 0 to {}", particle_vec.len());
+//     println!("Perimiter has particles from 0 to {}", particle_vec.len());
 
-    // some dynamic particles on the inside   
-    let blue = Vec4::new(0.0, 0.0, 1.0, 1.0); 
-    let mut liquid = ShapeBuilder::new();
-    liquid
-        .set_particle_template(Particle::default().set_colour(blue).set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
-        .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(5.0, 5.0)))
-        .create_in_particle_vec(particle_vec);
+//     // some dynamic particles on the inside   
+//     let blue = Vec4::new(0.0, 0.0, 1.0, 1.0); 
+//     let mut liquid = ShapeBuilder::new();
+//     liquid
+//         .set_particle_template(Particle::default().set_colour(blue).set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))
+//         .apply_operation(Rectangle::from_center_size(Vec2::new(0.0, 0.0), Vec2::new(5.0, 5.0)))
+//         .create_in_particle_vec(particle_vec);
 
-    // // Lets debug what happens to this particle (top left of the fluid)
-    // particle_vec[50].set_debug(true);
+//     // // Lets debug what happens to this particle (top left of the fluid)
+//     // particle_vec[50].set_debug(true);
 
-    //fixed_point_spring_vec
-}
+//     //fixed_point_spring_vec
+// }
 
-fn setup_3_particles(particle_vec: &mut ParticleVec) {
-    let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
-    let p2 = *Particle::default().set_pos(Vec2::new(2.0, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
-    particle_vec.push(p1);
-    particle_vec.push(p2);
+// fn setup_3_particles(particle_vec: &mut ParticleVec) {
+//     let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
+//     let p2 = *Particle::default().set_pos(Vec2::new(2.0, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
+//     particle_vec.push(p1);
+//     particle_vec.push(p2);
 
-    let p3 = *Particle::default().set_pos(Vec2::new(1.0, 2.0)).set_vel(Vec2::new(-0.0, -0.1));
-    particle_vec.push(p3);
-}
+//     let p3 = *Particle::default().set_pos(Vec2::new(1.0, 2.0)).set_vel(Vec2::new(-0.0, -0.1));
+//     particle_vec.push(p3);
+// }
 
 impl BasicParticles {
     pub fn new() -> Self {
@@ -312,7 +312,8 @@ impl Plugin for BasicParticles {
 
                 // Add car to the scene.
                 let car = CarEntity::new(&mut self.particle_vec, &mut self.simulation, Vec2::new(0.0, 1.0));
-                self.entity_system.push(car);
+                self.entity_system.car_entity_system.push(car);
+                //self.entity_system.push(car);
             }
         }
 
