@@ -54,6 +54,12 @@ impl Vec4 {
     pub fn dot(&self, other: Self) -> f32 {
         self.0.dot(other.0)
     }
+
+    pub const RED: Self = Self(cgmath::Vector4::new(1.0, 0.0, 0.0, 1.0));
+    pub const GREEN: Self = Self(cgmath::Vector4::new(0.0, 1.0, 0.0, 1.0));
+    pub const BLUE: Self = Self(cgmath::Vector4::new(0.0, 0.0, 1.0, 1.0));
+    pub const WHITE: Self = Self(cgmath::Vector4::new(1.0, 1.0, 1.0, 1.0));
+    pub const BLACK: Self = Self(cgmath::Vector4::new(0.0, 0.0, 0.0, 1.0));
 }
 
 // Conversions

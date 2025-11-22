@@ -29,7 +29,7 @@ pub struct BasicParticles {
 
 //     // static
 //     {
-//         let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+//         let red = Vec4::RED;
 //         let mut builder = ShapeBuilder::new();
 //         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
 //             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
@@ -41,7 +41,7 @@ pub struct BasicParticles {
 
 //     // stick connecting 2 particles
 //     {
-//         let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
+//         let blue = Vec4::BLUE;
 
 //         let mut stick_vec = StickVec::new();
 
@@ -64,7 +64,7 @@ pub struct BasicParticles {
 
 //     // static
 //     {
-//         let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+//         let red = Vec4::RED;
 //         let mut builder = ShapeBuilder::new();
 //         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
 //             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
@@ -76,7 +76,7 @@ pub struct BasicParticles {
 
 //     // sticks connecting 3 particles into a triangle
 //     {
-//         let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
+//         let blue = Vec4::BLUE;
 
 //         let mut stick_vec = StickVec::new();
 
@@ -107,7 +107,7 @@ pub struct BasicParticles {
 
 //     // static
 //     {
-//         let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+//         let red = Vec4::RED;
 //         let mut builder = ShapeBuilder::new();
 //         builder.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
 //             .apply_operation(LineSegment::new(Vec2::new(-5.0, 0.0), Vec2::new(5.0, 0.0)))
@@ -119,7 +119,7 @@ pub struct BasicParticles {
 
 //     // stick of circles
 //     {
-//         let blue = Vec4::new(0.0, 0.0, 1.0, 1.0);
+//         let blue = Vec4::BLUE;
 
 //         let mut stick_vec = StickVec::new();
 
@@ -146,7 +146,7 @@ pub struct BasicParticles {
 //     let static_large_mass = 1.0; //10000.0;
 
 //     // static
-//     let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+//     let red = Vec4::RED;
 //     let mut perimeter = ShapeBuilder::new();
 //     perimeter.set_particle_template(Particle::default().set_colour(red)/* .set_static(true)*/.set_mass(static_large_mass).set_radius(particle_radius).clone())
 //         .apply_operation(Circle::new(Vec2::new(0.0, 0.0), 5.0))
@@ -159,7 +159,7 @@ pub struct BasicParticles {
 //     println!("Perimiter has particles from 0 to {}", particle_vec.len());
 
 //     // some dynamic particles on the inside   
-//     let blue = Vec4::new(0.0, 0.0, 1.0, 1.0); 
+//     let blue = Vec4::BLUE; 
 //     let mut liquid = ShapeBuilder::new();
 //     liquid
 //         .set_particle_template(Particle::default().set_colour(blue).set_mass(1.0).set_radius(particle_radius).set_vel(Vec2::new(2.0, 0.0)).clone()) // .set_color(Color::from(LinearRgba::BLUE))

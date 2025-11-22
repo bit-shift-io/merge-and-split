@@ -243,7 +243,7 @@ impl Default for Particle {
             mass: 1.0,
             is_static: false,
 
-            colour: Vec4::new(1.0, 1.0, 1.0, 1.0),
+            colour: Vec4::WHITE,
 
             particle_type: ParticleType::Particle,
             is_merged: false,

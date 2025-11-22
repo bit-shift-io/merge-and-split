@@ -63,7 +63,7 @@ impl SimulationDemos {
         let mut jerk = *Particle::default().set_radius(particle_rad).set_pos(Vec2::new(-25.55, 40.0)).set_mass_2(100.0);
         jerk.phase = Phase::Solid;
         jerk.vel.x = 8.5;
-        jerk.set_colour(Vec4::new(1.0, 0.0, 0.0, 1.0));
+        jerk.set_colour(Vec4::RED);
         sim.add_particle(jerk);
     }
 
@@ -292,7 +292,7 @@ impl SimulationDemos {
         
         let delta = 0.7;
         let mut particles = ParticleVec::new();
-        let blue = Vec4::new(0.0, 0.0,1.0, 1.0);
+        let blue = Vec4::BLUE;
 
         let mut x = -scale;
         while x < scale { //for(double x = -scale; x < scale; x += delta) {
@@ -365,7 +365,7 @@ impl SimulationDemos {
 
         let mut particles = ParticleVec::new();
 
-        let blue = Vec4::new(0.0, 0.0,1.0, 1.0);
+        let blue = Vec4::BLUE;
 
         let num = 1.0;
         let mut d = 0.0;
@@ -527,8 +527,8 @@ impl SimulationDemos {
         let samples = 60;
         let da = 360.0 / samples as f32;
 
-        let blue = Vec4::new(0.0, 0.0,1.0, 1.0);
-        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+        let blue = Vec4::BLUE;
+        let red = Vec4::RED;
 
         for i in 0..samples { //for (int i = 0; i < samples; i++) {
             let angle = f32::to_radians(i as f32 * da); //D2R(i * da);
@@ -701,7 +701,7 @@ impl SimulationDemos {
         let particle_diam = 0.5;
         let particle_rad = particle_diam / 2.0;
 
-        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+        let red = Vec4::RED;
 
         //let mut particles = ParticleVec::new();
         let mut rng = rand::rng();
@@ -771,7 +771,7 @@ impl SimulationDemos {
         let particle_diam = 0.5;
         let particle_rad = particle_diam / 2.0;
 
-        let red = Vec4::new(1.0, 0.0,0.0, 1.0);
+        let red = Vec4::RED;
 
         let mut rng = rand::rng();
 
