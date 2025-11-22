@@ -1,2 +1,4 @@
-// Put code in here if we want to generate a WASM lib to run in browser?
-// See app_inner run_web and run functions.
+pub mod core;
+pub mod simulation;
+pub mod engine;
+pub mod game;
