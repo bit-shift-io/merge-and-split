@@ -1,7 +1,7 @@
 
 use std::{fmt, usize};
 
-use cgmath::{Array, InnerSpace};
+use cgmath::Array;
 
 use crate::{core::math::{vec2::Vec2, vec4::Vec4}, simulation::particles::{body::Body, sdf_data::SdfData}};
 

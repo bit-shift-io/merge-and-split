@@ -1,4 +1,3 @@
-use cgmath::InnerSpace;
 use rand::Rng;
 
 use crate::{core::math::{vec2::Vec2, vec4::Vec4}, simulation::{constraints::distance_constraint::DistanceConstraint, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData, simulation::Simulation}}};

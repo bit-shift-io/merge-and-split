@@ -1,4 +1,3 @@
-use cgmath::InnerSpace;
 use rand::Rng;
 
 use crate::{core::math::vec2::Vec2, simulation::{constraints::total_fluid_constraint::TotalFluidConstraint, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};

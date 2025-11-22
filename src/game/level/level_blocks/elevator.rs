@@ -1,4 +1,3 @@
-use cgmath::InnerSpace;
 use rand::Rng;
 
 use crate::{core::math::{vec2::Vec2, vec4::Vec4}, game::level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};

@@ -1,4 +1,3 @@
-use cgmath::InnerSpace;
 use winit::keyboard::KeyCode;
 
 use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::{Entity, UpdateContext}, simulation::{constraints::{distance_constraint::DistanceConstraint, stick::{Stick, StickVec}}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}}};

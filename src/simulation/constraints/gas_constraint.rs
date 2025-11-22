@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-
-use cgmath::InnerSpace;
 use std::f32::consts::PI;
 
 use crate::{core::math::{vec2::Vec2, vec3::Vec3}, simulation::particles::{body::Body, particle::{Particle, Phase}, particle_vec::ParticleVec}};

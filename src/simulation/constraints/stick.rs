@@ -1,5 +1,3 @@
-use cgmath::InnerSpace;
-
 use crate::{core::math::{float::float_approx_equal, vec2::Vec2}, simulation::particles::particle_vec::{ParticleHandle, ParticleVec}};
 
 #[derive(Debug, Copy, Clone, PartialEq)]

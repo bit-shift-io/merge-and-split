@@ -1,8 +1,5 @@
 use std::isize;
 
-use cgmath::InnerSpace;
-use rand::Rng;
-
 use crate::{simulation::constraints::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, core::math::{vec2::Vec2, vec4::Vec4}, simulation::particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 

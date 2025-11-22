@@ -2,9 +2,7 @@
 
 //use crate::v5::{particle::Particle, particle_handle::ParticleHandle, particle_system::ParticleSystem, particle_vec::SharedParticleVec};
 
-use cgmath::{Bounded, InnerSpace};
-
-use crate::{core::math::{aabb2d::Aabb2d, vec2::{Vec2, vec2_max, vec2_min}}, simulation::particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}, simulation::Simulation}};
+use crate::{core::math::{aabb2d::Aabb2d, vec2::Vec2}, simulation::particles::{particle::Particle, particle_vec::{ParticleHandle, ParticleVec}, simulation::Simulation}};
 
 
 
@@ -194,7 +192,7 @@ impl ShapeBuilder {
             .expect("point cloud must contain at least one point for Aabb2d construction");
 
         let (min, max) = points_iter.fold((first, first), |(prev_min, prev_max), point| {
-            (vec2_min(point, prev_min), vec2_max(point, prev_max))
+            (Vec2::min(point, prev_min), Vec2::max(point, prev_max))
         });
 
         Aabb2d {

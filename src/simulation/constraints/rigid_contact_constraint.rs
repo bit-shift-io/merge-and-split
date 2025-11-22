@@ -1,5 +1,3 @@
-use cgmath::InnerSpace;
-
 use crate::{core::math::vec2::Vec2, simulation::particles::{body::Body, particle::Particle, particle_vec::ParticleVec}};
 
 

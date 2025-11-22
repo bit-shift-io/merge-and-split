@@ -1,4 +1,3 @@
-use cgmath::InnerSpace;
 use std::f32::consts::PI;
 
 use crate::{core::math::vec2::Vec2, simulation::{constraints::gas_constraint::GasConstraint, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};

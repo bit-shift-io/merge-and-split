@@ -1,5 +1,3 @@
-use cgmath::InnerSpace;
-
 use crate::{core::math::vec2::Vec2, simulation::particles::{operations::operation::Operation, particle_vec::ParticleVec}};
 
 #[derive(Debug, Copy, Clone, PartialEq)]

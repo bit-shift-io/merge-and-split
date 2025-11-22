@@ -1,7 +1,5 @@
 use std::usize;
 
-use cgmath::InnerSpace;
-
 use crate::{core::math::vec2::Vec2, simulation::particles::{operations::operation::Operation, particle::{Particle, ParticleType}, particle_vec::ParticleVec}};
 
 // MetaParticle enum for tree structure

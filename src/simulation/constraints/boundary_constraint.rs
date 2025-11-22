@@ -1,5 +1,3 @@
-use cgmath::InnerSpace;
-
 use crate::{core::math::vec2::Vec2, simulation::particles::{particle::Phase, particle_vec::ParticleVec}};
 
 pub struct BoundaryConstraint {

@@ -1,5 +1,3 @@
-use cgmath::{InnerSpace, Vector2};
-
 use crate::{core::math::vec2::{reflect_vector_a_around_b, Vec2}, simulation::particles::{operations::{merge::LARGE_MASS, operation::Operation}, particle::{Particle, ParticleType}, particle_vec::ParticleVec}};
 
 

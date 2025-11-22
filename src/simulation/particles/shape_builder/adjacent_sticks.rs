@@ -1,5 +1,3 @@
-use cgmath::InnerSpace;
-
 use crate::simulation::{constraints::{distance_constraint::DistanceConstraint, stick::Stick}, particles::{particle_vec::ParticleHandle, simulation::Simulation}};
 
 /// Takes a Circle and created stick constraints in a grid layout between them
