@@ -51,7 +51,15 @@ pub struct Particle {
 
     pub imass: f32, // inverse mass
     pub tmass: f32, // temporary height-scaled mass
+
+    //// (Static Friction): This is the coefficient used to determine if a particle should "stick" to a surface. 
+    /// In the boundary constraint logic, if the tangential movement (ldpt) is below a threshold defined by s_friction, 
+    /// the particle's tangential motion is completely cancelled (it doesn't slide).
     pub s_friction: f32, // coeffs of friction
+
+    /// (Kinetic Friction): This is the coefficient used when the particle is already moving (sliding). 
+    /// If the movement exceeds the static friction threshold, this coefficient determines how much 
+    /// drag/resistance is applied to the sliding motion, slowing it down but not necessarily stopping it instantly.
     pub k_friction: f32, // coeffs of friction
     pub t: f32,
 }

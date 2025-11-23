@@ -11,7 +11,6 @@ pub struct CarWheel {
 impl CarWheel {
     pub fn new(origin: Vec2, particle_vec: &mut ParticleVec, sim: &mut Simulation) -> Self {
         let particle_mass = 1.0; //g_to_kg(10.0);
-        let green = Vec4::new(0.0, 1.0, 0.0, 1.0);
         //let mut stick_vec = StickVec::new();
 
         // wheel hub - this is on mask layer zero which is a special no collisions layer
@@ -19,7 +18,7 @@ impl CarWheel {
             let mask = 0x0;
             let particle_radius = cm_to_m(6.0);
             let mut builder = ShapeBuilder::new();
-            builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(green).clone());
+            builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(Vec4::GREEN).clone());
 
             builder.add_particle(builder.create_particle().set_pos(origin).clone())
                 .create_in_simulation(sim);//.create_in_particle_vec(particle_vec);
@@ -34,7 +33,13 @@ impl CarWheel {
             let circle_radius = cm_to_m(35.0); // around a typical car tyre size - 17-18" (once you account for particle radius)
             let particle_radius = cm_to_m(8.0);
             let mut builder = ShapeBuilder::new();
-            builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(green).clone());
+
+            let mut particle_template = Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(Vec4::GREEN).clone();
+            particle_template.k_friction = 0.9;
+            particle_template.s_friction = 0.9;
+            //particle_template.body = -1; // stop surface particles hitting each other!
+
+            builder.set_particle_template(particle_template);
 
             builder.apply_operation(Circle::new(origin, circle_radius));
 
@@ -96,8 +101,8 @@ impl CarWheel {
             for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
                 let dist = (sim.particles[hub_particle_handle].pos - sim.particles[*surface_particle_handle].pos).magnitude(); 
             
-                //sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
-                sim.add_spring_constraint(SpringConstraint::new(dist, 2000.0, hub_particle_handle, *surface_particle_handle, false));
+                sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
+                //sim.add_spring_constraint(SpringConstraint::new(dist, 3000.0, hub_particle_handle, *surface_particle_handle, false));
 
 
                 // stick_vec.push(*Stick::default()
@@ -120,7 +125,7 @@ impl CarWheel {
         
         let hub_particle = particle_vec[self.hub_particle_handle];
         let centre = hub_particle.pos;
-        let torque = 0.01; // Nm
+        let torque = 0.05; // Nm
 
         let particle_manipulator = ParticleManipulator::new();
 
