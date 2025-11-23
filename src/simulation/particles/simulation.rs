@@ -1,6 +1,6 @@
 use std::isize;
 
-use crate::{simulation::constraints::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, core::math::vec2::Vec2, simulation::particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{simulation::constraints::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, spring_constraint::{SpringConstraint, SpringConstraintVec}, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, core::math::vec2::Vec2, simulation::particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -18,6 +18,7 @@ pub struct Simulation {
     pub contact_contact_constraints: Vec<ContactConstraint>,
 
     pub distance_constraints: DistanceConstraintVec,
+    pub spring_constraints: SpringConstraintVec,
     pub global_standard_total_fluid_constraints: Vec<TotalFluidConstraint>,
     pub global_standard_gas_constraints: Vec<GasConstraint>,
     
@@ -46,6 +47,7 @@ impl Simulation {
             // CONTACT group end.
 
             distance_constraints: DistanceConstraintVec::new(),
+            spring_constraints: SpringConstraintVec::new(),
             global_standard_total_fluid_constraints: vec![],
             global_standard_gas_constraints: vec![],
 
@@ -179,6 +181,7 @@ impl Simulation {
             }
         }
         self.distance_constraints.update_counts(&mut self.counts);
+        self.spring_constraints.update_counts(&mut self.counts);
         for c in self.global_standard_total_fluid_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
@@ -231,6 +234,7 @@ impl Simulation {
                 }
             }
             self.distance_constraints.solve(&mut self.particles, &self.counts);
+            self.spring_constraints.solve(&mut self.particles, &self.counts, time_delta);
             for c in self.global_standard_total_fluid_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts);
             }
@@ -417,6 +421,10 @@ impl Simulation {
 
     pub fn add_distance_constraint(&mut self, c: DistanceConstraint) {
         self.distance_constraints.push(c);
+    }
+
+    pub fn add_spring_constraint(&mut self, c: SpringConstraint) {
+        self.spring_constraints.push(c);
     }
 
     pub fn add_particle(&mut self, p: Particle) {
