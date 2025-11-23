@@ -1,18 +1,18 @@
 use winit::keyboard::KeyCode;
 
-use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::{UpdateContext}, simulation::{constraints::{distance_constraint::DistanceConstraint, stick::{Stick, StickVec}}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}}};
+use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::UpdateContext, simulation::{constraints::distance_constraint::DistanceConstraint, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}}};
 
 pub struct CarWheel {
     hub_particle_handle: ParticleHandle,
     surface_particle_handles: Vec<ParticleHandle>,
-    stick_vec: StickVec,
+    //stick_vec: StickVec,
 }
 
 impl CarWheel {
     pub fn new(origin: Vec2, particle_vec: &mut ParticleVec, sim: &mut Simulation) -> Self {
         let particle_mass = 1.0; //g_to_kg(10.0);
         let green = Vec4::new(0.0, 1.0, 0.0, 1.0);
-        let mut stick_vec = StickVec::new();
+        //let mut stick_vec = StickVec::new();
 
         // wheel hub - this is on mask layer zero which is a special no collisions layer
         let hub_particle_handle = {
@@ -41,7 +41,7 @@ impl CarWheel {
 
             builder.create_in_simulation(sim); //.create_in_particle_vec(particle_vec); // cause particle_handles to be populated in the shape builder
 
-            AdjacentSticks::new(Stick::default().set_stiffness_factor(1.0).clone(), 1, true)
+            AdjacentSticks::new(/*Stick::default().set_stiffness_factor(1.0).clone(),*/ 1, true)
                 .apply_to_particle_handles(sim, &builder.particle_handles); // connect adjacent points
             //AdjacentSticks::new(Stick::default().set_stiffness_factor(0.5).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
             
@@ -109,7 +109,7 @@ impl CarWheel {
         Self {
             hub_particle_handle,
             surface_particle_handles,
-            stick_vec,
+            //stick_vec,
             //interior_particle_handles
         }
     }

@@ -1,17 +1,17 @@
-use crate::simulation::{constraints::{distance_constraint::DistanceConstraint, stick::Stick}, particles::{particle_vec::ParticleHandle, simulation::Simulation}};
+use crate::simulation::{constraints::{distance_constraint::DistanceConstraint}, particles::{particle_vec::ParticleHandle, simulation::Simulation}};
 
 /// Takes a Circle and created stick constraints in a grid layout between them
 pub struct AdjacentSticks {
-    constraint_template: Stick,
+    //constraint_template: Stick,
     stride: usize,
     wrap_around: bool
 }
 
 impl AdjacentSticks {
-    pub fn new(constraint_template: Stick, stride: usize, wrap_around: bool) -> Self {
+    pub fn new(/*constraint_template: Stick, */stride: usize, wrap_around: bool) -> Self {
         debug_assert!(stride > 0); // stride of zero would be bad as it would create a stick between a particle and itself
         Self {
-            constraint_template,
+            //constraint_template,
             stride,
             wrap_around
         }
