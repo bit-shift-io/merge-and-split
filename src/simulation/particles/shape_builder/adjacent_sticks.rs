@@ -1,4 +1,4 @@
-use crate::simulation::{constraints::{distance_constraint::DistanceConstraint}, particles::{particle_vec::ParticleHandle, simulation::Simulation}};
+use crate::simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint}, particles::{particle_vec::ParticleHandle, simulation::Simulation}};
 
 /// Takes a Circle and created stick constraints in a grid layout between them
 pub struct AdjacentSticks {
@@ -44,7 +44,7 @@ impl AdjacentSticks {
             //stick_vec.push(stick);
 
             sim.add_distance_constraint(DistanceConstraint::new(dist, particle_handles[0], particle_handles[1], false));
-
+            //sim.add_spring_constraint(SpringConstraint::new(dist, 0.001, particle_handles[0], particle_handles[1], false));
         }
     }
 }

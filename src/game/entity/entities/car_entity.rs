@@ -1,6 +1,6 @@
 use winit::keyboard::KeyCode;
 
-use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::UpdateContext, simulation::{constraints::distance_constraint::DistanceConstraint, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}}};
+use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::UpdateContext, simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}}};
 
 pub struct CarWheel {
     hub_particle_handle: ParticleHandle,
@@ -96,7 +96,9 @@ impl CarWheel {
             for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
                 let dist = (sim.particles[hub_particle_handle].pos - sim.particles[*surface_particle_handle].pos).magnitude(); 
             
-                sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
+                //sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
+                sim.add_spring_constraint(SpringConstraint::new(dist, 2000.0, hub_particle_handle, *surface_particle_handle, false));
+
 
                 // stick_vec.push(*Stick::default()
                 //     .set_stiffness_factor(0.5)
