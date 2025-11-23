@@ -5,7 +5,7 @@ use winit::{event::WindowEvent, keyboard::KeyCode};
 
 use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::Shader}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
 
-pub struct BasicParticles {
+pub struct Game {
     camera: Camera,
     camera_controller: CameraController,
     particle_vec: ParticleVec,
@@ -21,7 +21,7 @@ pub struct BasicParticles {
     simulation: Simulation
 }
 
-impl BasicParticles {
+impl Game {
     fn update_particle_instances(&mut self, queue: &wgpu::Queue, device: &wgpu::Device) {
         // Add particles into the instance renderer
         let mut instances: Vec<Instance> = vec![]; 
@@ -60,7 +60,7 @@ impl BasicParticles {
     }
 }
 
-impl Plugin for BasicParticles {
+impl Plugin for Game {
     fn new(state: &crate::engine::app::state::State) -> Self {
         let camera_controller = CameraController::new(0.2);
 
@@ -136,7 +136,7 @@ impl Plugin for BasicParticles {
         particles
     }
 
-    fn resize(&mut self, app: &mut App<BasicParticles>, width: u32, height: u32) {
+    fn resize(&mut self, app: &mut App<Game>, width: u32, height: u32) {
         if width > 0 && height > 0 {
             let state = match &mut app.state {
                 Some(s) => s,
@@ -146,18 +146,18 @@ impl Plugin for BasicParticles {
         }
     }
 
-    fn window_event(&mut self, app: &mut App<BasicParticles>, event: WindowEvent) {
+    fn window_event(&mut self, app: &mut App<Game>, event: WindowEvent) {
         self.event_system.queue_window_event(event);
     }
 
-    fn handle_key(&mut self, app: &mut App<BasicParticles>, key: KeyCode, pressed: bool) {
+    fn handle_key(&mut self, app: &mut App<Game>, key: KeyCode, pressed: bool) {
         self.camera_controller.handle_key(key, pressed);
 
         // todo: this should occur when we handle window events in the event system
         self.entity_system.handle_key(key, pressed);
     }
 
-    fn update(&mut self, app: &mut App<BasicParticles>) {
+    fn update(&mut self, app: &mut App<Game>) {
         // if self.frame_idx > 140 {
         //     thread::sleep(Duration::from_millis(200));
         // }
@@ -237,7 +237,7 @@ impl Plugin for BasicParticles {
         self.update_particle_instances(&state.queue, &state.device);
     }
 
-    fn render(&self, app: &mut App<BasicParticles>) {
+    fn render(&self, app: &mut App<Game>) {
         let state = match &mut app.state {
             Some(s) => s,
             None => return,
