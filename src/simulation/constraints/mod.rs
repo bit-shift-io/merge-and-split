@@ -6,5 +6,6 @@ pub mod total_fluid_constraint;
 pub mod contact_constraint;
 pub mod gas_constraint;
 pub mod spring_constraint;
+pub mod volume_constraint;
 //pub mod fixed_point_spring;
 //pub mod stick;

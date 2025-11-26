@@ -1,6 +1,6 @@
 use std::isize;
 
-use crate::{simulation::constraints::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, spring_constraint::{SpringConstraint, SpringConstraintVec}, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint}, core::math::vec2::Vec2, simulation::particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{simulation::constraints::{boundary_constraint::BoundaryConstraint, contact_constraint::ContactConstraint, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, spring_constraint::{SpringConstraint, SpringConstraintVec}, gas_constraint::GasConstraint, rigid_contact_constraint::RigidContactConstraint, total_fluid_constraint::TotalFluidConstraint, total_shape_constraint::TotalShapeConstraint, volume_constraint::VolumeConstraint}, core::math::vec2::Vec2, simulation::particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
 
 
 
@@ -21,6 +21,7 @@ pub struct Simulation {
     pub spring_constraints: SpringConstraintVec,
     pub global_standard_total_fluid_constraints: Vec<TotalFluidConstraint>,
     pub global_standard_gas_constraints: Vec<GasConstraint>,
+    pub volume_constraints: Vec<VolumeConstraint>,
     
     pub smoke_emitters: Vec<OpenSmokeEmitter>,
     pub fluid_emitters: Vec<FluidEmitter>,
@@ -50,6 +51,7 @@ impl Simulation {
             spring_constraints: SpringConstraintVec::new(),
             global_standard_total_fluid_constraints: vec![],
             global_standard_gas_constraints: vec![],
+            volume_constraints: vec![],
 
             smoke_emitters: vec![],
             fluid_emitters: vec![],
@@ -188,6 +190,9 @@ impl Simulation {
         for c in self.global_standard_gas_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
+        for c in self.volume_constraints.iter_mut() {
+            c.update_counts(&mut self.counts);
+        }
         for c in self.contact_rigid_contact_constraints.iter_mut() {
             c.update_counts(&mut self.counts);
         }
@@ -240,6 +245,9 @@ impl Simulation {
             }
             for c in self.global_standard_gas_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts);
+            }
+            for c in self.volume_constraints.iter_mut() {
+                c.project(&mut self.particles, &self.counts, time_delta);
             }
             for c in self.contact_rigid_contact_constraints.iter_mut() {
                 c.project(&mut self.particles, &self.counts, &self.bodies);
@@ -425,6 +433,10 @@ impl Simulation {
 
     pub fn add_spring_constraint(&mut self, c: SpringConstraint) {
         self.spring_constraints.push(c);
+    }
+
+    pub fn add_volume_constraint(&mut self, c: VolumeConstraint) {
+        self.volume_constraints.push(c);
     }
 
     pub fn add_particle(&mut self, p: Particle) {

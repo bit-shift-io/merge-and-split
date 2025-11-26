@@ -1,6 +1,6 @@
 use winit::keyboard::KeyCode;
 
-use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::UpdateContext, simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}}};
+use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::UpdateContext, simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}}};
 
 pub struct CarWheel {
     hub_particle_handle: ParticleHandle,
@@ -111,6 +111,10 @@ impl CarWheel {
                 //     .set_particle_handles([hub_particle_handle, surface_particle_handle.clone()])
                 // );
             }
+
+            // Add volume constraint
+            let compliance = 0.00001; // Tunable parameter
+            sim.add_volume_constraint(VolumeConstraint::new(compliance, surface_particle_handles.clone(), &sim.particles));
         }
 
         Self {
