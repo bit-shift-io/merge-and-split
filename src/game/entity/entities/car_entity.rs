@@ -1,6 +1,6 @@
 use winit::keyboard::KeyCode;
 
-use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::UpdateContext, simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::Circle, shape_builder::ShapeBuilder}, simulation::Simulation}}};
+use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::UpdateContext, simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation}}};
 
 pub struct CarWheel {
     hub_particle_handle: ParticleHandle,
@@ -41,7 +41,7 @@ impl CarWheel {
 
             builder.set_particle_template(particle_template);
 
-            builder.apply_operation(Circle::new(origin, circle_radius));
+            builder.apply_operation(Circle::new(origin, circle_radius, SpaceDistribution::SpaceBetweenParticles));
 
 
             builder.create_in_simulation(sim); //.create_in_particle_vec(particle_vec); // cause particle_handles to be populated in the shape builder

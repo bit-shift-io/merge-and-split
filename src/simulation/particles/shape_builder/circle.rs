@@ -3,14 +3,21 @@ use crate::core::math::vec2::Vec2;
 
 use super::shape_builder::{ShapeBuilder, ShapeBuilderOperation};
 
+// The method to distribute any left over space.
+pub enum SpaceDistribution {
+    AdjustRadius, // Adjust the particles radius so that there is no left over space.
+    SpaceBetweenParticles, // Spread out any left over space so all particles are evenly spaced out.
+}
+
 pub struct Circle {
     centre: Vec2,
     radius: f32,
+    space_distribution: SpaceDistribution,
 }
 
 impl Circle {
-    pub fn new(centre: Vec2, radius: f32) -> Self {
-        Self { centre, radius }
+    pub fn new(centre: Vec2, radius: f32, space_distribution: SpaceDistribution) -> Self {
+        Self { centre, radius, space_distribution }
     }
 
     fn get_points_for_radius(&self, radius: f32) -> Vec::<Vec2> {
