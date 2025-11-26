@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{core::math::vec2::Vec2, simulation::{constraints::total_fluid_constraint::TotalFluidConstraint, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
+use crate::{core::math::vec2::Vec2, simulation::{constraints::total_fluid_constraint::{TotalFluidConstraint, TotalFluidConstraintVec}, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
 
 pub struct FluidEmitter {
     posn: Vec2,
@@ -30,7 +30,7 @@ impl FluidEmitter {
     }
 
 
-    pub fn tick(&mut self, estimates: &mut ParticleVec, secs: f32, global_standard_total_fluid_constraints: &mut Vec<TotalFluidConstraint>) { 
+    pub fn tick(&mut self, estimates: &mut ParticleVec, secs: f32, global_standard_total_fluid_constraints: &mut TotalFluidConstraintVec) { 
         //let mut i = global_standard_total_fluid_constraints[self.fluid_index].ps.len()-1;
         for i in (0..global_standard_total_fluid_constraints[self.fluid_index].ps.len()).rev() { //while i >= 0 { //for(int i = global_standard_total_fluid_constraints[self.fluid_index].ps.len()-1; i >= 0; i--) {
             let eidx = global_standard_total_fluid_constraints[self.fluid_index].ps[i];

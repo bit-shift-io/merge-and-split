@@ -209,6 +209,56 @@ impl TotalFluidConstraint {
     }
 }
 
+pub struct TotalFluidConstraintVec(pub Vec<TotalFluidConstraint>);
+
+impl TotalFluidConstraintVec {
+    pub fn new() -> Self {
+        Self(vec![])
+    }
+
+    pub fn update_counts(&self, counts: &mut Vec<usize>) {
+        for c in &self.0 {
+            c.update_counts(counts);
+        }
+    }
+
+    pub fn solve(&mut self, particles: &mut ParticleVec, counts: &Vec<usize>) {
+        for c in &mut self.0 {
+            c.project(particles, counts);
+        }
+    }
+
+    pub fn push(&mut self, c: TotalFluidConstraint) {
+        self.0.push(c);
+    }
+
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, TotalFluidConstraint> {
+        self.0.iter_mut()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl std::ops::Index<usize> for TotalFluidConstraintVec {
+    type Output = TotalFluidConstraint;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+impl std::ops::IndexMut<usize> for TotalFluidConstraintVec {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.0[index]
+    }
+}
+
 
 
 pub fn poly6(r2: f32) -> f32 {

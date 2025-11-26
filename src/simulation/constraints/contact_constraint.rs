@@ -55,3 +55,39 @@ impl ContactConstraint {
         counts[self.i2] += 1;
     }
 }
+
+pub struct ContactConstraintVec(pub Vec<ContactConstraint>);
+
+impl ContactConstraintVec {
+    pub fn new() -> Self {
+        Self(vec![])
+    }
+
+    pub fn update_counts(&self, counts: &mut Vec<usize>) {
+        for c in &self.0 {
+            c.update_counts(counts);
+        }
+    }
+
+    pub fn solve(&self, particles: &mut ParticleVec, counts: &Vec<usize>) {
+        for c in &self.0 {
+            c.project(particles, counts);
+        }
+    }
+
+    pub fn push(&mut self, c: ContactConstraint) {
+        self.0.push(c);
+    }
+
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, ContactConstraint> {
+        self.0.iter_mut()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}

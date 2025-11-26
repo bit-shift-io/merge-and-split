@@ -141,3 +141,39 @@ impl RigidContactConstraint {
         return false;
     }
 }
+
+pub struct RigidContactConstraintVec(pub Vec<RigidContactConstraint>);
+
+impl RigidContactConstraintVec {
+    pub fn new() -> Self {
+        Self(vec![])
+    }
+
+    pub fn update_counts(&self, counts: &mut Vec<usize>) {
+        for c in &self.0 {
+            c.update_counts(counts);
+        }
+    }
+
+    pub fn solve(&mut self, particles: &mut ParticleVec, counts: &Vec<usize>, bodies: &Vec<Body>) {
+        for c in &mut self.0 {
+            c.project(particles, counts, bodies);
+        }
+    }
+
+    pub fn push(&mut self, c: RigidContactConstraint) {
+        self.0.push(c);
+    }
+
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, RigidContactConstraint> {
+        self.0.iter_mut()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}

@@ -7,7 +7,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'merge-and-split'",
+            "name": "Debug executable",
             "cargo": {
                 "args": [
                     "build",
@@ -29,7 +29,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'merge-and-split' (volcano)",
+            "name": "Debug - volcano",
             "cargo": {
                 "args": [
                     "build",
@@ -51,7 +51,73 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'merge-and-split'",
+            "name": "Debug - water_balloon",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=merge-and-split",
+                    "--package=merge-and-split"
+                ],
+                "filter": {
+                    "name": "merge-and-split",
+                    "kind": "bin"
+                }
+            },
+            "args": ["water_balloon"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DYLD_FALLBACK_LIBRARY_PATH": "${userHome}/.rustup/toolchains/nightly-x86_64-apple-darwin/lib",
+                "CARGO_MANIFEST_DIR": "${workspaceFolder}"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug - rope_gas",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=merge-and-split",
+                    "--package=merge-and-split"
+                ],
+                "filter": {
+                    "name": "merge-and-split",
+                    "kind": "bin"
+                }
+            },
+            "args": ["rope_gas"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DYLD_FALLBACK_LIBRARY_PATH": "${userHome}/.rustup/toolchains/nightly-x86_64-apple-darwin/lib",
+                "CARGO_MANIFEST_DIR": "${workspaceFolder}"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug - boxes",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=merge-and-split",
+                    "--package=merge-and-split"
+                ],
+                "filter": {
+                    "name": "merge-and-split",
+                    "kind": "bin"
+                }
+            },
+            "args": ["boxes"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DYLD_FALLBACK_LIBRARY_PATH": "${userHome}/.rustup/toolchains/nightly-x86_64-apple-darwin/lib",
+                "CARGO_MANIFEST_DIR": "${workspaceFolder}"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests",
             "cargo": {
                 "args": [
                     "test",
@@ -74,7 +140,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug bench 'merge-and-split'",
+            "name": "Debug bench",
             "cargo": {
                 "args": [
                     "bench",

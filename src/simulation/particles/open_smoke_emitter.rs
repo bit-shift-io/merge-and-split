@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use crate::{core::math::vec2::Vec2, simulation::{constraints::gas_constraint::GasConstraint, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
+use crate::{core::math::vec2::Vec2, simulation::{constraints::gas_constraint::{GasConstraint, GasConstraintVec}, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
 
 pub struct OpenSmokeEmitter {
 
@@ -22,7 +22,7 @@ impl OpenSmokeEmitter {
         }
     }
 
-    pub fn tick(&mut self, estimates: &mut ParticleVec, secs: f32, global_standard_gas_constraints: &mut Vec<GasConstraint>) {
+    pub fn tick(&mut self, estimates: &mut ParticleVec, secs: f32, global_standard_gas_constraints: &mut GasConstraintVec) {
         self.timer += secs;
 
         let particle_diam = 0.5;
