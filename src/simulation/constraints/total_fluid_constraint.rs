@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use crate::{core::math::vec2::Vec2, simulation::particles::{body::Body, particle::Phase, particle_vec::ParticleVec}};
+use crate::{core::math::vec2::Vec2, simulation::particles::{particle::Phase, particle_vec::ParticleVec}};
 
-const h: f32 = 2.0;
-const h2: f32 = 4.0;
-const h6: f32 = 64.0;
-const h9: f32 = 512.0;
+const H: f32 = 2.0;
+const H2: f32 = 4.0;
+const H6: f32 = 64.0;
+const H9: f32 = 512.0;
 
-const s_solid: f32 = 0.0; // Fluid-solid coupling constant
-const relaxation: f32 = 0.01; // Epsilon in gamma correction denominator
+const S_SOLID: f32 = 0.0; // Fluid-solid coupling constant
+const RELAXATION: f32 = 0.01; // Epsilon in gamma correction denominator
 
 // Pressure terms
-const k_p: f32 = 0.1;
-const e_p: f32 = 4.0;
+const K_P: f32 = 0.1;
+const E_P: f32 = 4.0;
 const DQ_P: f32 = 0.2;
 
 
@@ -85,13 +85,13 @@ impl TotalFluidConstraint {
                     }
                     let r = p_i.pos_guess - p_j.pos_guess;
                     let rlen2 = r.dot(r); //glm::dot(r, r);
-                    if rlen2 < h2 {
+                    if rlen2 < H2 {
 
                         // Found a neighbor! Remember it and add to pi and the gamma denominator
                         self.neighbors[k].push(j);
                         let mut incr = poly6(rlen2) / p_j.imass;
                         if p_j.phase == Phase::Solid {
-                            incr *= s_solid;
+                            incr *= S_SOLID;
                         }
                         pi += incr;
 
@@ -111,7 +111,7 @@ impl TotalFluidConstraint {
 
             // Compute the gamma value
     //        cout << i << " estimated " << pi << endl;
-            let lambda = -((pi / self.p0) - 1.) / (denom + relaxation);
+            let lambda = -((pi / self.p0) - 1.) / (denom + RELAXATION);
             self.lambdas.insert(i, lambda); //self.lambdas[i] = lambda;
         }
 
@@ -130,7 +130,7 @@ impl TotalFluidConstraint {
                 let r = p_i.pos_guess - p_j.pos_guess;
                 let rlen = r.magnitude(); //glm::length(r);
                 let sg = spiky_grad(&r, rlen);
-                let lambda_corr = -k_p * (poly6(rlen * rlen) / poly6(DQ_P * DQ_P * h * h)).powf(e_p); //pow(, e_p);
+                let lambda_corr = -K_P * (poly6(rlen * rlen) / poly6(DQ_P * DQ_P * H * H)).powf(E_P); //pow(, E_P);
 
                 let lambdas_i = match self.lambdas.get(&i) {
                     Some(value) => *value,
@@ -172,7 +172,7 @@ impl TotalFluidConstraint {
             let p_j = estimates[self.neighbors[k][x]]; // todo: make ref
             let r = p_i.pos_guess - p_j.pos_guess;
             let rlen = r.magnitude(); //glm::length(r);
-            let mult = if p_j.phase == Phase::Solid { s_solid } else { 1.0 };
+            let mult = if p_j.phase == Phase::Solid { S_SOLID } else { 1.0 };
             out += mult * spiky_grad(&r, rlen);
         }
 
@@ -193,7 +193,7 @@ impl TotalFluidConstraint {
         self.deltas = deltas;
     }
 
-    pub fn remove_particle(&mut self, index: usize) {
+    pub fn removE_Particle(&mut self, index: usize) {
     //     self.neighbors.clear(); //delete[] neighbors;
     //     self.deltas.clear(); //delete[] deltas;
     // //    if(ps.contains(index)) {
@@ -262,21 +262,21 @@ impl std::ops::IndexMut<usize> for TotalFluidConstraintVec {
 
 
 pub fn poly6(r2: f32) -> f32 {
-    if r2 >= h2 {
+    if r2 >= H2 {
         return 0.0;
     }
-    let term2 = (h2 - r2);
-    return (315.0 / (64. * PI * h9)) * (term2 * term2 * term2);
+    let term2 = H2 - r2;
+    return (315.0 / (64. * PI * H9)) * (term2 * term2 * term2);
 //    return (H-r) / (H*H);
 }
 
 pub fn spiky_grad(r: &Vec2, rlen2: f32) -> Vec2 {
-    if (rlen2 >= h) {
+    if rlen2 >= H {
         return Vec2::new(0.0, 0.0);
     }
-    if (rlen2 == 0.0) {
+    if rlen2 == 0.0 {
         return Vec2::new(0.0, 0.0);
     }
-    return -r.normalize() * (45.0 / (PI * h6)) * (h - rlen2) * (h - rlen2);
+    return -r.normalize() * (45.0 / (PI * H6)) * (H - rlen2) * (H - rlen2);
 //    return -r / (H*H*rlen);
 }

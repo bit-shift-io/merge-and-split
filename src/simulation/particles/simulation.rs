@@ -194,7 +194,7 @@ impl Simulation {
         // update_counts_callback(self);
     }
 
-    pub fn tick_2(&mut self, time_delta: f32, solver_iterations: i32, iteration: i32) {
+    pub fn tick_2(&mut self, time_delta: f32, _solver_iterations: i32, iteration: i32) {
         
         // for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
         //     ConstraintGroup g = (ConstraintGroup) j;
@@ -213,7 +213,7 @@ impl Simulation {
 
 
         // // (16) For solver iterations
-        let i = iteration;
+        let _i = iteration;
         //let solver_iterations = 3; // user tweakable
         //for i in 0..solver_iterations {
  

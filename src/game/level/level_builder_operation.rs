@@ -10,7 +10,7 @@ pub trait LevelBuilderOperation {
         1.0
     }
 
-    fn prepare(&self, level_builder_context: &mut LevelBuilderContext, level_builder_operations: &mut Vec<(f32, Box<dyn LevelBuilderOperation + Send + Sync>)>) {
+    fn prepare(&self, _level_builder_context: &mut LevelBuilderContext, _level_builder_operations: &mut Vec<(f32, Box<dyn LevelBuilderOperation + Send + Sync>)>) {
     }
 
     fn execute(&self, level_builder_context: &mut LevelBuilderContext);

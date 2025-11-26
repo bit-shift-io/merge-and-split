@@ -1,4 +1,4 @@
-use crate::{core::math::vec2::Vec2, simulation::particles::particle_vec::ParticleVec};
+use crate::simulation::particles::particle_vec::ParticleVec;
 
 pub struct SpringConstraint {
     pub d: f32,

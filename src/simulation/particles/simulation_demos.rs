@@ -184,7 +184,7 @@ impl SimulationDemos {
         sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
         sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
 
-        for i in 0..(x_max - 2) {
+        for _i in 0..(x_max - 2) {
             sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
             sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
         }
@@ -405,7 +405,7 @@ impl SimulationDemos {
             sdf_data.push(SdfData::new(Vec2::new(-1.0, -1.0).normalize(), particle_rad * root2));
             sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
     
-            for i in 0..(dim_x - 2) { //for (int i = 0; i < dim.x - 2; i++) {
+            for _i in 0..(dim_x - 2) { //for (int i = 0; i < dim.x - 2; i++) {
                 sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
                 sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
             }
@@ -433,7 +433,7 @@ impl SimulationDemos {
             sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
             sdf_data.push(SdfData::new(Vec2::new(-1.0, 1.0).normalize(), particle_rad * root2));
     
-            for i in 0..(dim_x - 2) { //(int i = 0; i < dim.x - 2; i++) {
+            for _i in 0..(dim_x - 2) { //(int i = 0; i < dim.x - 2; i++) {
                 sdf_data.push(SdfData::new(Vec2::new(0.0, -1.0).normalize(), particle_rad));
                 sdf_data.push(SdfData::new(Vec2::new(0.0, 1.0).normalize(), particle_rad));
             }
@@ -684,7 +684,7 @@ impl SimulationDemos {
             x += delta;
         }
         //GasConstraint *gs = 
-        let gas_idx = sim.create_gas(&particles, 1.5, false);
+        let _gas_idx = sim.create_gas(&particles, 1.5, false);
         particles.clear();
 
         sim.create_smoke_emitter(Vec2::new(0.0,-2.0 * scale + 1.0), 15.0, usize::MAX /*gs*/);

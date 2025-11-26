@@ -99,12 +99,12 @@ impl BoundaryConstraint {
         }
     }
 
-    pub fn evaluate(&self, estimates: &ParticleVec) {
+    pub fn evaluate(&self, _estimates: &ParticleVec) {
 
     }
 
 
-    pub fn gradient(&self, estimates: &ParticleVec, respect: i32) -> Vec2 {
+    pub fn gradient(&self, _estimates: &ParticleVec, _respect: i32) -> Vec2 {
         Vec2::new(0.0, 0.0)
     }
 
