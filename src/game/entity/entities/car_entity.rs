@@ -17,9 +17,9 @@ impl CarWheel {
         let hub_particle_handle = {
             let mask = 0x0;
             let particle_radius = cm_to_m(6.0);
-            let mut builder = ShapeBuilder::new();
-            builder.set_particle_template(Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(Vec4::GREEN).clone());
-
+            let mut builder = ShapeBuilder::from_particle_template(
+                Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(Vec4::GREEN).clone()
+            );
             builder.add_particle(builder.create_particle().set_pos(origin).clone())
                 .create_in_simulation(sim);//.create_in_particle_vec(particle_vec);
 
@@ -32,18 +32,14 @@ impl CarWheel {
             let divisions = 20;
             let circle_radius = cm_to_m(35.0); // around a typical car tyre size - 17-18" (once you account for particle radius)
             let particle_radius = cm_to_m(8.0);
-            let mut builder = ShapeBuilder::new();
-
+            
             let mut particle_template = Particle::default().set_mass(particle_mass).set_radius(particle_radius).set_colour(Vec4::GREEN).clone();
             particle_template.k_friction = 0.9;
             particle_template.s_friction = 0.9;
             //particle_template.body = -1; // stop surface particles hitting each other!
 
-            builder.set_particle_template(particle_template);
-
+            let mut builder = ShapeBuilder::from_particle_template(particle_template);
             builder.apply_operation(Circle::new(origin, circle_radius, SpaceDistribution::SpaceBetweenParticles));
-
-
             builder.create_in_simulation(sim); //.create_in_particle_vec(particle_vec); // cause particle_handles to be populated in the shape builder
 
             AdjacentSticks::new(/*Stick::default().set_stiffness_factor(1.0).clone(),*/ 1, true)

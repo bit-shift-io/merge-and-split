@@ -32,19 +32,17 @@ impl LevelBuilderOperation for ElevatorOperation {
         let elevator_end = elevator_start + vertical_movement;
 
         let vertical_diameter_offset = Vec2::new(0.0, level_builder_context.particle_template.radius * 2.0);
-        let mut sb = ShapeBuilder::new();
-        sb.set_particle_template(*level_builder_context.particle_template.set_static(true))
+        ShapeBuilder::from_particle_template(*level_builder_context.particle_template.clone().set_static(true))
             // Floor:
             .apply_operation(LineSegment::new(cursor_start - vertical_diameter_offset, cursor_start + horizontal_movement - vertical_diameter_offset)) 
             // Wall:
             .apply_operation(LineSegment::new(cursor_start + horizontal_movement, cursor_end))
             .create_in_simulation(level_builder_context.sim);
 
-        let green = Vec4::new(0.0, 1.0, 0.0, 1.0);
 
-        let mut platform = ShapeBuilder::new();
-        platform.set_particle_template(*level_builder_context.particle_template.clone().set_static(true).set_colour(green))
-            .apply_operation(LineSegment::new(cursor_start, cursor_start + horizontal_movement))
+        // Moving platform - todo: make this a rigid body or soft body? it crushes the player forcing the game to end which is no fun.
+        let mut platform = ShapeBuilder::from_particle_template(*level_builder_context.particle_template.clone().set_static(true).set_colour(Vec4::GREEN));
+        platform.apply_operation(LineSegment::new(cursor_start, cursor_start + horizontal_movement))
             .create_in_simulation(level_builder_context.sim);
 
         let first_particle_offset = platform.particles[0].pos - elevator_start;

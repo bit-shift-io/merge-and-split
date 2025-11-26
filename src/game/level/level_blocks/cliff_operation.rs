@@ -25,8 +25,7 @@ impl LevelBuilderOperation for CliffOperation {
         let cursor_start = level_builder_context.cursor;
         let cursor_end = cursor_start + Vec2::new(width * level_builder_context.x_direction, height);
 
-        let mut sb = ShapeBuilder::new();
-        sb.set_particle_template(level_builder_context.particle_template)
+        ShapeBuilder::from_particle_template(level_builder_context.particle_template)
             .apply_operation(LineSegment::new(level_builder_context.cursor, cursor_end)) 
             .apply_operation(LineSegment::new(cursor_end, cursor_end))
             .create_in_simulation(level_builder_context.sim); //.create_in_particle_vec(level_builder_context.particle_vec);

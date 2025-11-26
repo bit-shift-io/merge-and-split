@@ -59,8 +59,7 @@ impl LevelBuilderOperation for StraightLevelBlock {
         // Get the current length of particle_vec, as we are about to push on more particles
         // let particle_vec_start_index = level_builder_context.particle_vec.len();
         
-        let mut sb = ShapeBuilder::new();
-        sb.set_particle_template(level_builder_context.particle_template.set_mass(0.0).clone())
+        ShapeBuilder::from_particle_template(*level_builder_context.particle_template.clone().set_mass(0.0))
             .apply_operation(LineSegment::new(level_builder_context.cursor, cursor_end)) 
             .create_in_simulation(level_builder_context.sim); //.create_in_particle_vec(level_builder_context.particle_vec);
 

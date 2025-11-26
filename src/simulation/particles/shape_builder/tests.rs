@@ -11,6 +11,12 @@ mod tests {
     }
 
     #[test]
+    fn from_particle_template() {
+        let b = ShapeBuilder::from_particle_template(Particle::default().set_radius(3.0).clone());
+        assert_eq!(b.particle_template.radius, 3.0);
+    }
+
+    #[test]
     fn add_particle() {
         let mut b = ShapeBuilder::new();
         b.add_particle(Particle::default().set_pos(Vec2::new(1.0, 1.0)).clone());

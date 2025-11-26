@@ -74,6 +74,12 @@ impl ShapeBuilder {
         }    
     }
 
+    pub fn from_particle_template(particle_template: Particle) -> Self {
+        let mut s = ShapeBuilder::new();
+        s.set_particle_template(particle_template);
+        s
+    }
+
     pub fn from_shape_builder_templates(sb: &ShapeBuilder) -> Self {
         let mut new_sb = ShapeBuilder::new();
         new_sb.set_particle_template(sb.particle_template);

@@ -31,8 +31,7 @@ impl LevelBuilderOperation for SaggyBridgeOperation {
 
         let red = Vec4::new(1.0, 0.0,0.0, 1.0);
 
-        let mut sb = ShapeBuilder::new();
-        sb.set_particle_template(level_builder_context.particle_template.clone().set_colour(red).set_mass(1.0).set_static(false).clone());
+        let mut sb = ShapeBuilder::from_particle_template(level_builder_context.particle_template.clone().set_colour(red).set_mass(1.0).set_static(false).clone());
         sb.apply_operation(rectangle.clone());
         
         // set left and right most particles and make them static

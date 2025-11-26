@@ -26,8 +26,7 @@ impl LevelBuilderOperation for DropDirectionReverse {
         let cursor_end = cursor_start + Vec2::new(level_builder_context.x_direction * width, height);
 
         // todo: might need a downward slope to ease us down lower
-        let mut sb = ShapeBuilder::new();
-        sb.set_particle_template(level_builder_context.particle_template) 
+        ShapeBuilder::from_particle_template(level_builder_context.particle_template)
             .apply_operation(LineSegment::new(cursor_start, cursor_start + Vec2::new(1.5 * level_builder_context.x_direction, -1.0))) // steep downward slope
             .apply_operation(LineSegment::new(cursor_end, cursor_end + Vec2::new(0.0, -height + 2.0))) // a wall to stop the user escaping the map
             .create_in_simulation(level_builder_context.sim); //.create_in_particle_vec(level_builder_context.particle_vec);

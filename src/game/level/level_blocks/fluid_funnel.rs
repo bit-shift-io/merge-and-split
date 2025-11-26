@@ -57,15 +57,13 @@ impl LevelBuilderOperation for FluidFunnel {
         let width = liquid_particle_radius * 2.0 * 20.0;
         let height = liquid_particle_radius * 2.0 * 15.0;
 
-        let mut liquid = ShapeBuilder::new();
-        liquid
-            .set_particle_template(Particle::default().set_mass(liquid_particle_mass).set_radius(liquid_particle_radius).set_colour(Vec4::new(0.0, 0.0, 1.0, 1.0)).clone())
+        // Liquid
+        ShapeBuilder::from_particle_template(Particle::default().set_mass(liquid_particle_mass).set_radius(liquid_particle_radius).set_colour(Vec4::new(0.0, 0.0, 1.0, 1.0)).clone())
             .apply_operation(Rectangle::from_center_size(origin + Vec2::new(0.0, funnel_height + 1.0), Vec2::new(width, height)))
             .create_in_simulation(level_builder_context.sim); //.create_in_particle_vec(level_builder_context.particle_vec);
 
-        let mut funnel = ShapeBuilder::new();
-        funnel
-            .set_particle_template(Particle::default().set_static(true).set_radius(funnel_particle_radius).clone())
+        // Funnel
+        ShapeBuilder::from_particle_template(Particle::default().set_static(true).set_radius(funnel_particle_radius).clone())
             .apply_operation(LineSegment::new(origin + Vec2::new(-funnel_mouth_half_width, funnel_height), origin + Vec2::new(-3.0, funnel_height + 2.0))) 
             .apply_operation(LineSegment::new(origin + Vec2::new(funnel_mouth_half_width, funnel_height), origin + Vec2::new(3.0, funnel_height + 2.0))) 
             .create_in_simulation(level_builder_context.sim); //.create_in_particle_vec(level_builder_context.particle_vec);
