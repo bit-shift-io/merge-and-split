@@ -1,4 +1,4 @@
-use std::{env, thread, time::Duration};
+use std::env;
 
 use cgmath::Rotation3;
 use winit::{event::WindowEvent, keyboard::KeyCode};

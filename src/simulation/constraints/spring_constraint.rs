@@ -99,7 +99,7 @@ impl SpringConstraintVec {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::simulation::particles::particle::Particle;
+    use crate::{core::math::vec2::Vec2, simulation::particles::particle::Particle};
 
     #[test]
     fn test_spring_contraction() {

@@ -1,4 +1,4 @@
-use std::{ops::{Deref, DerefMut, Index, IndexMut, RangeBounds}, ptr::NonNull, slice::{Iter, IterMut}, vec::ExtractIf};
+use std::{ops::{Index, IndexMut}, slice::{Iter, IterMut}};
 
 use crate::simulation::particles::particle::Particle;
 
@@ -107,7 +107,6 @@ impl IndexMut<usize> for ParticleVec {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::math::vec2::Vec2;
     use super::*;
 
     // #[test]

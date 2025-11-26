@@ -46,7 +46,7 @@ impl EventSystem {
             WindowEvent::CloseRequested => {
                 self.events.push(event)
             },
-            WindowEvent::Resized(size) => {
+            WindowEvent::Resized(_size) => {
                 self.events.push(event)
             },
             WindowEvent::RedrawRequested => {

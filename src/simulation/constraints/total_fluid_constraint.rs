@@ -193,7 +193,7 @@ impl TotalFluidConstraint {
         self.deltas = deltas;
     }
 
-    pub fn removE_Particle(&mut self, index: usize) {
+    pub fn remove_particle(&mut self, index: usize) {
     //     self.neighbors.clear(); //delete[] neighbors;
     //     self.deltas.clear(); //delete[] deltas;
     // //    if(ps.contains(index)) {
