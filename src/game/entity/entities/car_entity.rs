@@ -48,6 +48,7 @@ impl CarWheel {
 
             AdjacentSticks::new(/*Stick::default().set_stiffness_factor(1.0).clone(),*/ 1, true)
                 .apply_to_particle_handles(sim, &builder.particle_handles); // connect adjacent points
+            
             //AdjacentSticks::new(Stick::default().set_stiffness_factor(0.5).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
             
 
@@ -101,8 +102,9 @@ impl CarWheel {
             for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
                 let dist = (sim.particles[hub_particle_handle].pos - sim.particles[*surface_particle_handle].pos).magnitude(); 
             
-                sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
-                //sim.add_spring_constraint(SpringConstraint::new(dist, 3000.0, hub_particle_handle, *surface_particle_handle, false));
+                //sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
+                
+                sim.add_spring_constraint(SpringConstraint::new(dist, 1000.0, hub_particle_handle, *surface_particle_handle, false));
 
 
                 // stick_vec.push(*Stick::default()
