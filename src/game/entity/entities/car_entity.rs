@@ -152,10 +152,13 @@ pub struct CarEntity {
 
 impl CarEntity {
     pub fn new(particle_vec: &mut ParticleVec, sim: &mut Simulation, origin: Vec2) -> Self {
-        let wheel_spacing = 1.0 * 0.5; // metres
+        // I kind of like it when the wheels can bump into each other a little occasionally, it adds to the challenge:
+        // if you go too fast you risk getting bogged in your own wheels.
+        let wheel_spacing = 1.2; // metres - 
+        let half_wheel_spacing = wheel_spacing * 0.5; // metres
 
-        let wheel_1 = CarWheel::new(origin + Vec2::new(wheel_spacing, 0.0), particle_vec, sim);
-        let wheel_2 = CarWheel::new(origin - Vec2::new(wheel_spacing, 0.0), particle_vec, sim);
+        let wheel_1 = CarWheel::new(origin + Vec2::new(half_wheel_spacing, 0.0), particle_vec, sim);
+        let wheel_2 = CarWheel::new(origin - Vec2::new(half_wheel_spacing, 0.0), particle_vec, sim);
 
         // axle stick to connect the two wheel hubs
         {
@@ -168,7 +171,8 @@ impl CarEntity {
             //     .set_particle_handles([wheel_1.hub_particle_handle, wheel_2.hub_particle_handle]).box_clone()
             // );
 
-            sim.add_distance_constraint(DistanceConstraint::new(dist, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false));
+            //sim.add_distance_constraint(DistanceConstraint::new(dist, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false));
+            sim.add_spring_constraint(SpringConstraint::new(dist, 2000.0, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false));
         }
 
         Self {
