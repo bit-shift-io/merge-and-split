@@ -7,3 +7,4 @@ pub mod spawn_operation;
 pub mod straight_level_block;
 pub mod finish_operation;
 pub mod elevator;
+pub mod water_balloon_drop;
