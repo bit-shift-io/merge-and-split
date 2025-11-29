@@ -1,6 +1,6 @@
 use std::isize;
 
-use crate::{simulation::constraints::{boundary_constraint::{BoundaryConstraint, BoundaryConstraintVec}, contact_constraint::{ContactConstraint, ContactConstraintVec}, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, spring_constraint::{SpringConstraint, SpringConstraintVec}, gas_constraint::{GasConstraint, GasConstraintVec}, rigid_contact_constraint::{RigidContactConstraint, RigidContactConstraintVec}, total_fluid_constraint::{TotalFluidConstraint, TotalFluidConstraintVec}, total_shape_constraint::TotalShapeConstraint, volume_constraint::{VolumeConstraint, VolumeConstraintVec}}, core::math::vec2::Vec2, simulation::particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData}};
+use crate::{core::math::vec2::Vec2, simulation::{constraints::{boundary_constraint::{BoundaryConstraint, BoundaryConstraintVec}, contact_constraint::{ContactConstraint, ContactConstraintVec}, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, gas_constraint::{GasConstraint, GasConstraintVec}, rigid_contact_constraint::{RigidContactConstraint, RigidContactConstraintVec}, spring_constraint::{SpringConstraint, SpringConstraintVec}, total_fluid_constraint::{TotalFluidConstraint, TotalFluidConstraintVec}, total_shape_constraint::TotalShapeConstraint, volume_constraint::{VolumeConstraint, VolumeConstraintVec}}, particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData, spatial_hash::SpatialHash}}};
 
 
 
@@ -106,12 +106,26 @@ impl Simulation {
 
         // m_contactSolver.setupM(&m_particles, true);
 
+
+        // Use SpatialHash to speed up particle collision checking
+        // Ideally we keep spatial hash as part of self to save memory reallocation.
+        let mut spatial_hash = SpatialHash::<usize, 1>::new();
+        for i in 0..particle_count {
+            let p = &mut self.particles[i];
+            let aabb = p.get_aabb();
+            spatial_hash.insert_aabb(aabb, i);
+        }
+
         // (6) For all particles
         for i in 0..particle_count {
             let p = &self.particles[i];
 
             // (7) Find neighboring particles and solid contacts, naive solution
-            for j in (i + 1)..particle_count {
+            for j in spatial_hash.aabb_iter(p.get_aabb()) { //for j in (i + 1)..particle_count {
+                if j <= i {
+                    continue;
+                }
+
                 let p2 = &self.particles[j];
 
                 // Skip collision between two immovables

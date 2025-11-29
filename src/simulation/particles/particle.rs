@@ -1,7 +1,7 @@
 
 use std::{fmt, usize};
 
-use crate::{core::math::{vec2::Vec2, vec4::Vec4}, simulation::particles::{body::Body, sdf_data::SdfData}};
+use crate::{core::math::{aabb2d::Aabb2d, vec2::Vec2, vec4::Vec4}, simulation::particles::{body::Body, sdf_data::SdfData}};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ParticleType {
@@ -233,6 +233,14 @@ impl Particle {
             self.pos
         } else {
             self.pos_guess
+        }
+    }
+
+    pub fn get_aabb(&self) -> Aabb2d {
+        let d = Vec2::new(self.radius, self.radius);
+        Aabb2d {
+            min: self.pos - d,
+            max: self.pos + d,
         }
     }
 }
