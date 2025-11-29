@@ -9,6 +9,12 @@ pub enum BindGroupType {
     Diffuse,
 }
 
+const BIND_GROUP_MAPPINGS: &[(&str, BindGroupType)] = &[
+    ("camera", BindGroupType::Camera),
+    ("cam", BindGroupType::Camera),
+    ("diffuse", BindGroupType::Diffuse),
+];
+
 pub struct ShaderBuilder<'a> {
     shader_module: ShaderModule,
     device: &'a wgpu::Device,
@@ -51,7 +57,7 @@ impl<'a> ShaderBuilder<'a> {
                 // simple parsing strategy:
                 // 1. find @group(X)
                 // 2. look at the next line (or same line) for variable name
-                // 3. if variable name contains "camera" or "diffuse", map it.
+                // 3. if variable name contains a known keyword, map it.
                 
                 let start = line.find("@group(").unwrap() + 7;
                 let end = line[start..].find(")").unwrap() + start;
@@ -68,10 +74,18 @@ impl<'a> ShaderBuilder<'a> {
                     context.push_str(lines[i+1]);
                 }
 
-                if context.contains("camera") {
-                    mappings.insert(BindGroupType::Camera, group_index);
-                } else if context.contains("diffuse") {
-                    mappings.insert(BindGroupType::Diffuse, group_index);
+                for (key, variant) in BIND_GROUP_MAPPINGS {
+                    if context.contains(key) {
+                        mappings.insert(*variant, group_index);
+                        // Once found, we might want to stop searching for this group?
+                        // But maybe multiple keys match? 
+                        // Let's assume one match per group for now, or last one wins.
+                        // Actually, if we have "camera" and "cam", "camera" contains "cam".
+                        // So order matters if we break. 
+                        // But here we just insert. If multiple match, last one wins.
+                        // Ideally we should match the longest key first or exact match.
+                        // But context.contains is loose.
+                    }
                 }
             }
         }
@@ -262,13 +276,6 @@ pub struct Shader {
 }
 
 impl Shader {
-    pub fn new<'a>(file_name: String, device: &wgpu::Device, camera: &Camera, diffuse_texture: &Texture, buffers: &'a [wgpu::VertexBufferLayout<'a>], format: wgpu::TextureFormat) -> Self {
-        let mut builder = ShaderBuilder::from_file(file_name, device);
-        builder.diffuse_texture(diffuse_texture);
-        builder.camera(camera);
-        builder.build(buffers, format)
-    }
-
     pub fn bind(&self, render_pass: &mut wgpu::RenderPass) {
         render_pass.set_pipeline(&self.render_pipeline);
         for (i, group) in self.bind_groups.iter().enumerate() {
@@ -299,5 +306,16 @@ var s_diffuse: sampler;
         
         assert_eq!(mappings.get(&BindGroupType::Camera), Some(&1));
         assert_eq!(mappings.get(&BindGroupType::Diffuse), Some(&0));
+    }
+
+    #[test]
+    fn test_parse_wgsl_alias() {
+        let source = r#"
+@group(2) @binding(0)
+var<uniform> cam: CameraUniform;
+"#;
+        let mappings = ShaderBuilder::parse_wgsl(source);
+        
+        assert_eq!(mappings.get(&BindGroupType::Camera), Some(&2));
     }
 }
