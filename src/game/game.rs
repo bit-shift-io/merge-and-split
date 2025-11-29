@@ -3,7 +3,7 @@ use std::env;
 use cgmath::Rotation3;
 use winit::{event::WindowEvent, keyboard::KeyCode};
 
-use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::Shader}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
+use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
 
 pub struct Game {
     camera: Camera,
@@ -13,7 +13,8 @@ pub struct Game {
     particle_instance_renderer: InstanceRenderer,
     quad_mesh: Mesh,
     material: Material,
-    shader: Shader,
+    particle_shader: Shader,
+    line_shader: Shader,
     frame_idx: u128,
     entity_system: EntitySystem,
     event_system: EventSystem,
@@ -77,12 +78,15 @@ impl Plugin for Game {
         
         let diffuse_texture = &material.diffuse_texture;
 
-        let shader = Shader::new("particle_shader.wgsl".to_owned(), &state.device, 
-            &camera,
-            diffuse_texture,
-            &[Vertex::desc(), InstanceRaw::desc()],
-            state.config.format,
-        );
+        // note: order is important here as it must align with bind group order in the wgsl file.
+        let particle_shader = ShaderBuilder::from_file("particle_shader.wgsl".to_owned(), &state.device)
+            .diffuse_texture(diffuse_texture)
+            .camera(&camera)
+            .build(&[Vertex::desc(), InstanceRaw::desc()], state.config.format);
+        
+        let line_shader = ShaderBuilder::from_file("line_shader.wgsl".to_owned(), &state.device)
+            .camera(&camera)
+            .build(&[Vertex::desc(), InstanceRaw::desc()], state.config.format);
 
         // Determine what "scene" to load based on command line argument.
         let args: Vec<String> = env::args().collect();
@@ -124,7 +128,8 @@ impl Plugin for Game {
             particle_instance_renderer,
             quad_mesh,
             material,
-            shader,
+            particle_shader,
+            line_shader,
             frame_idx: 0,
             entity_system,
             event_system: EventSystem::new(),
@@ -244,7 +249,7 @@ impl Plugin for Game {
         };
 
         let render_context = state.render(|render_pass| {
-            self.shader.bind(render_pass);
+            self.particle_shader.bind(render_pass);
             self.material.bind(render_pass, 0);
 
             {
