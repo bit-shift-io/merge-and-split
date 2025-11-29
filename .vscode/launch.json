@@ -29,6 +29,28 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug - wrecking_ball",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=merge-and-split",
+                    "--package=merge-and-split"
+                ],
+                "filter": {
+                    "name": "merge-and-split",
+                    "kind": "bin"
+                }
+            },
+            "args": ["wrecking_ball"],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DYLD_FALLBACK_LIBRARY_PATH": "${userHome}/.rustup/toolchains/nightly-x86_64-apple-darwin/lib",
+                "CARGO_MANIFEST_DIR": "${workspaceFolder}"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug - volcano",
             "cargo": {
                 "args": [

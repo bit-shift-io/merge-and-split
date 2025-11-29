@@ -61,7 +61,7 @@ impl Simulation {
         }
     }
 
-    pub fn tick_1(&mut self, time_delta: f32) {
+    pub fn pre_solve(&mut self, time_delta: f32) {
         // https://github.com/ebirenbaum/ParticleSolver/blob/master/cpu/src/simulation.cpp
 
         debug_assert!(self.contact_boundary_constraints.len() == 0);
@@ -208,7 +208,7 @@ impl Simulation {
         // update_counts_callback(self);
     }
 
-    pub fn tick_2(&mut self, time_delta: f32, _solver_iterations: i32, iteration: i32) {
+    pub fn solve(&mut self, time_delta: f32, _solver_iterations: i32, iteration: i32) {
         
         // for (int j = 0; j < (int) NUM_CONSTRAINT_GROUPS; j++) {
         //     ConstraintGroup g = (ConstraintGroup) j;
@@ -266,7 +266,7 @@ impl Simulation {
         //}
     }
 
-    pub fn tick_3(&mut self, time_delta: f32) {
+    pub fn post_solve(&mut self, time_delta: f32) {
         // (23) For all particles
         for i in 0..self.particles.len() {
             let p = &mut self.particles[i];
