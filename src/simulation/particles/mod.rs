@@ -13,3 +13,4 @@ pub mod sdf_data;
 pub mod open_smoke_emitter;
 pub mod fluid_emitter;
 pub mod simulation_demos;
+pub mod spatial_hash;

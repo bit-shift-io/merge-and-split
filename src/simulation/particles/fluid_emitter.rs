@@ -6,13 +6,13 @@ pub struct FluidEmitter {
     posn: Vec2,
     particles_per_sec: f32,
     timer: f32,
-    totalTimer: f32,
+    total_timer: f32,
     fluid_index: usize, // TotalFluidConstraint *m_fs;
     grains: ParticleVec,
     // glm::dvec2 m_posn;
     // double m_particles_per_sec;
     // double timer;
-    // double totalTimer;
+    // double total_timer;
     // TotalFluidConstraint *m_fs;
     // QList<Particle *> grains;
 }
@@ -23,7 +23,7 @@ impl FluidEmitter {
             posn,
             particles_per_sec,
             timer: 0.0,
-            totalTimer: 0.0,
+            total_timer: 0.0,
             fluid_index,
             grains: ParticleVec::new(),
         }
@@ -98,9 +98,9 @@ impl FluidEmitter {
     //    }
 
         self.timer += secs;
-        self.totalTimer += secs;
+        self.total_timer += secs;
 
-        while self.totalTimer < 5.0 && self.timer >= 1.0/self.particles_per_sec {
+        while self.total_timer < 5.0 && self.timer >= 1.0/self.particles_per_sec {
             self.timer -= 1.0/self.particles_per_sec;
             if self.fluid_index != usize::MAX { // if (m_fs != NULL) {
 

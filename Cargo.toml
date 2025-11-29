@@ -20,6 +20,7 @@ now = "0.1.3"
 chrono = "0.4.42"
 rand_pcg = "0.9.0"
 rand_seeder = "0.4.0"
+smallvec = "1.15.1"
 
 [dependencies.image]
 version = "0.24"
