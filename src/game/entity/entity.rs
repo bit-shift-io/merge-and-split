@@ -1,6 +1,6 @@
 use winit::keyboard::KeyCode;
 
-use crate::{simulation::particles::{particle_vec::ParticleVec, simulation::Simulation}, engine::app::camera::Camera};
+use crate::{game::entity::entities::finish_entity::FinishEntitySystem, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation}, engine::app::camera::Camera};
 
 
 pub struct UpdateContext<'a> {
@@ -8,7 +8,9 @@ pub struct UpdateContext<'a> {
     pub sim: &'a mut Simulation,
    // pub level: &'a mut Level,
     pub time_delta: f32,
+    pub total_time: f32,
     pub camera: &'a mut Camera,
+    pub finish_entity_system: &'a FinishEntitySystem,
 }
 
 // pub trait Entity {

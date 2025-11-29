@@ -1,4 +1,4 @@
-use crate::{core::math::vec2::Vec2, game::level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
+use crate::{core::math::{aabb2d::Aabb2d, vec2::Vec2}, game::{entity::entities::finish_entity::FinishEntity, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
 
 pub struct FinishOperation {
 }
@@ -49,5 +49,12 @@ impl LevelBuilderOperation for FinishOperation {
         // level_builder_context.entity_system.push(FixedPointSpringVecEntity::new(fixed_point_spring_vec));
 
         level_builder_context.cursor = cursor_end;
+
+        // Add finish entity
+        let aabb = Aabb2d {
+            min: Vec2::new(cursor_start.x.min(cursor_end.x), cursor_start.y.min(cursor_end.y + 1.5)),
+            max: Vec2::new(cursor_start.x.max(cursor_end.x), cursor_start.y.max(cursor_end.y + 1.5)),
+        };
+        level_builder_context.entity_system.finish_entity_system.push(FinishEntity::new(aabb));
     }
 }

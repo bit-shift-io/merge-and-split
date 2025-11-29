@@ -19,7 +19,8 @@ pub struct Game {
     entity_system: EntitySystem,
     event_system: EventSystem,
 
-    simulation: Simulation
+    simulation: Simulation,
+    total_time: f32,
 }
 
 impl Game {
@@ -134,6 +135,7 @@ impl Plugin for Game {
             event_system: EventSystem::new(),
 
             simulation,
+            total_time: 0.0,
         };
 
         particles.update_particle_instances(&state.queue, &state.device);
@@ -230,7 +232,8 @@ impl Plugin for Game {
 
 
         // Apply constraints
-        self.entity_system.update(&mut self.particle_vec, &mut self.simulation, &mut self.camera, time_delta);
+        self.total_time += time_delta;
+        self.entity_system.update(&mut self.particle_vec, &mut self.simulation, &mut self.camera, time_delta, self.total_time);
 
 
         self.camera.update_camera_uniform(&state.queue);

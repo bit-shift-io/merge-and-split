@@ -145,6 +145,20 @@ impl CarEntity {
         // Update the camera to follow the car
         let look_at_pos = self.get_camera_look_at_position(&mut context.sim.particles);
         context.camera.target = cgmath::Point3::new(look_at_pos.x, look_at_pos.y, 0.0);
+
+        // Check for finish
+        for finish_entity in &context.finish_entity_system.entities {
+            for wheel in &self.wheels {
+                for particle_handle in &wheel.surface_particle_handles {
+                    let particle = &context.sim.particles[*particle_handle];
+                    if particle.pos.x >= finish_entity.aabb.min.x && particle.pos.x <= finish_entity.aabb.max.x &&
+                       particle.pos.y >= finish_entity.aabb.min.y && particle.pos.y <= finish_entity.aabb.max.y {
+                        println!("Game Finished! Time: {:.2}s", context.total_time);
+                        std::process::exit(0);
+                    }
+                }
+            }
+        }
     }
 
     fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool {
