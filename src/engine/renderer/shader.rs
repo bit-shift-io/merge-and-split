@@ -1,13 +1,19 @@
 use wgpu::{BindGroup, BindGroupLayout, ShaderModule};
+use std::collections::HashMap;
 
 use crate::engine::{app::camera::Camera, renderer::texture::{self, Texture}};
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+pub enum BindGroupType {
+    Camera,
+    Diffuse,
+}
 
 pub struct ShaderBuilder<'a> {
     shader_module: ShaderModule,
     device: &'a wgpu::Device,
-    bind_group_layouts: Vec<BindGroupLayout>,
-    bind_groups: Vec<BindGroup>,
+    mappings: HashMap<BindGroupType, u32>,
+    bind_groups_map: HashMap<u32, (BindGroupLayout, BindGroup)>,
 }
 
 impl<'a> ShaderBuilder<'a> {
@@ -20,6 +26,9 @@ impl<'a> ShaderBuilder<'a> {
 
         let shader_source = fs::read_to_string(path)
             .expect("Failed to read shader file");
+        
+        let mappings = Self::parse_wgsl(&shader_source);
+
         let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(shader_source.into()),
@@ -28,12 +37,50 @@ impl<'a> ShaderBuilder<'a> {
         Self {
             device,
             shader_module,
-            bind_group_layouts: vec![],
-            bind_groups: vec![],
+            mappings,
+            bind_groups_map: HashMap::new(),
         }
     }
 
+    fn parse_wgsl(source: &str) -> HashMap<BindGroupType, u32> {
+        let mut mappings = HashMap::new();
+        let lines: Vec<&str> = source.lines().collect();
+        
+        for (i, line) in lines.iter().enumerate() {
+            if line.contains("@group(") {
+                // simple parsing strategy:
+                // 1. find @group(X)
+                // 2. look at the next line (or same line) for variable name
+                // 3. if variable name contains "camera" or "diffuse", map it.
+                
+                let start = line.find("@group(").unwrap() + 7;
+                let end = line[start..].find(")").unwrap() + start;
+                let group_index: u32 = line[start..end].parse().unwrap_or(0);
+
+                // Look ahead for variable name
+                // This is a bit fragile but works for the current shader style
+                // We expect something like: var<uniform> camera: CameraUniform;
+                // or var t_diffuse: texture_2d<f32>;
+                
+                let mut context = String::new();
+                context.push_str(line);
+                if i + 1 < lines.len() {
+                    context.push_str(lines[i+1]);
+                }
+
+                if context.contains("camera") {
+                    mappings.insert(BindGroupType::Camera, group_index);
+                } else if context.contains("diffuse") {
+                    mappings.insert(BindGroupType::Diffuse, group_index);
+                }
+            }
+        }
+        mappings
+    }
+
     pub fn diffuse_texture(&mut self, diffuse_texture: &Texture) -> &mut Self {
+        let group_index = *self.mappings.get(&BindGroupType::Diffuse).expect("Shader does not have a 'diffuse' bind group");
+
         let texture_bind_group_layout =
             self.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[
@@ -72,13 +119,14 @@ impl<'a> ShaderBuilder<'a> {
             label: Some("diffuse_bind_group"),
         });
 
-        self.bind_group_layouts.push(texture_bind_group_layout);
-        self.bind_groups.push(diffuse_bind_group);
-
+        self.bind_groups_map.insert(group_index, (texture_bind_group_layout, diffuse_bind_group));
+        
         self
     }
 
     pub fn camera(&mut self, camera: &Camera) -> &mut Self {
+        let group_index = *self.mappings.get(&BindGroupType::Camera).expect("Shader does not have a 'camera' bind group");
+
         let camera_bind_group_layout =
             self.device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 entries: &[wgpu::BindGroupLayoutEntry {
@@ -108,20 +156,47 @@ impl<'a> ShaderBuilder<'a> {
             label: Some("camera_bind_group"),
         });
 
-        self.bind_group_layouts.push(camera_bind_group_layout);
-        self.bind_groups.push(camera_bind_group);
+        self.bind_groups_map.insert(group_index, (camera_bind_group_layout, camera_bind_group));
 
         self
     }
 
     pub fn build(&mut self, buffers: &'a [wgpu::VertexBufferLayout<'a>], format: wgpu::TextureFormat) -> Shader {
-        let bind_group_layout_refs: Vec<&BindGroupLayout> = self.bind_group_layouts.iter().collect();
-        let bind_group_layouts = bind_group_layout_refs.as_slice(); //.try_into().expect("Slice length mismatch");
+        let mut bind_groups_map = std::mem::take(&mut self.bind_groups_map);
+        let max_index = bind_groups_map.keys().max().copied().unwrap_or(0);
+        
+        let mut bind_group_layouts = Vec::new();
+        let mut bind_groups = Vec::new();
+
+        // Ensure we have all bind groups from 0 to max_index
+        for i in 0..=max_index {
+            if let Some((layout, group)) = bind_groups_map.remove(&i) {
+                bind_group_layouts.push(layout);
+                bind_groups.push(group);
+            } else {
+                // If the map is empty (no bind groups), max_index is 0. 
+                // If we didn't insert anything, loop runs once for 0.
+                // If map is empty, remove(&0) returns None.
+                // But if map is empty, we shouldn't panic if max_index is 0?
+                // Wait, if map is empty, max_index is 0. Loop runs for i=0.
+                // remove(0) is None. Panic.
+                // Correct behavior: if map is empty, we shouldn't loop?
+                // Or we should check if map is empty first.
+                if bind_groups_map.is_empty() && max_index == 0 {
+                    // No bind groups, do nothing
+                    break;
+                }
+                panic!("Missing bind group for index {}", i);
+            }
+        }
+
+        let bind_group_layout_refs: Vec<&BindGroupLayout> = bind_group_layouts.iter().collect();
+        let bind_group_layouts_slice = bind_group_layout_refs.as_slice();
 
         let render_pipeline_layout =
             self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: bind_group_layouts, //self.bind_group_layouts, //&[&texture_bind_group_layout, &camera_bind_group_layout],
+                bind_group_layouts: bind_group_layouts_slice,
                 push_constant_ranges: &[],
             });
 
@@ -131,14 +206,14 @@ impl<'a> ShaderBuilder<'a> {
             vertex: wgpu::VertexState {
                 module: &self.shader_module,
                 entry_point: Some("vs_main"),
-                buffers: buffers, //&[Vertex::desc(), InstanceRaw::desc()],
+                buffers: buffers,
                 compilation_options: Default::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 module: &self.shader_module,
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
-                    format: format, //config.format,
+                    format: format,
                     blend: Some(wgpu::BlendState {
                         color: wgpu::BlendComponent::REPLACE,
                         alpha: wgpu::BlendComponent::REPLACE,
@@ -152,12 +227,8 @@ impl<'a> ShaderBuilder<'a> {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: Some(wgpu::Face::Back),
-                // Setting this to anything other than Fill requires Features::POLYGON_MODE_LINE
-                // or Features::POLYGON_MODE_POINT
                 polygon_mode: wgpu::PolygonMode::Fill,
-                // Requires Features::DEPTH_CLIP_CONTROL
                 unclipped_depth: false,
-                // Requires Features::CONSERVATIVE_RASTERIZATION
                 conservative: false,
             },
             depth_stencil: Some(wgpu::DepthStencilState {
@@ -172,16 +243,13 @@ impl<'a> ShaderBuilder<'a> {
                 mask: !0,
                 alpha_to_coverage_enabled: false,
             },
-            // If the pipeline will be used with a multiview render pass, this
-            // indicates how many array layers the attachments will have.
             multiview: None,
-            // Useful for optimizing shader compilation on Android
             cache: None,
         });
 
         Shader {
             render_pipeline,
-            camera_bind_group: self.bind_groups[self.bind_groups.len() - 1].clone() // fixme! assumed first binding is the camera. should not use a hard coded number here!
+            bind_groups,
         }
     }
 }
@@ -190,20 +258,46 @@ impl<'a> ShaderBuilder<'a> {
 
 pub struct Shader {
     render_pipeline: wgpu::RenderPipeline,
-    camera_bind_group: wgpu::BindGroup,
+    bind_groups: Vec<BindGroup>,
 }
 
 impl Shader {
     pub fn new<'a>(file_name: String, device: &wgpu::Device, camera: &Camera, diffuse_texture: &Texture, buffers: &'a [wgpu::VertexBufferLayout<'a>], format: wgpu::TextureFormat) -> Self {
-        let s = ShaderBuilder::from_file(file_name, device)
-            .diffuse_texture(diffuse_texture)
-            .camera(camera)
-            .build(buffers, format);
-        s
+        let mut builder = ShaderBuilder::from_file(file_name, device);
+        builder.diffuse_texture(diffuse_texture);
+        builder.camera(camera);
+        builder.build(buffers, format)
     }
 
     pub fn bind(&self, render_pass: &mut wgpu::RenderPass) {
         render_pass.set_pipeline(&self.render_pipeline);
-        render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
+        for (i, group) in self.bind_groups.iter().enumerate() {
+            render_pass.set_bind_group(i as u32, group, &[]);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_wgsl() {
+        let source = r#"
+struct CameraUniform {
+    view_proj: mat4x4<f32>,
+}
+@group(1) @binding(0)
+var<uniform> camera: CameraUniform;
+
+@group(0) @binding(0)
+var t_diffuse: texture_2d<f32>;
+@group(0)@binding(1)
+var s_diffuse: sampler;
+"#;
+        let mappings = ShaderBuilder::parse_wgsl(source);
+        
+        assert_eq!(mappings.get(&BindGroupType::Camera), Some(&1));
+        assert_eq!(mappings.get(&BindGroupType::Diffuse), Some(&0));
     }
 }

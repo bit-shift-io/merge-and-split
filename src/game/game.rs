@@ -78,10 +78,9 @@ impl Plugin for Game {
         
         let diffuse_texture = &material.diffuse_texture;
 
-        // note: order is important here as it must align with bind group order in the wgsl file.
         let particle_shader = ShaderBuilder::from_file("particle_shader.wgsl".to_owned(), &state.device)
-            .diffuse_texture(diffuse_texture)
             .camera(&camera)
+            .diffuse_texture(diffuse_texture)
             .build(&[Vertex::desc(), InstanceRaw::desc()], state.config.format);
         
         let line_shader = ShaderBuilder::from_file("line_shader.wgsl".to_owned(), &state.device)
