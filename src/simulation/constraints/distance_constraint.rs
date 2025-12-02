@@ -6,6 +6,7 @@ pub struct DistanceConstraint {
     pub i1: usize,
     pub i2: usize,
     pub stable: bool,
+    pub enabled: bool,
 }
 
 impl DistanceConstraint {
@@ -16,7 +17,8 @@ impl DistanceConstraint {
             d,
             i1,
             i2,
-            stable
+            stable,
+            enabled: true,
         }
     }
 
@@ -26,6 +28,10 @@ impl DistanceConstraint {
     }
 
     pub fn project(&self, estimates: &mut ParticleVec, counts: &Vec<usize>) {
+        if !self.enabled {
+            return;
+        }
+
         let p1 = estimates[self.i1];
         let p2 = estimates[self.i2];
         
@@ -74,5 +80,39 @@ impl DistanceConstraintVec {
 
     pub fn push(&mut self, c: DistanceConstraint) {
         self.0.push(c);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{core::math::vec2::Vec2, simulation::particles::particle::Particle};
+
+    #[test]
+    fn test_distance_disabled() {
+        let mut particles = ParticleVec::new();
+        
+        let mut p1 = Particle::default();
+        p1.pos = Vec2::new(0.0, 0.0);
+        p1.pos_guess = Vec2::new(0.0, 0.0);
+        p1.imass = 1.0;
+        particles.push(p1);
+
+        let mut p2 = Particle::default();
+        p2.pos = Vec2::new(10.0, 0.0);
+        p2.pos_guess = Vec2::new(10.0, 0.0);
+        p2.imass = 1.0;
+        particles.push(p2);
+
+        // Rest length 5.0, current distance 10.0. Should contract if enabled.
+        let mut constraint = DistanceConstraint::new(5.0, 0, 1, false);
+        constraint.enabled = false;
+        
+        let counts = vec![1, 1];
+
+        constraint.project(&mut particles, &counts);
+
+        let new_dist = (particles[0].pos_guess - particles[1].pos_guess).magnitude();
+        assert_eq!(new_dist, 10.0); // Should not have moved
     }
 }

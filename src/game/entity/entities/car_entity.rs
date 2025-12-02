@@ -7,6 +7,7 @@ pub struct CarWheel {
     surface_particle_handles: Vec<ParticleHandle>,
     spring_constraint_ids: Vec<usize>,
     volume_constraint_ids: Vec<usize>,
+    surface_constraint_ids: Vec<usize>,
 }
 
 impl CarWheel {
@@ -27,7 +28,7 @@ impl CarWheel {
         };
 
         // wheel surface
-        let surface_particle_handles = {
+        let (surface_particle_handles, surface_constraint_ids) = {
             //let mask = 0x1;
             //let divisions = 20;
             let circle_radius = cm_to_m(35.0); // around a typical car tyre size - 17-18" (once you account for particle radius)
@@ -42,10 +43,10 @@ impl CarWheel {
             builder.apply_operation(Circle::new(origin, circle_radius, SpaceDistribution::SpaceBetweenParticles));
             builder.create_in_simulation(sim);
             
-            AdjacentSticks::new(/*Stick::default().set_stiffness_factor(1.0).clone(),*/ 1, true)
+            let ids = AdjacentSticks::new(/*Stick::default().set_stiffness_factor(1.0).clone(),*/ 1, true)
                 .apply_to_particle_handles(sim, &builder.particle_handles); // connect adjacent points
             //AdjacentSticks::new(Stick::default().set_stiffness_factor(0.5).clone(), 6, true).apply_to_particle_handles(particle_vec, &builder.particle_handles, &mut stick_vec); // connect every n points for extra stability during collisions
-            builder.particle_handles.clone()
+            (builder.particle_handles.clone(), ids)
         };
 
         let mut spring_constraint_ids = vec![];
@@ -71,6 +72,7 @@ impl CarWheel {
             surface_particle_handles,
             spring_constraint_ids,
             volume_constraint_ids,
+            surface_constraint_ids,
         }
     }
 
@@ -85,6 +87,18 @@ impl CarWheel {
         // this will stop the wheels expanding outwards as you accelerate
         particle_manipulator.add_torque_around_point(particle_vec, &self.surface_particle_handles, centre, torque * direction);
     }
+
+    fn disable_constraints(&mut self, sim: &mut Simulation) {
+        for &id in &self.spring_constraint_ids {
+            sim.spring_constraints.0[id].enabled = false;
+        }
+        for &id in &self.volume_constraint_ids {
+            sim.volume_constraints.0[id].enabled = false;
+        }
+        for &id in &self.surface_constraint_ids {
+            sim.distance_constraints.0[id].enabled = false;
+        }
+    }
 }
 
 const NUM_WHEELS: usize = 2;
@@ -94,6 +108,7 @@ pub struct CarEntity {
     is_left_pressed: bool,
     is_right_pressed: bool,
     axle_constraint_id: usize,
+    game_ended: bool,
 }
 
 impl CarEntity {
@@ -118,6 +133,7 @@ impl CarEntity {
             is_left_pressed: false,
             is_right_pressed: false,
             axle_constraint_id,
+            game_ended: false,
         }
     }
 
@@ -140,10 +156,9 @@ impl CarEntity {
     }
 
     fn update(&mut self, context: &mut UpdateContext) {
-        // Update wheel contraints
-        // for wheel in self.wheels.iter_mut() {
-        //     wheel.update(context);
-        // }
+        if self.game_ended {
+            return;
+        }
 
         // Apply input to wheels
         if self.is_left_pressed {
@@ -166,19 +181,18 @@ impl CarEntity {
                     let particle = &context.sim.particles[*particle_handle];
                     if particle.pos.x >= finish_entity.aabb.min.x && particle.pos.x <= finish_entity.aabb.max.x &&
                        particle.pos.y >= finish_entity.aabb.min.y && particle.pos.y <= finish_entity.aabb.max.y {
-                        println!("Game Finished! Time: {:.2}s", context.total_time);
-
-                        // Break the car apart!
-                        context.sim.spring_constraints.0[self.axle_constraint_id].enabled = false;
-                        for wheel in &self.wheels {
-                            for &id in &wheel.spring_constraint_ids {
-                                context.sim.spring_constraints.0[id].enabled = false;
-                            }
-                            for &id in &wheel.volume_constraint_ids {
-                                context.sim.volume_constraints.0[id].enabled = false;
-                            }
-                        }
+                        self.game_ended = true;
                     }
+                }
+            }
+
+            if self.game_ended {
+                println!("Game Finished! Time: {:.2}s", context.total_time);
+
+                // Break the car apart!
+                context.sim.spring_constraints.0[self.axle_constraint_id].enabled = false;
+                for wheel in self.wheels.iter_mut() {
+                    wheel.disable_constraints(context.sim);
                 }
             }
         }

@@ -417,8 +417,9 @@ impl Simulation {
         return idx;
     }
 
-    pub fn add_distance_constraint(&mut self, c: DistanceConstraint) {
+    pub fn add_distance_constraint(&mut self, c: DistanceConstraint) -> usize {
         self.distance_constraints.push(c);
+        self.distance_constraints.0.len() - 1
     }
 
     pub fn add_spring_constraint(&mut self, c: SpringConstraint) -> usize {

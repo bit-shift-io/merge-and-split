@@ -17,9 +17,11 @@ impl AdjacentSticks {
         }
     }
 
-    pub fn apply_to_particle_handles(&self, sim: &mut Simulation, particle_handles: &Vec<ParticleHandle>) {
+    pub fn apply_to_particle_handles(&self, sim: &mut Simulation, particle_handles: &Vec<ParticleHandle>) -> Vec<usize> {
         let radius = sim.particles[particle_handles[0]].radius; //shape_builder.particle_radius();
         let particle_count = particle_handles.len(); //shape_builder.particles.len();
+
+        let mut constraint_ids = vec![];
 
         for pi in 0..particle_count {
             let mut pi_next = pi + self.stride;
@@ -43,9 +45,11 @@ impl AdjacentSticks {
             //stick.set_particle_handles(particle_handles).set_length(dist);
             //stick_vec.push(stick);
 
-            sim.add_distance_constraint(DistanceConstraint::new(dist, particle_handles[0], particle_handles[1], false));
+            let id = sim.add_distance_constraint(DistanceConstraint::new(dist, particle_handles[0], particle_handles[1], false));
+            constraint_ids.push(id);
             //sim.add_spring_constraint(SpringConstraint::new(dist, 0.001, particle_handles[0], particle_handles[1], false));
         }
+        constraint_ids
     }
 }
 
