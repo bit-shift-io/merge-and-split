@@ -1,7 +1,7 @@
 use rand_pcg::Pcg64;
 use rand::Rng;
 
-use crate::{core::math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, game::{entity::entity_system::EntitySystem, level::{level_blocks::{cliff_operation::CliffOperation, drop_direction_reverse::DropDirectionReverse, elevator::ElevatorOperation, finish_operation::FinishOperation, fluid_funnel::FluidFunnel, saggy_bridge_operation::SaggyBridgeOperation, spawn_operation::SpawnOperation, straight_level_block::StraightLevelBlock, water_balloon_drop::WaterBalloonDrop}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}}, simulation::particles::{particle::Particle, particle_vec::ParticleVec, simulation::Simulation}};
+use crate::{core::math::{random::Random, unit_conversions::cm_to_m, vec2::Vec2}, game::{entity::entity_system::EntitySystem, level::{level_blocks::{cliff_operation::CliffOperation, drop_direction_reverse::DropDirectionReverse, elevator::ElevatorOperation, finish_operation::FinishOperation, fluid_funnel::FluidFunnel, hill_operation::HillOperation, saggy_bridge_operation::SaggyBridgeOperation, spawn_operation::SpawnOperation, straight_level_block::StraightLevelBlock, water_balloon_drop::WaterBalloonDrop}, level_builder_operation::LevelBuilderOperation, level_builder_operation_registry::LevelBuilderOperationRegistry}}, simulation::particles::{particle::Particle, particle_vec::ParticleVec, simulation::Simulation}};
 
 pub struct LevelBuilder {
     level_builder_operations_registry: LevelBuilderOperationRegistry,
@@ -55,7 +55,7 @@ impl LevelBuilder {
         let mut rng = Random::seed_from_now(); //seed_from_beginning_of_day(); //seed_from_beginning_of_week(); //car_scene.rng;
         
         let mut level_builder_context = LevelBuilderContext::new(entity_system, particle_vec, sim, &mut rng);
-        self.generate(&mut level_builder_context, 2); //10); //10);
+        self.generate(&mut level_builder_context, 3); //10); //10);
     }
 
     pub fn generate(&mut self, level_builder_context: &mut LevelBuilderContext, num_blocks: i32) -> &mut Self {
@@ -128,14 +128,17 @@ impl Default for LevelBuilder {
         // we should keep a bounding box for each operation applied to help work out if a block can be used instead of using x_direction_changed for example
         registry.register(SpawnOperation {});
         registry.register(FinishOperation {});
-        registry.register(WaterBalloonDrop {});
+        registry.register(HillOperation {});
 
-        registry.register(SaggyBridgeOperation {});
-        registry.register(StraightLevelBlock {});
-        registry.register(CliffOperation {});
-        registry.register(FluidFunnel {});
-        registry.register(DropDirectionReverse {});
-        registry.register(ElevatorOperation {});
+
+        // registry.register(WaterBalloonDrop {});
+        // registry.register(SaggyBridgeOperation {});
+        // registry.register(StraightLevelBlock {});
+        // registry.register(CliffOperation {});
+        // registry.register(FluidFunnel {});
+        // registry.register(DropDirectionReverse {});
+        // registry.register(ElevatorOperation {});
+        
 
         //registry.register(JellyCube {});
  

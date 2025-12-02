@@ -6,3 +6,4 @@ pub mod aabb2d;
 pub mod float;
 pub mod unit_conversions;
 pub mod random;
+pub mod bezier_spline;
