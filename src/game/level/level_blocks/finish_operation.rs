@@ -1,4 +1,4 @@
-use crate::{core::math::{aabb2d::Aabb2d, vec2::Vec2}, game::{entity::entities::finish_entity::FinishEntity, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
+use crate::{core::math::{aabb2d::Aabb2d, unit_conversions::cm_to_m, vec2::Vec2}, game::{entity::entities::finish_entity::FinishEntity, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
 
 pub struct FinishOperation {
 }
@@ -32,8 +32,12 @@ impl LevelBuilderOperation for FinishOperation {
         let width = 3.0;
         let height = 0.0;
 
+        // this must match what is in car_entity.rs
+        let car_wheel_particle_radius = cm_to_m(8.0);
+
         let cursor_start = level_builder_context.cursor;
         let cursor_end = cursor_start + Vec2::new(width * level_builder_context.x_direction, height);
+        let finish_start = cursor_end - Vec2::new(car_wheel_particle_radius * 2.0 * level_builder_context.x_direction, 0.0) + Vec2::new(0.0, 1.5);
 
         // Get the current length of particle_vec, as we are about to push on more particles
         // let particle_vec_start_index = level_builder_context.particle_vec.len();
@@ -51,10 +55,7 @@ impl LevelBuilderOperation for FinishOperation {
         level_builder_context.cursor = cursor_end;
 
         // Add finish entity
-        let aabb = Aabb2d {
-            min: Vec2::new(cursor_start.x.min(cursor_end.x), cursor_start.y.min(cursor_end.y + 1.5)),
-            max: Vec2::new(cursor_start.x.max(cursor_end.x), cursor_start.y.max(cursor_end.y + 1.5)),
-        };
+        let aabb = Aabb2d::from_point_cloud(&[finish_start, cursor_end]);
         level_builder_context.entity_system.finish_entity_system.push(FinishEntity::new(aabb));
     }
 }
