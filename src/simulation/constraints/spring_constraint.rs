@@ -6,6 +6,7 @@ pub struct SpringConstraint {
     pub i1: usize,
     pub i2: usize,
     pub stable: bool,
+    pub enabled: bool,
 }
 
 impl SpringConstraint {
@@ -17,6 +18,7 @@ impl SpringConstraint {
             i1,
             i2,
             stable,
+            enabled: true,
         }
     }
 
@@ -26,6 +28,10 @@ impl SpringConstraint {
     }
 
     pub fn project(&self, estimates: &mut ParticleVec, counts: &Vec<usize>, dt: f32) {
+        if !self.enabled {
+            return;
+        }
+
         let p1 = estimates[self.i1];
         let p2 = estimates[self.i2];
 
@@ -128,5 +134,34 @@ mod tests {
         let new_dist = (particles[0].pos_guess - particles[1].pos_guess).magnitude();
         assert!(new_dist < 10.0);
         assert!(new_dist > 5.0); // It shouldn't snap instantly with finite stiffness
+    }
+
+    #[test]
+    fn test_spring_disabled() {
+        let mut particles = ParticleVec::new();
+        
+        let mut p1 = Particle::default();
+        p1.pos = Vec2::new(0.0, 0.0);
+        p1.pos_guess = Vec2::new(0.0, 0.0);
+        p1.imass = 1.0;
+        particles.push(p1);
+
+        let mut p2 = Particle::default();
+        p2.pos = Vec2::new(10.0, 0.0);
+        p2.pos_guess = Vec2::new(10.0, 0.0);
+        p2.imass = 1.0;
+        particles.push(p2);
+
+        // Rest length 5.0, current distance 10.0. Should contract if enabled.
+        let mut spring = SpringConstraint::new(5.0, 100.0, 0, 1, false);
+        spring.enabled = false;
+        
+        let counts = vec![1, 1];
+        let dt = 0.016;
+
+        spring.project(&mut particles, &counts, dt);
+
+        let new_dist = (particles[0].pos_guess - particles[1].pos_guess).magnitude();
+        assert_eq!(new_dist, 10.0); // Should not have moved
     }
 }

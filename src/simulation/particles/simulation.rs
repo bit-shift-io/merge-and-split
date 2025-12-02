@@ -421,12 +421,14 @@ impl Simulation {
         self.distance_constraints.push(c);
     }
 
-    pub fn add_spring_constraint(&mut self, c: SpringConstraint) {
+    pub fn add_spring_constraint(&mut self, c: SpringConstraint) -> usize {
         self.spring_constraints.push(c);
+        self.spring_constraints.0.len() - 1
     }
 
-    pub fn add_volume_constraint(&mut self, c: VolumeConstraint) {
+    pub fn add_volume_constraint(&mut self, c: VolumeConstraint) -> usize {
         self.volume_constraints.push(c);
+        self.volume_constraints.0.len() - 1
     }
 
     pub fn add_particle(&mut self, p: Particle) {

@@ -5,6 +5,8 @@ use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, gam
 pub struct CarWheel {
     hub_particle_handle: ParticleHandle,
     surface_particle_handles: Vec<ParticleHandle>,
+    spring_constraint_ids: Vec<usize>,
+    volume_constraint_ids: Vec<usize>,
 }
 
 impl CarWheel {
@@ -46,22 +48,29 @@ impl CarWheel {
             builder.particle_handles.clone()
         };
 
+        let mut spring_constraint_ids = vec![];
+        let mut volume_constraint_ids = vec![];
+
         {
             // Connect sufrace of wheels together
             for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
                 let dist = (sim.particles[hub_particle_handle].pos - sim.particles[*surface_particle_handle].pos).magnitude(); 
                 //sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
-                sim.add_spring_constraint(SpringConstraint::new(dist, 1000.0, hub_particle_handle, *surface_particle_handle, false));
+                let id = sim.add_spring_constraint(SpringConstraint::new(dist, 1000.0, hub_particle_handle, *surface_particle_handle, false));
+                spring_constraint_ids.push(id);
             }
 
             // Add volume constraint
             let compliance = 0.00001; // Tunable parameter
-            sim.add_volume_constraint(VolumeConstraint::new(compliance, surface_particle_handles.clone(), &sim.particles));
+            let id = sim.add_volume_constraint(VolumeConstraint::new(compliance, surface_particle_handles.clone(), &sim.particles));
+            volume_constraint_ids.push(id);
         }
 
         Self {
             hub_particle_handle,
             surface_particle_handles,
+            spring_constraint_ids,
+            volume_constraint_ids,
         }
     }
 
@@ -84,6 +93,7 @@ pub struct CarEntity {
     pub wheels: [CarWheel; NUM_WHEELS],
     is_left_pressed: bool,
     is_right_pressed: bool,
+    axle_constraint_id: usize,
 }
 
 impl CarEntity {
@@ -97,16 +107,17 @@ impl CarEntity {
         let wheel_2 = CarWheel::new(origin - Vec2::new(half_wheel_spacing, 0.0), particle_vec, sim);
 
         // Axle constraint to connect the two wheel hubs
-        {
+        let axle_constraint_id = {
             let dist = (sim.particles[wheel_1.hub_particle_handle].pos - sim.particles[wheel_2.hub_particle_handle].pos).magnitude(); 
             //sim.add_distance_constraint(DistanceConstraint::new(dist, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false));
-            sim.add_spring_constraint(SpringConstraint::new(dist, 2000.0, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false));
-        }
+            sim.add_spring_constraint(SpringConstraint::new(dist, 2000.0, wheel_1.hub_particle_handle, wheel_2.hub_particle_handle, false))
+        };
 
         Self {
             wheels: [wheel_1, wheel_2],
             is_left_pressed: false,
             is_right_pressed: false,
+            axle_constraint_id,
         }
     }
 
@@ -156,6 +167,17 @@ impl CarEntity {
                     if particle.pos.x >= finish_entity.aabb.min.x && particle.pos.x <= finish_entity.aabb.max.x &&
                        particle.pos.y >= finish_entity.aabb.min.y && particle.pos.y <= finish_entity.aabb.max.y {
                         println!("Game Finished! Time: {:.2}s", context.total_time);
+
+                        // Break the car apart!
+                        context.sim.spring_constraints.0[self.axle_constraint_id].enabled = false;
+                        for wheel in &self.wheels {
+                            for &id in &wheel.spring_constraint_ids {
+                                context.sim.spring_constraints.0[id].enabled = false;
+                            }
+                            for &id in &wheel.volume_constraint_ids {
+                                context.sim.volume_constraints.0[id].enabled = false;
+                            }
+                        }
                     }
                 }
             }

@@ -4,6 +4,7 @@ pub struct VolumeConstraint {
     pub rest_volume: f32,
     pub compliance: f32,
     pub particle_indices: Vec<usize>,
+    pub enabled: bool,
 }
 
 impl VolumeConstraint {
@@ -12,6 +13,7 @@ impl VolumeConstraint {
             rest_volume: 0.0,
             compliance,
             particle_indices,
+            enabled: true,
         };
         constraint.rest_volume = constraint.calculate_volume(particles, true); // Calculate initial volume as rest volume
         constraint
@@ -29,6 +31,10 @@ impl VolumeConstraint {
     }
 
     pub fn project(&self, estimates: &mut ParticleVec, counts: &Vec<usize>, dt: f32) {
+        if !self.enabled {
+            return;
+        }
+
         let current_volume = self.calculate_volume(estimates, false);
         let c = current_volume - self.rest_volume;
 
