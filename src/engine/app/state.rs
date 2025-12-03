@@ -1,13 +1,13 @@
 use std::{iter, sync::Arc};
 
 use winit::{
-    application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window
+    event_loop::ActiveEventLoop, keyboard::KeyCode, window::Window
 };
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use crate::engine::{app::camera::{Camera, CameraController, CameraUniform}, renderer::texture};
+use crate::engine::renderer::texture;
 
 // #[repr(C)]
 // #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]

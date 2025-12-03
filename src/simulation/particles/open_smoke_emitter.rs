@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use crate::{core::math::vec2::Vec2, simulation::{constraints::gas_constraint::{GasConstraint, GasConstraintVec}, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
+use crate::{core::math::vec2::Vec2, simulation::{constraints::gas_constraint::GasConstraintVec, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
 
 pub struct OpenSmokeEmitter {
 
@@ -73,7 +73,7 @@ pub fn poly6(r2: f32) -> f32 {
     if r2 >= h2 {
         return 0.0;
     }
-    let term2 = (h2 - r2);
+    let term2 = h2 - r2;
     return (315.0 / (64. * PI * h9)) * (term2 * term2 * term2);
 //    return (H-r) / (H*H);
 }

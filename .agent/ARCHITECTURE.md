@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The merge-and-split project is structured in three main layers:
+The planck-time-trials project is structured in three main layers:
 
 ```
 ┌─────────────────────────────────────┐

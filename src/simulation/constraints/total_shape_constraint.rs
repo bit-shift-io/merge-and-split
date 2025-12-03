@@ -23,7 +23,7 @@ impl TotalShapeConstraint {
         return d + body.center;
     }
 
-    pub fn project(&self, estimates: &mut ParticleVec, counts: &Vec<usize>, body: &mut Body) {
+    pub fn project(&self, estimates: &mut ParticleVec, _counts: &Vec<usize>, body: &mut Body) {
         body.update_com(estimates, true);
 
         // implemented using http://labs.byhook.com/2010/06/29/particle-based-rigid-bodies-using-shape-matching/

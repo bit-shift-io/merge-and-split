@@ -7,7 +7,7 @@ use winit::{
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use crate::engine::{app::{camera::{Camera, CameraController, CameraUniform}, plugin::Plugin, state::State}, renderer::texture};
+use crate::engine::app::{plugin::Plugin, state::State};
 
 pub struct App<P: Plugin> {
     #[cfg(target_arch = "wasm32")]
@@ -76,7 +76,7 @@ impl<P: Plugin> App<P> {
     }
 
     pub fn render(&mut self) {
-        if let Some(mut plugin) = self.plugin.take() {
+        if let Some(plugin) = self.plugin.take() {
             plugin.render(self);
             self.plugin = Some(plugin);
         }

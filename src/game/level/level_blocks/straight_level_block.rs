@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{core::math::{vec2::Vec2, vec4::Vec4}, game::level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
+use crate::{core::math::vec2::Vec2, game::level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
 
 pub struct StraightLevelBlock {
 }
@@ -23,12 +23,12 @@ impl LevelBuilderOperation for StraightLevelBlock {
         // Generate a random color
         //let rng = level_builder_context.rng;
         
-        let random_color = Vec4::new(
-            level_builder_context.rng.random_range(0.0..1.0),
-            level_builder_context.rng.random_range(0.0..1.0),
-            level_builder_context.rng.random_range(0.0..1.0),
-            1.0,
-        );
+        // let random_color = Vec4::new(
+        //     level_builder_context.rng.random_range(0.0..1.0),
+        //     level_builder_context.rng.random_range(0.0..1.0),
+        //     level_builder_context.rng.random_range(0.0..1.0),
+        //     1.0,
+        // );
 
         let width = level_builder_context.rng.random_range(5.0..=10.0);
         let height = level_builder_context.rng.random_range(-1.5..=1.5);

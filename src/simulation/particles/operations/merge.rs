@@ -1,6 +1,6 @@
 use std::usize;
 
-use crate::{core::math::vec2::Vec2, simulation::particles::{operations::operation::Operation, particle::{Particle, ParticleType}, particle_vec::ParticleVec}};
+use crate::simulation::particles::{operations::operation::Operation, particle::{Particle, ParticleType}, particle_vec::ParticleVec};
 
 
 pub const LARGE_MASS: f32 = 1.0; //100000000.0; // This might cause problems if this goes too high due to merging combining masses.
@@ -221,7 +221,7 @@ impl Merge {
 
 impl Operation for Merge {
 
-    fn execute(&mut self, ps: &mut ParticleVec) {
+    fn execute(&mut self, _ps: &mut ParticleVec) {
     }
 
 

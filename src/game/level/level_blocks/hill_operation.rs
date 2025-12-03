@@ -2,17 +2,15 @@ use rand::Rng;
 use crate::{
     core::math::{
         vec2::Vec2, 
-        vec4::Vec4,
         bezier_spline::{BezierSpline, CubicBezierCurve}
     }, 
     game::level::{
         level_builder::LevelBuilderContext, 
         level_builder_operation::LevelBuilderOperation
     }, 
-    simulation::particles::{
-        shape_builder::shape_builder::ShapeBuilder,
-        particle::Particle
-    }
+    simulation::particles::
+        shape_builder::shape_builder::ShapeBuilder
+    
 };
 
 pub struct HillOperation;
@@ -82,7 +80,7 @@ impl LevelBuilderOperation for HillOperation {
         // Or just fill down to a certain y?
         // Let's fill down to min(start_y, end_y) - 5.0 or something.
         // Or just make a thick terrain layer, e.g. 5 units thick.
-        let thickness = 1.0;
+        //let thickness = 1.0;
 
         let mut sb = ShapeBuilder::from_particle_template(level_builder_context.particle_template.clone());
         // Make it static (ground)

@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{core::math::vec2::Vec2, simulation::{constraints::total_fluid_constraint::{TotalFluidConstraint, TotalFluidConstraintVec}, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
+use crate::{core::math::vec2::Vec2, simulation::{constraints::total_fluid_constraint::TotalFluidConstraintVec, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
 
 pub struct FluidEmitter {
     posn: Vec2,

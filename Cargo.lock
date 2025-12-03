@@ -973,27 +973,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "merge-and-split"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bytemuck",
- "cgmath",
- "chrono",
- "env_logger",
- "image",
- "log",
- "now",
- "pollster",
- "rand",
- "rand_pcg",
- "rand_seeder",
- "smallvec",
- "wgpu",
- "winit",
-]
-
-[[package]]
 name = "metal"
 version = "0.32.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1426,6 +1405,27 @@ name = "pkg-config"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7edddbd0b52d732b21ad9a5fab5c704c14cd949e5e9a1ec5929a24fded1b904c"
+
+[[package]]
+name = "planck-time-trials"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bytemuck",
+ "cgmath",
+ "chrono",
+ "env_logger",
+ "image",
+ "log",
+ "now",
+ "pollster",
+ "rand",
+ "rand_pcg",
+ "rand_seeder",
+ "smallvec",
+ "wgpu",
+ "winit",
+]
 
 [[package]]
 name = "png"

@@ -158,7 +158,7 @@ impl GasConstraint {
         }
     }
 
-    pub fn update_counts(&self, counts: &mut Vec<usize>) {
+    pub fn update_counts(&self, _counts: &mut Vec<usize>) {
         // do nothing
     }
 

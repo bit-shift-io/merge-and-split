@@ -1,12 +1,9 @@
 // Based on https://github.com/sotrh/learn-wgpu/blob/master/code/beginner/tutorial9-models/src/model.rs
 
 use bytemuck::NoUninit;
-use wgpu::{naga::proc::index, util::DeviceExt};
-use winit::{
-    application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window
-};
+use wgpu::util::DeviceExt;
 
-use crate::engine::{app::camera::Camera, renderer::texture};
+use crate::engine::renderer::texture;
 
 pub trait Vertex {
     fn desc() -> wgpu::VertexBufferLayout<'static>;
@@ -112,7 +109,7 @@ impl Material {
         }
     }
 
-    pub fn bind(&self, render_pass: &mut wgpu::RenderPass, index: u32) {
+    pub fn bind(&self, render_pass: &mut wgpu::RenderPass, _index: u32) {
         render_pass.set_bind_group(0, &self.bind_group, &[]);
     }
 }

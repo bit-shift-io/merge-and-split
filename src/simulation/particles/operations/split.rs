@@ -1,4 +1,4 @@
-use crate::{core::math::vec2::{reflect_vector_a_around_b, Vec2}, simulation::particles::{operations::{merge::LARGE_MASS, operation::Operation}, particle::{Particle, ParticleType}, particle_vec::ParticleVec}};
+use crate::{core::math::vec2::Vec2, simulation::particles::{operations::operation::Operation, particle::ParticleType, particle_vec::ParticleVec}};
 
 
 
@@ -24,7 +24,7 @@ fn split(meta_index: usize, alpha: f32, ps: &mut ParticleVec) {
     let delta_e = meta.energy_delta;
     let n = meta.n;
     let v1 = meta.v_left_initial;
-    let v2 = meta.v_right_initial;
+    let _v2 = meta.v_right_initial;
 
     let m1 = left.mass; //if left.is_static { LARGE_MASS } else { left.mass }; //left.mass; //get_mass(ps);
     let m2 = right.mass; //if right.is_static { LARGE_MASS } else { right.mass }; //right.mass; //get_mass(ps);
@@ -360,7 +360,7 @@ impl Default for Split {
 //     use super::*;
 
 //     // #[test]
-//     // fn merge_and_split_3_intersecting_order_independent() {
+//     // fn planck_time_trials_3_intersecting_order_independent() {
 //     //     let p1 = *Particle::default().set_debug(true).set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0)); // At origin.
 //     //     let p2 = *Particle::default().set_debug(true).set_pos(Vec2::new(0.9, 0.0)); // To the right of p1 such that it just overlaps.
 //     //     let p3 = *Particle::default().set_debug(true).set_pos(Vec2::new(0.5, 0.5)); // Between p1 and p2, but higher, so all 3 overlap.
@@ -392,7 +392,7 @@ impl Default for Split {
 
 
 //     #[test]
-//     fn merge_and_split_2_intersecting() {
+//     fn planck_time_trials_2_intersecting() {
 //         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0));
 //         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
 
@@ -448,7 +448,7 @@ impl Default for Split {
 
 
 //     #[test]
-//     fn merge_and_split_3_intersecting() {
+//     fn planck_time_trials_3_intersecting() {
 //         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0)); // At origin.
 //         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)); // To the right of p1 such that it just overlaps.
 //         let p3 = *Particle::default().set_pos(Vec2::new(0.5, 0.5)); // Between p1 and p2, but higher, so all 3 overlap.
@@ -521,7 +521,7 @@ impl Default for Split {
 
 
 //     // #[test]
-//     // fn merge_and_split_2_static_intersecting() {
+//     // fn planck_time_trials_2_static_intersecting() {
 //     //     let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_static(true);
 //     //     let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)).set_vel(Vec2::new(-0.1, 0.0));
 

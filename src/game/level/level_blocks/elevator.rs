@@ -150,7 +150,7 @@ impl ElevatorEntitySystem {
         }
     }
 
-    pub fn solve_constraints(&mut self, sim: &mut crate::simulation::particles::simulation::Simulation, time_delta: f32) {
+    pub fn solve_constraints(&mut self, sim: &mut crate::simulation::particles::simulation::Simulation, _time_delta: f32) {
         // for e in self.0.iter_mut() {
         //     let body_pos = sim.bodies[e.body_idx].center;
         //     let offset = e.pos - body_pos;

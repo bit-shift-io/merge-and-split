@@ -275,7 +275,7 @@
 //     use super::*;
 
 //     #[test]
-//     fn merge_and_split_2_intersecting() {
+//     fn planck_time_trials_2_intersecting() {
 //         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0));
 //         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
 
@@ -302,7 +302,7 @@
 
 
 //     #[test]
-//     fn merge_and_split_3_intersecting() {
+//     fn planck_time_trials_3_intersecting() {
 //         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0)); // At origin.
 //         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)); // To the right of p1 such that it just overlaps.
 //         let p3 = *Particle::default().set_pos(Vec2::new(0.5, 0.5)); // Between p1 and p2, but higher, so all 3 overlap.

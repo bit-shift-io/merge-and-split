@@ -69,7 +69,7 @@ impl EventSystem {
         self.events.clear();
     }
 
-    pub fn process_event(&self, event: &WindowEvent) {
+    pub fn process_event(&self, _event: &WindowEvent) {
 
     }
 }

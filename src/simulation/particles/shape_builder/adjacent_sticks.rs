@@ -18,7 +18,7 @@ impl AdjacentSticks {
     }
 
     pub fn apply_to_particle_handles(&self, sim: &mut Simulation, particle_handles: &Vec<ParticleHandle>) -> Vec<usize> {
-        let radius = sim.particles[particle_handles[0]].radius; //shape_builder.particle_radius();
+        let _radius = sim.particles[particle_handles[0]].radius; //shape_builder.particle_radius();
         let particle_count = particle_handles.len(); //shape_builder.particles.len();
 
         let mut constraint_ids = vec![];

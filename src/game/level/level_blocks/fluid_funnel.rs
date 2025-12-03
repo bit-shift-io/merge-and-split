@@ -1,4 +1,3 @@
-use rand::Rng;
 
 use crate::{game::level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, core::math::{unit_conversions::g_to_kg, vec2::Vec2, vec4::Vec4}, simulation::particles::{particle::Particle, shape_builder::{line_segment::LineSegment, rectangle::Rectangle, shape_builder::ShapeBuilder}}};
 
@@ -31,8 +30,8 @@ impl LevelBuilderOperation for FluidFunnel {
     fn execute(&self, level_builder_context: &mut LevelBuilderContext) {
         let rng = &mut level_builder_context.rng;
 
-        let width = 0.0;
-        let height = rng.random_range(-2.0..=-0.5);
+        // let width = 0.0;
+        // let height = rng.random_range(-2.0..=-0.5);
 
         let cursor_start = level_builder_context.cursor;
         let cursor_end = cursor_start; //cursor_start + vec2(width * level_builder_context.x_direction, height);
@@ -49,8 +48,8 @@ impl LevelBuilderOperation for FluidFunnel {
 
         let funnel_mouth_half_width = liquid_particle_radius * 6.0 * 0.5;
 
-        let bucket_height = particle_radius * 6.0;
-        let bucket_width = 3.0;
+        // let bucket_height = particle_radius * 6.0;
+        // let bucket_width = 3.0;
 
         let origin = cursor_start;
 

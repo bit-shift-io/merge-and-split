@@ -28,7 +28,7 @@ impl Game {
         // Add particles into the instance renderer
         let mut instances: Vec<Instance> = vec![]; 
 
-        // Switch between the merge-and-split particle system (old) and the new unified particle system
+        // Switch between the planck-time-trials particle system (old) and the new unified particle system
         //let particles = &self.particle_vec;
         let particles = &self.simulation.particles;
 
@@ -152,11 +152,11 @@ impl Plugin for Game {
         }
     }
 
-    fn window_event(&mut self, app: &mut App<Game>, event: WindowEvent) {
+    fn window_event(&mut self, _app: &mut App<Game>, event: WindowEvent) {
         self.event_system.queue_window_event(event);
     }
 
-    fn handle_key(&mut self, app: &mut App<Game>, key: KeyCode, pressed: bool) {
+    fn handle_key(&mut self, _app: &mut App<Game>, key: KeyCode, pressed: bool) {
         self.camera_controller.handle_key(key, pressed);
 
         // todo: this should occur when we handle window events in the event system

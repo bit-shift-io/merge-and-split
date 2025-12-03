@@ -1,10 +1,7 @@
 use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
-use winit::{
-    application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window
-};
 
-use crate::{core::math::vec4::Vec4, engine::{app::camera::Camera, renderer::texture}};
+use crate::{core::math::vec4::Vec4, engine::app::camera::Camera};
 
 
 #[repr(C)]
@@ -191,7 +188,7 @@ pub struct InstanceRenderer {
 }
 
 impl InstanceRenderer {
-    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, config: &wgpu::SurfaceConfiguration) -> Self {
+    pub fn new(device: &wgpu::Device, _queue: &wgpu::Queue, _config: &wgpu::SurfaceConfiguration) -> Self {
         // let diffuse_bytes = include_bytes!("../../res/marble.png");
         // let diffuse_texture =
         //     texture::Texture::from_bytes(&device, &queue, diffuse_bytes, "marble.png").unwrap();

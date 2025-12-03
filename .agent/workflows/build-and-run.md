@@ -1,5 +1,5 @@
 ---
-description: Build and run the merge-and-split simulation
+description: Build and run the planck-time-trials simulation
 ---
 
 # Build and Run Workflow

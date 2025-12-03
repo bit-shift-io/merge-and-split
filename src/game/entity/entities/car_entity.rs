@@ -1,6 +1,6 @@
 use winit::keyboard::KeyCode;
 
-use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::{entities::finish_entity::FinishEntitySystem, entity_system::UpdateContext}, simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation}}};
+use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::{entities::finish_entity::FinishEntitySystem, entity_system::UpdateContext}, simulation::{constraints::{spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation}}};
 
 pub struct CarWheel {
     hub_particle_handle: ParticleHandle,
@@ -11,7 +11,7 @@ pub struct CarWheel {
 }
 
 impl CarWheel {
-    pub fn new(origin: Vec2, particle_vec: &mut ParticleVec, sim: &mut Simulation) -> Self {
+    pub fn new(origin: Vec2, _particle_vec: &mut ParticleVec, sim: &mut Simulation) -> Self {
         let particle_mass = 1.0; //g_to_kg(10.0);
 
         // wheel hub - this is on mask layer zero which is a special no collisions layer
@@ -54,7 +54,7 @@ impl CarWheel {
 
         {
             // Connect sufrace of wheels together
-            for (idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
+            for (_idx, surface_particle_handle) in surface_particle_handles.iter().enumerate() {
                 let dist = (sim.particles[hub_particle_handle].pos - sim.particles[*surface_particle_handle].pos).magnitude(); 
                 //sim.add_distance_constraint(DistanceConstraint::new(dist, hub_particle_handle, *surface_particle_handle, false));
                 let id = sim.add_spring_constraint(SpringConstraint::new(dist, 1000.0, hub_particle_handle, *surface_particle_handle, false));

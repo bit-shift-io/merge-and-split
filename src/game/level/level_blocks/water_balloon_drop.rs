@@ -3,10 +3,9 @@ use rand::Rng;
 use crate::{
     core::math::{vec2::Vec2, vec4::Vec4},
     game::level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation},
-    simulation::{
-        constraints::distance_constraint::DistanceConstraint,
-        particles::{particle::Particle, particle_vec::ParticleVec, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation},
-    },
+    simulation::
+        particles::{particle::Particle, particle_vec::ParticleVec, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation}
+    ,
 };
 
 pub struct WaterBalloonDrop {}

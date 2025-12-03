@@ -11,11 +11,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=merge-and-split",
-                    "--package=merge-and-split"
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
                 ],
                 "filter": {
-                    "name": "merge-and-split",
+                    "name": "planck-time-trials",
                     "kind": "bin"
                 }
             },
@@ -33,11 +33,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=merge-and-split",
-                    "--package=merge-and-split"
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
                 ],
                 "filter": {
-                    "name": "merge-and-split",
+                    "name": "planck-time-trials",
                     "kind": "bin"
                 }
             },
@@ -55,11 +55,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=merge-and-split",
-                    "--package=merge-and-split"
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
                 ],
                 "filter": {
-                    "name": "merge-and-split",
+                    "name": "planck-time-trials",
                     "kind": "bin"
                 }
             },
@@ -77,11 +77,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=merge-and-split",
-                    "--package=merge-and-split"
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
                 ],
                 "filter": {
-                    "name": "merge-and-split",
+                    "name": "planck-time-trials",
                     "kind": "bin"
                 }
             },
@@ -99,11 +99,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=merge-and-split",
-                    "--package=merge-and-split"
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
                 ],
                 "filter": {
-                    "name": "merge-and-split",
+                    "name": "planck-time-trials",
                     "kind": "bin"
                 }
             },
@@ -121,11 +121,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=merge-and-split",
-                    "--package=merge-and-split"
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
                 ],
                 "filter": {
-                    "name": "merge-and-split",
+                    "name": "planck-time-trials",
                     "kind": "bin"
                 }
             },
@@ -144,11 +144,11 @@
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=merge-and-split",
-                    "--package=merge-and-split"
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
                 ],
                 "filter": {
-                    "name": "merge-and-split",
+                    "name": "planck-time-trials",
                     "kind": "bin"
                 }
             },
@@ -166,11 +166,11 @@
             "cargo": {
                 "args": [
                     "bench",
-                    "--bin=merge-and-split",
-                    "--package=merge-and-split"
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
                 ],
                 "filter": {
-                    "name": "merge-and-split",
+                    "name": "planck-time-trials",
                     "kind": "bin"
                 }
             },
