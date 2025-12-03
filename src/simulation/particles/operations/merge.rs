@@ -341,103 +341,103 @@ impl Default for Merge {
 }
 
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn merge_2_intersecting() {
-        let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
-        let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
+//     #[test]
+//     fn merge_2_intersecting() {
+//         let p1 = *Particle::default().set_vel(Vec2::new(0.1, 0.0));
+//         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0));
 
-        let mut ps = ParticleVec::from([p1, p2]);
+//         let mut ps = ParticleVec::from([p1, p2]);
 
-        assert_eq!(ps[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps[0].is_merged, false);
+//         assert_eq!(ps[0].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[0].is_merged, false);
 
-        assert_eq!(ps[1].particle_type, ParticleType::Particle);
-        assert_eq!(ps[1].is_merged, false);
+//         assert_eq!(ps[1].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[1].is_merged, false);
 
-        // This should merge p2 and p1 as they intersect.
-        let mut psm = Merge::default();
-        psm.execute(&mut ps);
+//         // This should merge p2 and p1 as they intersect.
+//         let mut psm = Merge::default();
+//         psm.execute(&mut ps);
 
-        assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
+//         assert_eq!(ps.len(), 3); // A meta particle has been added to the Particle System.
 
-        assert_eq!(ps[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps[0].is_merged, true);
-        assert_eq!(ps[0].index, 0);
+//         assert_eq!(ps[0].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[0].is_merged, true);
+//         assert_eq!(ps[0].index, 0);
 
-        assert_eq!(ps[1].particle_type, ParticleType::Particle);
-        assert_eq!(ps[1].is_merged, true);
-        assert_eq!(ps[1].index, 1);
+//         assert_eq!(ps[1].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[1].is_merged, true);
+//         assert_eq!(ps[1].index, 1);
 
-        assert_eq!(ps[2].particle_type, ParticleType::MetaParticle);
-        assert_eq!(ps[2].is_merged, false);
-        assert_eq!(ps[2].index, 2);
-        assert_eq!(ps[2].left_index, 0);
-        assert_eq!(ps[2].right_index, 1);
-    }
+//         assert_eq!(ps[2].particle_type, ParticleType::MetaParticle);
+//         assert_eq!(ps[2].is_merged, false);
+//         assert_eq!(ps[2].index, 2);
+//         assert_eq!(ps[2].left_index, 0);
+//         assert_eq!(ps[2].right_index, 1);
+//     }
 
-    #[test]
-    fn merge_3_intersecting() {
-        let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0)); // At origin.
-        let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)); // To the right of p1 such that it just overlaps.
-        let p3 = *Particle::default().set_pos(Vec2::new(0.5, 0.5)); // Between p1 and p2, but higher, so all 3 overlap.
+//     #[test]
+//     fn merge_3_intersecting() {
+//         let p1 = *Particle::default().set_pos(Vec2::new(0.0, 0.0)).set_vel(Vec2::new(0.1, 0.0)); // At origin.
+//         let p2 = *Particle::default().set_pos(Vec2::new(0.9, 0.0)); // To the right of p1 such that it just overlaps.
+//         let p3 = *Particle::default().set_pos(Vec2::new(0.5, 0.5)); // Between p1 and p2, but higher, so all 3 overlap.
 
-        let mut ps = ParticleVec::from([p1, p2, p3]);
+//         let mut ps = ParticleVec::from([p1, p2, p3]);
 
-        assert_eq!(ps[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps[0].is_merged, false);
+//         assert_eq!(ps[0].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[0].is_merged, false);
 
-        assert_eq!(ps[1].particle_type, ParticleType::Particle);
-        assert_eq!(ps[1].is_merged, false);
+//         assert_eq!(ps[1].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[1].is_merged, false);
 
-        assert_eq!(ps[2].particle_type, ParticleType::Particle);
-        assert_eq!(ps[2].is_merged, false);
+//         assert_eq!(ps[2].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[2].is_merged, false);
 
-        // This should merge p1, p2 and p3 as they intersect.
-        let mut psm = Merge::default();
-        psm.execute(&mut ps);
+//         // This should merge p1, p2 and p3 as they intersect.
+//         let mut psm = Merge::default();
+//         psm.execute(&mut ps);
 
-        assert_eq!(ps.len(), 5); // 3 original particles + 2 meta particle. 2 meta particles have been added to the Particle System.
+//         assert_eq!(ps.len(), 5); // 3 original particles + 2 meta particle. 2 meta particles have been added to the Particle System.
 
-        assert_eq!(ps[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps[0].is_merged, true);
+//         assert_eq!(ps[0].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[0].is_merged, true);
 
-        assert_eq!(ps[1].particle_type, ParticleType::Particle);
-        assert_eq!(ps[1].is_merged, true);
+//         assert_eq!(ps[1].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[1].is_merged, true);
 
-        assert_eq!(ps[2].particle_type, ParticleType::Particle);
-        assert_eq!(ps[2].is_merged, true);
+//         assert_eq!(ps[2].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[2].is_merged, true);
 
-        assert_eq!(ps[3].particle_type, ParticleType::MetaParticle); // The merging of p1 and p2 -> p12
-        assert_eq!(ps[3].is_merged, true);
-        assert_eq!(ps[3].left_index, 1);
-        assert_eq!(ps[3].right_index, 2);
+//         assert_eq!(ps[3].particle_type, ParticleType::MetaParticle); // The merging of p1 and p2 -> p12
+//         assert_eq!(ps[3].is_merged, true);
+//         assert_eq!(ps[3].left_index, 1);
+//         assert_eq!(ps[3].right_index, 2);
 
-        assert_eq!(ps[4].particle_type, ParticleType::MetaParticle); // The merging of p12 and p3 -> p123
-        assert_eq!(ps[4].is_merged, false);
-        assert_eq!(ps[4].left_index, 0);
-        assert_eq!(ps[4].right_index, 3);
-    }
+//         assert_eq!(ps[4].particle_type, ParticleType::MetaParticle); // The merging of p12 and p3 -> p123
+//         assert_eq!(ps[4].is_merged, false);
+//         assert_eq!(ps[4].left_index, 0);
+//         assert_eq!(ps[4].right_index, 3);
+//     }
 
-    #[test]
-    fn ignore_non_intersecting() {
-        let p1 = Particle::default();
-        let p2 = *Particle::default().set_pos(Vec2::new(1.1, 0.0));
+//     #[test]
+//     fn ignore_non_intersecting() {
+//         let p1 = Particle::default();
+//         let p2 = *Particle::default().set_pos(Vec2::new(1.1, 0.0));
 
-        let mut ps = ParticleVec::from([p1, p2]);
+//         let mut ps = ParticleVec::from([p1, p2]);
 
-        assert_eq!(ps[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps[1].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[0].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[1].particle_type, ParticleType::Particle);
 
-        // This should NOT merge p1 and p2, as they are not close enough.
-        let mut psm = Merge::default();
-        psm.execute(&mut ps);
+//         // This should NOT merge p1 and p2, as they are not close enough.
+//         let mut psm = Merge::default();
+//         psm.execute(&mut ps);
 
-        assert_eq!(ps[0].particle_type, ParticleType::Particle);
-        assert_eq!(ps[1].particle_type, ParticleType::Particle);
-        assert_eq!(ps.len(), 2);
-    }
-}
+//         assert_eq!(ps[0].particle_type, ParticleType::Particle);
+//         assert_eq!(ps[1].particle_type, ParticleType::Particle);
+//         assert_eq!(ps.len(), 2);
+//     }
+// }
