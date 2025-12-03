@@ -169,7 +169,7 @@ impl Plugin for Game {
         // }
         
         self.frame_idx += 1;
-        println!("F: {}", self.frame_idx);
+        //println!("F: {}", self.frame_idx);
 
         // Frame 151, the particle on the left (p50) gets merged and its not near anything! It seems there is a metaparticle P81 that is apparently nearby, but there should not be.
         // if self.frame_idx >= 151 {

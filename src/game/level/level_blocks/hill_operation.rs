@@ -27,7 +27,7 @@ impl LevelBuilderOperation for HillOperation {
     fn execute(&self, level_builder_context: &mut LevelBuilderContext) {
         let rng = &mut level_builder_context.rng;
 
-        let total_width = rng.random_range(15.0..=25.0);
+        let mut total_width = rng.random_range(5.0..=15.0);
         let num_segments = rng.random_range(2..=4);
         let segment_width = total_width / num_segments as f32;
         let direction = level_builder_context.x_direction;
@@ -42,7 +42,7 @@ impl LevelBuilderOperation for HillOperation {
             let next_x = current_pos.x + segment_width * direction;
             // Randomize height, but keep it somewhat relative to start y to avoid huge cliffs
             // Maybe trend upwards or downwards or oscillate
-            let height_variation = rng.random_range(-3.0..=3.0);
+            let height_variation = rng.random_range(-2.5..=2.5);
             let next_y = start_pos.y + height_variation; 
             
             // If it's the last segment, maybe bring it back to a standard level? 
@@ -72,7 +72,10 @@ impl LevelBuilderOperation for HillOperation {
 
         // Generate particles
         let particle_radius = level_builder_context.particle_template.radius;
-        let step_size = particle_radius * 2.0;
+
+        // adding a gap to allow wheels to grip going up hill
+        let gap_multiplier = 2.0;
+        let step_size = particle_radius * 2.0 * gap_multiplier;
         
         // We want to fill the area under the curve.
         // Let's define a "floor" level. Maybe a fixed depth below the curve?
