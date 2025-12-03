@@ -1,4 +1,7 @@
-# Merge & Split
+# Planck Time Trials
+
+We are simulating physics down to the stupidest level possible and you’re trying to beat the clock by femtoseconds.
+
 
 # Future work
 
