@@ -1,6 +1,6 @@
 use winit::keyboard::KeyCode;
 
-use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::entity::UpdateContext, simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation}}};
+use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::{entities::finish_entity::FinishEntitySystem, entity_system::UpdateContext}, simulation::{constraints::{distance_constraint::DistanceConstraint, spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation}}};
 
 pub struct CarWheel {
     hub_particle_handle: ParticleHandle,
@@ -155,7 +155,7 @@ impl CarEntity {
         pos
     }
 
-    fn update(&mut self, context: &mut UpdateContext) {
+    fn update(&mut self, context: &mut UpdateContext, finish_entity_system: &FinishEntitySystem) {
         if self.game_ended {
             return;
         }
@@ -175,7 +175,7 @@ impl CarEntity {
         // Check for finish 
         // - todo: check against wheel hub centres so we only need to check 2 points instead of every wheel surface
         //      and/or check against the simulation spatial partition.
-        for finish_entity in &context.finish_entity_system.entities {
+        for finish_entity in &finish_entity_system.entities {
             for wheel in &self.wheels {
                 for particle_handle in &wheel.surface_particle_handles {
                     let particle = &context.sim.particles[*particle_handle];
@@ -226,9 +226,9 @@ impl CarEntitySystem {
         self.0.push(c);
     }
 
-    pub fn update(&mut self, context: &mut crate::game::entity::entity::UpdateContext) {
+    pub fn update(&mut self, context: &mut UpdateContext, finish_entity_system: &FinishEntitySystem) {
         for e in self.0.iter_mut() {
-            e.update(context);
+            e.update(context, finish_entity_system);
         }
     }
 

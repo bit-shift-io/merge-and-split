@@ -1,6 +1,15 @@
 use winit::{keyboard::KeyCode};
 
-use crate::{engine::app::camera::Camera, game::{entity::{entities::{car_entity::CarEntitySystem, finish_entity::FinishEntitySystem}, entity::UpdateContext}, level::level_blocks::elevator::ElevatorEntitySystem}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation}};
+use crate::{engine::app::camera::Camera, game::{entity::entities::{car_entity::CarEntitySystem, finish_entity::FinishEntitySystem}, level::level_blocks::elevator::ElevatorEntitySystem}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation}};
+
+pub struct UpdateContext<'a> {
+    pub particle_vec: &'a mut ParticleVec,
+    pub sim: &'a mut Simulation,
+    pub time_delta: f32,
+    pub total_time: f32,
+    pub camera: &'a mut Camera
+}
+
 
 pub struct EntitySystem {
     pub elevator_entity_system: ElevatorEntitySystem,
@@ -24,11 +33,10 @@ impl EntitySystem {
             particle_vec,
             sim,
             camera,
-            finish_entity_system: &self.finish_entity_system,
         };
 
         self.elevator_entity_system.update(&mut context);
-        self.car_entity_system.update(&mut context);
+        self.car_entity_system.update(&mut context, &self.finish_entity_system);
     }
 
     pub fn handle_key(&mut self, key: KeyCode, pressed: bool) {

@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{core::math::{vec2::Vec2, vec4::Vec4}, game::level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
+use crate::{core::math::{vec2::Vec2, vec4::Vec4}, game::{entity::entity_system::UpdateContext, level::{level_builder::LevelBuilderContext, level_builder_operation::LevelBuilderOperation}}, simulation::particles::shape_builder::{line_segment::LineSegment, shape_builder::ShapeBuilder}};
 
 pub struct ElevatorOperation {
 }
@@ -97,7 +97,7 @@ impl ElevatorEntitySystem {
         self.0.push(c);
     }
 
-    pub fn update(&mut self, context: &mut crate::game::entity::entity::UpdateContext) {
+    pub fn update(&mut self, context: &mut UpdateContext) {
         for e in self.0.iter_mut() {
             // todo: support horizontal movement too
             match e.state {

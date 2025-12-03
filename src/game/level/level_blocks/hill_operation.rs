@@ -97,7 +97,7 @@ impl LevelBuilderOperation for HillOperation {
             let surface_point = spline.sample(t);
             
             // Fill column downwards
-            let num_y_steps = (thickness / step_size).ceil() as usize;
+            let num_y_steps = 1; //(thickness / step_size).ceil() as usize;
             for j in 0..num_y_steps {
                 let y_offset = j as f32 * step_size;
                 let pos = surface_point - Vec2::new(0.0, y_offset);
