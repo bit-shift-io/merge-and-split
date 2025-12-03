@@ -21,8 +21,7 @@ jobs:
       - name: Create archive
         shell: bash
         run: |
-          # Replace 'plank-time-trials' with the actual name of your executable
-          BINARY_NAME="plank-time-trials" 
+          BINARY_NAME="planck-time-trials" 
           TARGET_DIR="target/release"
           ARCHIVE_NAME="${BINARY_NAME}-${{ github.ref_name }}-${{ runner.os }}-${{ runner.arch }}"
 
