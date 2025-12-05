@@ -67,6 +67,7 @@ pub enum ElementStateType {
 pub enum KeyCodeType {
     Escape,
     Space,
+    ShiftLeft,
     ArrowLeft,
     ArrowRight,
     ArrowUp,
@@ -75,6 +76,8 @@ pub enum KeyCodeType {
     KeyD,
     KeyW,
     KeyS,
+    KeyZ,
+    KeyX,
     F9,
     F10,
     F11,
@@ -97,7 +100,7 @@ pub struct EventRecording {
 }
 
 pub struct EventSystem {
-    pub events: Vec<WindowEvent>,
+    pub events: Vec<GameEvent>,
     
     // Recording state
     recording: bool,
@@ -196,7 +199,7 @@ impl EventSystem {
     }
 
     /// Convert WindowEvent to GameEvent for serialization
-    fn window_event_to_game_event(event: &WindowEvent) -> Option<GameEvent> {
+    pub fn window_event_to_game_event(event: &WindowEvent) -> Option<GameEvent> {
         match event {
             WindowEvent::CloseRequested => Some(GameEvent::CloseRequested),
             WindowEvent::Resized(size) => Some(GameEvent::Resized {
@@ -227,6 +230,7 @@ impl EventSystem {
                     let key_type = match key_code {
                         KeyCode::Escape => KeyCodeType::Escape,
                         KeyCode::Space => KeyCodeType::Space,
+                        KeyCode::ShiftLeft => KeyCodeType::ShiftLeft,
                         KeyCode::ArrowLeft => KeyCodeType::ArrowLeft,
                         KeyCode::ArrowRight => KeyCodeType::ArrowRight,
                         KeyCode::ArrowUp => KeyCodeType::ArrowUp,
@@ -235,6 +239,8 @@ impl EventSystem {
                         KeyCode::KeyD => KeyCodeType::KeyD,
                         KeyCode::KeyW => KeyCodeType::KeyW,
                         KeyCode::KeyS => KeyCodeType::KeyS,
+                        KeyCode::KeyZ => KeyCodeType::KeyZ,
+                        KeyCode::KeyX => KeyCodeType::KeyX,
                         KeyCode::F9 => KeyCodeType::F9,
                         KeyCode::F10 => KeyCodeType::F10,
                         KeyCode::F11 => KeyCodeType::F11,
@@ -257,41 +263,23 @@ impl EventSystem {
         }
     }
 
-    pub fn queue_window_event(&mut self, event: WindowEvent) {
+    pub fn queue_event(&mut self, event: GameEvent) {
         // Record the event if recording is active (only mouse and keyboard events)
         if self.recording {
-            if let Some(game_event) = Self::window_event_to_game_event(&event) {
-                // Only record mouse and keyboard events, skip window events
-                match game_event {
-                    GameEvent::MouseInput { .. } | GameEvent::KeyboardInput { .. } => {
-                        self.recorded_events.push(FramedEvent {
-                            frame: self.current_frame,
-                            event: game_event,
-                        });
-                    }
-                    _ => {} // Skip window events (CloseRequested, Resized, RedrawRequested)
+            // Only record mouse and keyboard events, skip window events
+            match &event {
+                GameEvent::MouseInput { .. } | GameEvent::KeyboardInput { .. } => {
+                    self.recorded_events.push(FramedEvent {
+                        frame: self.current_frame,
+                        event: event.clone(),
+                    });
                 }
+                _ => {} // Skip window events (CloseRequested, Resized, RedrawRequested)
             }
         }
 
-        match event {
-            WindowEvent::CloseRequested => {
-                self.events.push(event)
-            },
-            WindowEvent::Resized(_size) => {
-                self.events.push(event)
-            },
-            WindowEvent::RedrawRequested => {
-                self.events.push(event);
-            }
-            WindowEvent::MouseInput { .. } => {
-                self.events.push(event);
-            },
-            WindowEvent::KeyboardInput { .. } => {
-                self.events.push(event);
-            },
-            _ => {}
-        }
+        // Queue all events for processing
+        self.events.push(event);
     }
 
     /// Get replay events for the current frame and inject them into the event queue
@@ -310,20 +298,8 @@ impl EventSystem {
             }
             
             if framed_event.frame == self.current_frame {
-                // Convert GameEvent back to WindowEvent and queue it
-                // Note: This is a simplified conversion, some data may be lost
-                match &framed_event.event {
-                    GameEvent::CloseRequested => {
-                        self.events.push(WindowEvent::CloseRequested);
-                    }
-                    GameEvent::RedrawRequested => {
-                        self.events.push(WindowEvent::RedrawRequested);
-                    }
-                    // For other events, we'd need to reconstruct WindowEvent
-                    // This is complex because WindowEvent contains non-serializable data
-                    // For now, we'll skip these in replay
-                    _ => {}
-                }
+                // Directly push GameEvent to the queue - no conversion needed!
+                self.events.push(framed_event.event.clone());
             }
             
             self.replay_index += 1;
@@ -337,6 +313,8 @@ impl EventSystem {
     }
 
     pub fn process_events(&mut self) {
+        //self.events.clear();
+
         // In replay mode, inject replay events first
         if self.replaying {
             self.inject_replay_events();
@@ -345,7 +323,11 @@ impl EventSystem {
         // for event in self.events.iter() {
         //     self.process_event(event);
         // }
-        // self.events.clear();
+        
+    }
+
+    pub fn clear_events(&mut self) {
+        self.events.clear();
     }
 
     // pub fn process_event(&self, _event: &WindowEvent) {

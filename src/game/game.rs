@@ -1,9 +1,9 @@
 use std::env;
 
 use cgmath::Rotation3;
-use winit::{event::WindowEvent, keyboard::KeyCode};
+use winit::keyboard::KeyCode;
 
-use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
+use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::{EventSystem, GameEvent, KeyCodeType}, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameState {
@@ -184,16 +184,11 @@ impl Plugin for Game {
         }
     }
 
-    fn window_event(&mut self, _app: &mut App<Game>, event: WindowEvent) {
-        self.event_system.queue_window_event(event);
+    fn window_event(&mut self, _app: &mut App<Game>, event: GameEvent) {
+        self.event_system.queue_event(event);
     }
 
-    fn handle_key(&mut self, _app: &mut App<Game>, key: KeyCode, pressed: bool) {
-        self.camera_controller.handle_key(key, pressed);
 
-        // todo: this should occur when we handle window events in the event system
-        self.entity_system.handle_key(key, pressed);
-    }
 
     fn update(&mut self, app: &mut App<Game>) {
         // if self.frame_idx > 140 {
@@ -206,6 +201,44 @@ impl Plugin for Game {
         // Update event system with current frame number
         self.event_system.set_frame(self.frame_idx);
         self.event_system.process_events();
+
+        // Process events from the event system
+        for event in self.event_system.events.iter() {
+            match event {
+                GameEvent::KeyboardInput { key_code, state } => {
+                    let is_pressed = matches!(state, crate::game::event::event_system::ElementStateType::Pressed);
+                    
+                    // Convert KeyCodeType to winit KeyCode for camera and entity systems
+                    let winit_key = match key_code {
+                        KeyCodeType::Escape => KeyCode::Escape,
+                        KeyCodeType::Space => KeyCode::Space,
+                        KeyCodeType::ShiftLeft => KeyCode::ShiftLeft,
+                        KeyCodeType::ArrowLeft => KeyCode::ArrowLeft,
+                        KeyCodeType::ArrowRight => KeyCode::ArrowRight,
+                        KeyCodeType::ArrowUp => KeyCode::ArrowUp,
+                        KeyCodeType::ArrowDown => KeyCode::ArrowDown,
+                        KeyCodeType::KeyA => KeyCode::KeyA,
+                        KeyCodeType::KeyD => KeyCode::KeyD,
+                        KeyCodeType::KeyW => KeyCode::KeyW,
+                        KeyCodeType::KeyS => KeyCode::KeyS,
+                        KeyCodeType::KeyZ => KeyCode::KeyZ,
+                        KeyCodeType::KeyX => KeyCode::KeyX,
+                        KeyCodeType::F9 => KeyCode::F9,
+                        KeyCodeType::F10 => KeyCode::F10,
+                        KeyCodeType::F11 => KeyCode::F11,
+                        KeyCodeType::F12 => KeyCode::F12,
+                        KeyCodeType::Unknown => continue, // Skip unknown keys
+                    };
+                    
+                    self.camera_controller.handle_key(winit_key, is_pressed);
+                    self.entity_system.handle_key(winit_key, is_pressed);
+                }
+                _ => {} // Handle other events if needed
+            }
+        }
+        
+        // Clear events after processing
+        self.event_system.clear_events();
 
         // Frame 151, the particle on the left (p50) gets merged and its not near anything! It seems there is a metaparticle P81 that is apparently nearby, but there should not be.
         // if self.frame_idx >= 151 {

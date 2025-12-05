@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use winit::{
-    application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window
+    application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, window::Window
 };
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use crate::engine::app::{plugin::Plugin, state::State};
+use crate::{engine::app::{plugin::Plugin, state::State}, game::event::event_system::EventSystem};
 
 pub struct App<P: Plugin> {
     #[cfg(target_arch = "wasm32")]
@@ -61,19 +61,7 @@ impl<P: Plugin> App<P> {
         }
     }
 
-    pub fn handle_key(&mut self, event_loop: &ActiveEventLoop, key: KeyCode, pressed: bool) {
-        // todo: remove this!
-        let state = match &mut self.state {
-            Some(s) => s,
-            None => return,
-        };
-        state.handle_key(event_loop, key, pressed);
 
-        if let Some(mut plugin) = self.plugin.take() {
-            plugin.handle_key(self, key, pressed);
-            self.plugin = Some(plugin);
-        }
-    }
 
     pub fn render(&mut self) {
         if let Some(plugin) = self.plugin.take() {
@@ -170,9 +158,12 @@ impl<P: Plugin> ApplicationHandler<State> for App<P> {
             return;
         }
 
-        if let Some(mut plugin) = self.plugin.take() {
-            plugin.window_event(self, event.clone());
-            self.plugin = Some(plugin);
+        // Convert WindowEvent to GameEvent at the boundary
+        if let Some(game_event) = EventSystem::window_event_to_game_event(&event) {
+            if let Some(mut plugin) = self.plugin.take() {
+                plugin.window_event(self, game_event);
+                self.plugin = Some(plugin);
+            }
         }
 
         match event {
@@ -195,20 +186,6 @@ impl<P: Plugin> ApplicationHandler<State> for App<P> {
 
                 self.render();
             }
-            WindowEvent::MouseInput { state, button, .. } => match (button, state.is_pressed()) {
-                (MouseButton::Left, true) => {}
-                (MouseButton::Left, false) => {}
-                _ => {}
-            },
-            WindowEvent::KeyboardInput {
-                event:
-                    KeyEvent {
-                        physical_key: PhysicalKey::Code(code),
-                        state: key_state,
-                        ..
-                    },
-                ..
-            } => self.handle_key(event_loop, code, key_state.is_pressed()),
             _ => {}
         }
     }
