@@ -120,6 +120,9 @@ impl Plugin for Game {
             }
         }
 
+        let mut event_system = EventSystem::new();
+        event_system.start_recording();
+
         let mut particles = Self {
             camera,
             camera_controller,
@@ -132,7 +135,7 @@ impl Plugin for Game {
             line_shader,
             frame_idx: 0,
             entity_system,
-            event_system: EventSystem::new(),
+            event_system,
 
             simulation,
             total_time: 0.0,
@@ -157,6 +160,42 @@ impl Plugin for Game {
     }
 
     fn handle_key(&mut self, _app: &mut App<Game>, key: KeyCode, pressed: bool) {
+        // Handle recording/replay shortcuts (only on key press, not release)
+        if pressed {
+            match key {
+                KeyCode::F9 => {
+                    if self.event_system.is_recording() {
+                        self.event_system.stop_recording();
+                    } else {
+                        self.event_system.start_recording();
+                    }
+                    return;
+                }
+                KeyCode::F10 => {
+                    let filename = "recording.json"; //format!("recording_{}.json", chrono::Local::now().format("%Y%m%d_%H%M%S"));
+                    if let Err(e) = self.event_system.export_recording(&filename) {
+                        eprintln!("Failed to export recording: {}", e);
+                    }
+                    return;
+                }
+                KeyCode::F11 => {
+                    // Try to load the most recent recording
+                    // For now, use a default filename
+                    if let Err(e) = self.event_system.load_replay("recording.json") {
+                        eprintln!("Failed to load replay: {}", e);
+                    } else {
+                        self.event_system.start_replay();
+                    }
+                    return;
+                }
+                KeyCode::F12 => {
+                    self.event_system.stop_replay();
+                    return;
+                }
+                _ => {}
+            }
+        }
+
         self.camera_controller.handle_key(key, pressed);
 
         // todo: this should occur when we handle window events in the event system
@@ -170,6 +209,9 @@ impl Plugin for Game {
         
         self.frame_idx += 1;
         //println!("F: {}", self.frame_idx);
+
+        // Update event system with current frame number
+        self.event_system.set_frame(self.frame_idx);
 
         // Frame 151, the particle on the left (p50) gets merged and its not near anything! It seems there is a metaparticle P81 that is apparently nearby, but there should not be.
         // if self.frame_idx >= 151 {
