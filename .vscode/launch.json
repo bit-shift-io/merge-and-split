@@ -29,6 +29,31 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug - replay last recording",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=planck-time-trials",
+                    "--package=planck-time-trials"
+                ],
+                "filter": {
+                    "name": "planck-time-trials",
+                    "kind": "bin"
+                }
+            },
+            "args": [
+                "replay",
+                "recording.json"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "DYLD_FALLBACK_LIBRARY_PATH": "${userHome}/.rustup/toolchains/nightly-x86_64-apple-darwin/lib",
+                "CARGO_MANIFEST_DIR": "${workspaceFolder}"
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug - wrecking_ball",
             "cargo": {
                 "args": [

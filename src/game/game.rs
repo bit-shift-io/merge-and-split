@@ -5,6 +5,12 @@ use winit::{event::WindowEvent, keyboard::KeyCode};
 
 use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::EventSystem, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameState {
+    Playing,
+    Finished,
+}
+
 pub struct Game {
     camera: Camera,
     camera_controller: CameraController,
@@ -21,6 +27,7 @@ pub struct Game {
 
     simulation: Simulation,
     total_time: f32,
+    game_state: GameState,
 }
 
 impl Game {
@@ -91,37 +98,54 @@ impl Plugin for Game {
         // Determine what "scene" to load based on command line argument.
         let args: Vec<String> = env::args().collect();
         let scene = if args.len() >= 2 { args[1].clone() } else { String::from("") };
-        match scene.as_str() {
-            "friction" => SimulationDemos::init_friction(&mut simulation),
-            "granular" => SimulationDemos::init_granular(&mut simulation),
-            "sdf" => SimulationDemos::init_sdf(&mut simulation),
-            "boxes" => SimulationDemos::init_boxes(&mut simulation),
-            "wall" => SimulationDemos::init_wall(&mut simulation),
-            "pendulum" => SimulationDemos::init_pendulum(&mut simulation),
-            "rope" => SimulationDemos::init_rope(&mut simulation),
-            "fluid" => SimulationDemos::init_fluid(&mut simulation),
-            "fluid_solid" => SimulationDemos::init_fluid_solid(&mut simulation),
-            "gas" => SimulationDemos::init_gas(&mut simulation),
-            "water_balloon" => SimulationDemos::init_water_balloon(&mut simulation),
-            "newtons_cradle" => SimulationDemos::init_newtons_cradle(&mut simulation),
-            "smoke_open" => SimulationDemos::init_smoke_open(&mut simulation),
-            "smoke_closed" => SimulationDemos::init_smoke_closed(&mut simulation),
-            "rope_gas" => SimulationDemos::init_rope_gas(&mut simulation),
-            "volcano" => SimulationDemos::init_volcano(&mut simulation),
-            "wrecking_ball" => SimulationDemos::init_wrecking_ball(&mut simulation),
-            _ => {
-                // Generate a procedural level.
+        
+        // Check if we should load a replay
+        let replay_file = if args.len() >= 3 && args[1] == "replay" {
+            Some(args[2].clone())
+        } else {
+            None
+        };
+        
+        let is_demo_scene = match scene.as_str() {
+            "friction" => { SimulationDemos::init_friction(&mut simulation); true }
+            "granular" => { SimulationDemos::init_granular(&mut simulation); true }
+            "sdf" => { SimulationDemos::init_sdf(&mut simulation); true }
+            "boxes" => { SimulationDemos::init_boxes(&mut simulation); true }
+            "wall" => { SimulationDemos::init_wall(&mut simulation); true }
+            "pendulum" => { SimulationDemos::init_pendulum(&mut simulation); true }
+            "rope" => { SimulationDemos::init_rope(&mut simulation); true }
+            "fluid" => { SimulationDemos::init_fluid(&mut simulation); true }
+            "fluid_solid" => { SimulationDemos::init_fluid_solid(&mut simulation); true }
+            "gas" => { SimulationDemos::init_gas(&mut simulation); true }
+            "water_balloon" => { SimulationDemos::init_water_balloon(&mut simulation); true }
+            "newtons_cradle" => { SimulationDemos::init_newtons_cradle(&mut simulation); true }
+            "smoke_open" => { SimulationDemos::init_smoke_open(&mut simulation); true }
+            "smoke_closed" => { SimulationDemos::init_smoke_closed(&mut simulation); true }
+            "rope_gas" => { SimulationDemos::init_rope_gas(&mut simulation); true }
+            "volcano" => { SimulationDemos::init_volcano(&mut simulation); true }
+            "wrecking_ball" => { SimulationDemos::init_wrecking_ball(&mut simulation); true }
+            "replay" | _ => {
+                // Generate a procedural level for replay
                 LevelBuilder::default().generate_level_based_on_date(&mut entity_system, &mut particle_vec, &mut simulation);
-
-                // Add car to the scene.
                 let car = CarEntity::new(&mut particle_vec, &mut simulation, Vec2::new(0.0, 1.0));
                 entity_system.car_entity_system.push(car);
-                //self.entity_system.push(car);
+                false
             }
-        }
+        };
 
         let mut event_system = EventSystem::new();
-        event_system.start_recording();
+        
+        // Handle replay mode from command line
+        if let Some(replay_path) = replay_file {
+            if let Err(e) = event_system.load_replay(&replay_path) {
+                eprintln!("Failed to load replay file '{}': {}", replay_path, e);
+            } else {
+                event_system.start_replay();
+            }
+        } else if !is_demo_scene {
+            // Only start recording for non-demo scenes (actual gameplay)
+            event_system.start_recording();
+        }
 
         let mut particles = Self {
             camera,
@@ -139,6 +163,7 @@ impl Plugin for Game {
 
             simulation,
             total_time: 0.0,
+            game_state: GameState::Playing,
         };
 
         particles.update_particle_instances(&state.queue, &state.device);
@@ -212,6 +237,7 @@ impl Plugin for Game {
 
         // Update event system with current frame number
         self.event_system.set_frame(self.frame_idx);
+        self.event_system.process_events();
 
         // Frame 151, the particle on the left (p50) gets merged and its not near anything! It seems there is a metaparticle P81 that is apparently nearby, but there should not be.
         // if self.frame_idx >= 151 {
@@ -277,6 +303,26 @@ impl Plugin for Game {
         self.total_time += time_delta;
         self.entity_system.update(&mut self.particle_vec, &mut self.simulation, &mut self.camera, time_delta, self.total_time);
 
+        // Check if game has finished (car reached finish line)
+        if self.game_state == GameState::Playing {
+            // Check if any car has finished
+            let game_finished = self.entity_system.car_entity_system.0.iter().any(|car| car.game_ended);
+            
+            if game_finished {
+                self.game_state = GameState::Finished;
+                
+                // Auto-export recording if we were recording
+                if self.event_system.is_recording() {
+                    self.event_system.stop_recording();
+                    let filename = "recording.json"; //format!("recording_{}.json", chrono::Local::now().format("%Y%m%d_%H%M%S"));
+                    if let Err(e) = self.event_system.export_recording(&filename) {
+                        eprintln!("Failed to auto-export recording: {}", e);
+                    } else {
+                        println!("Recording auto-exported to: {}", filename);
+                    }
+                }
+            }
+        }
 
         self.camera.update_camera_uniform(&state.queue);
         //particle_instance_renderer.update_camera_uniform(&camera, &state.queue);

@@ -258,13 +258,19 @@ impl EventSystem {
     }
 
     pub fn queue_window_event(&mut self, event: WindowEvent) {
-        // Record the event if recording is active
+        // Record the event if recording is active (only mouse and keyboard events)
         if self.recording {
             if let Some(game_event) = Self::window_event_to_game_event(&event) {
-                self.recorded_events.push(FramedEvent {
-                    frame: self.current_frame,
-                    event: game_event,
-                });
+                // Only record mouse and keyboard events, skip window events
+                match game_event {
+                    GameEvent::MouseInput { .. } | GameEvent::KeyboardInput { .. } => {
+                        self.recorded_events.push(FramedEvent {
+                            frame: self.current_frame,
+                            event: game_event,
+                        });
+                    }
+                    _ => {} // Skip window events (CloseRequested, Resized, RedrawRequested)
+                }
             }
         }
 
@@ -336,13 +342,13 @@ impl EventSystem {
             self.inject_replay_events();
         }
 
-        for event in self.events.iter() {
-            self.process_event(event);
-        }
-        self.events.clear();
+        // for event in self.events.iter() {
+        //     self.process_event(event);
+        // }
+        // self.events.clear();
     }
 
-    pub fn process_event(&self, _event: &WindowEvent) {
+    // pub fn process_event(&self, _event: &WindowEvent) {
 
-    }
+    // }
 }

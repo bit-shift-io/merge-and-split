@@ -108,7 +108,7 @@ pub struct CarEntity {
     is_left_pressed: bool,
     is_right_pressed: bool,
     axle_constraint_id: usize,
-    game_ended: bool,
+    pub game_ended: bool,
 }
 
 impl CarEntity {

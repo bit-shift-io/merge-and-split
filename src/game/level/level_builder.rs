@@ -52,10 +52,12 @@ impl<'a> LevelBuilderContext<'a> {
 impl LevelBuilder {
     pub fn generate_level_based_on_date(&mut self, entity_system: &mut EntitySystem, particle_vec: &mut ParticleVec, sim: &mut Simulation) {
         // set a random seed used for level generation based on todays date. Each day we get a new map to try
-        let mut rng = Random::seed_from_now(); //seed_from_beginning_of_day(); //seed_from_beginning_of_week(); //car_scene.rng;
+        let mut rng = Random::seed_from_beginning_of_day(); //seed_from_beginning_of_week(); //car_scene.rng;
         
         let mut level_builder_context = LevelBuilderContext::new(entity_system, particle_vec, sim, &mut rng);
-        self.generate(&mut level_builder_context, 10); //10); //10);
+        self.generate(&mut level_builder_context, 3); //10); //10);
+
+        // todo: we should push the seed and # level blocks into the event system
     }
 
     pub fn generate(&mut self, level_builder_context: &mut LevelBuilderContext, num_blocks: i32) -> &mut Self {
