@@ -18,12 +18,13 @@ impl WaterBalloonDrop {
     /// - `center`: Center position of the balloon
     /// - `particle_rad`: Radius of individual particles
     /// - `balloon_radius`: Radius of the balloon membrane
-    /// - `samples`: Number of particles in each membrane circle (fewer = less particles)
+    /// - `rng`: Random number generator for deterministic jitter
     fn create_water_balloon(
         sim: &mut Simulation,
         center: Vec2,
         particle_rad: f32,
-        balloon_radius: f32
+        balloon_radius: f32,
+        rng: &mut rand_pcg::Pcg64
     ) {
         // Membrane
         // may need to do some overlap to stop fluid leaking out?
@@ -44,7 +45,6 @@ impl WaterBalloonDrop {
         // Fill with fluid particles - a grid of them that fits inside the membrane
         let delta = 2.0 * particle_rad;
         let mut particles = ParticleVec::new();
-        let mut rng = rand::rng();
         let distance = balloon_radius * 0.60;
         let mut x = -distance;
         while x <= distance {
@@ -97,7 +97,8 @@ impl LevelBuilderOperation for WaterBalloonDrop {
             level_builder_context.sim,
             balloon_center,
             particle_rad,
-            balloon_radius
+            balloon_radius,
+            rng
         );
         
         // // 50% chance to spawn a second balloon

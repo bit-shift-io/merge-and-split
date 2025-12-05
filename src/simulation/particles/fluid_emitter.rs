@@ -1,4 +1,5 @@
 use rand::Rng;
+use rand_pcg::Pcg64;
 
 use crate::{core::math::vec2::Vec2, simulation::{constraints::total_fluid_constraint::TotalFluidConstraintVec, particles::{particle::{Particle, Phase}, particle_vec::ParticleVec}}};
 
@@ -9,6 +10,7 @@ pub struct FluidEmitter {
     total_timer: f32,
     fluid_index: usize, // TotalFluidConstraint *m_fs;
     grains: ParticleVec,
+    rng: Pcg64,
     // glm::dvec2 m_posn;
     // double m_particles_per_sec;
     // double timer;
@@ -18,7 +20,7 @@ pub struct FluidEmitter {
 }
 
 impl FluidEmitter {
-    pub fn new(posn: Vec2, particles_per_sec: f32, fluid_index: usize /*TotalFluidConstraint *fs*/) -> Self {
+    pub fn new(posn: Vec2, particles_per_sec: f32, fluid_index: usize /*TotalFluidConstraint *fs*/, rng: Pcg64) -> Self {
         Self {
             posn,
             particles_per_sec,
@@ -26,6 +28,7 @@ impl FluidEmitter {
             total_timer: 0.0,
             fluid_index,
             grains: ParticleVec::new(),
+            rng,
         }
     }
 
@@ -109,9 +112,7 @@ impl FluidEmitter {
 
                 let mut p = *Particle::default().set_radius(particle_rad).set_pos(self.posn).set_mass_2(1.0).set_phase(Phase::Fluid);
 
-                // todo: do not use rand here! want something deterministic
-                let mut rng = rand::rng();
-                let r1: f32 = rng.random();
+                let r1: f32 = self.rng.random();
 
                 p.vel = Vec2::new(r1, 1.0);
                 global_standard_total_fluid_constraints[self.fluid_index].add_particle(estimates.len());

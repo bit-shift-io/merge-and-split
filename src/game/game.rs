@@ -75,7 +75,11 @@ impl Plugin for Game {
 
         let mut entity_system = EntitySystem::new();
         let mut particle_vec = ParticleVec::new();
-        let mut simulation = Simulation::new();
+        
+        // Create simulation with deterministic RNG seeded from beginning of day
+        // This ensures consistent gameplay for the same day
+        let rng = crate::core::math::random::Random::seed_from_beginning_of_day();
+        let mut simulation = Simulation::new(rng);
 
         let particle_instance_renderer = InstanceRenderer::new(&state.device, &state.queue, &state.config);
         

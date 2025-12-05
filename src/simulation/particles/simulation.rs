@@ -1,5 +1,6 @@
 use std::isize;
 
+use rand_pcg::Pcg64;
 use crate::{core::math::vec2::Vec2, simulation::{constraints::{boundary_constraint::{BoundaryConstraint, BoundaryConstraintVec}, contact_constraint::{ContactConstraint, ContactConstraintVec}, distance_constraint::{DistanceConstraint, DistanceConstraintVec}, gas_constraint::{GasConstraint, GasConstraintVec}, rigid_contact_constraint::{RigidContactConstraint, RigidContactConstraintVec}, spring_constraint::{SpringConstraint, SpringConstraintVec}, total_fluid_constraint::{TotalFluidConstraint, TotalFluidConstraintVec}, total_shape_constraint::TotalShapeConstraint, volume_constraint::{VolumeConstraint, VolumeConstraintVec}}, particles::{body::Body, fluid_emitter::FluidEmitter, open_smoke_emitter::OpenSmokeEmitter, particle::{Particle, Phase}, particle_vec::ParticleVec, sdf_data::SdfData, spatial_hash::SpatialHash}}};
 
 
@@ -28,10 +29,12 @@ pub struct Simulation {
 
     pub counts: Vec<usize>,
     pub body_count: usize,
+    
+    pub rng: Pcg64,
 }
 
 impl Simulation {
-    pub fn new() -> Self {
+    pub fn new(rng: Pcg64) -> Self {
         Self {
             particles: ParticleVec::new(),
             gravity: Vec2::new(0.0, -9.8),
@@ -58,6 +61,7 @@ impl Simulation {
 
             counts: vec![],
             body_count: 0,
+            rng,
         }
     }
 
@@ -388,7 +392,7 @@ impl Simulation {
     }
 
     pub fn create_fluid_emitter(&mut self, posn: Vec2, particles_per_sec: f32, fluid_index: usize /*TotalFluidConstraint *fs*/) {
-        self.fluid_emitters.push(FluidEmitter::new(posn, particles_per_sec, fluid_index));
+        self.fluid_emitters.push(FluidEmitter::new(posn, particles_per_sec, fluid_index, self.rng.clone()));
     }
 
     // open = false by default
