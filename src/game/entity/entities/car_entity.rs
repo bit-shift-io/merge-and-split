@@ -1,6 +1,4 @@
-use winit::keyboard::KeyCode;
-
-use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::entity::{entities::finish_entity::FinishEntitySystem, entity_system::UpdateContext}, simulation::{constraints::{spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation}}};
+use crate::{core::math::{unit_conversions::cm_to_m, vec2::Vec2, vec4::Vec4}, game::{entity::{entities::finish_entity::FinishEntitySystem, entity_system::UpdateContext}, event::event_system::KeyCodeType}, simulation::{constraints::{spring_constraint::SpringConstraint, volume_constraint::VolumeConstraint}, particles::{particle::Particle, particle_manipulator::ParticleManipulator, particle_vec::{ParticleHandle, ParticleVec}, shape_builder::{adjacent_sticks::AdjacentSticks, circle::{Circle, SpaceDistribution}, shape_builder::ShapeBuilder}, simulation::Simulation}}};
 
 pub struct CarWheel {
     hub_particle_handle: ParticleHandle,
@@ -198,13 +196,13 @@ impl CarEntity {
         }
     }
 
-    fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool {
+    fn handle_key(&mut self, key: KeyCodeType, is_pressed: bool) -> bool {
         match key {
-            KeyCode::KeyZ => {
+            KeyCodeType::KeyZ => {
                 self.is_left_pressed = is_pressed;
                 true
             }
-            KeyCode::KeyX => {
+            KeyCodeType::KeyX => {
                 self.is_right_pressed = is_pressed;
                 true
             }
@@ -232,7 +230,7 @@ impl CarEntitySystem {
         }
     }
 
-    pub fn handle_key(&mut self, key: KeyCode, is_pressed: bool) {
+    pub fn handle_key(&mut self, key: KeyCodeType, is_pressed: bool) {
         for e in self.0.iter_mut() {
             e.handle_key(key, is_pressed);
         }

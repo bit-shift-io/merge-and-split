@@ -4,30 +4,6 @@ use std::io::{self, Write};
 use winit::event::{ElementState, MouseButton, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
-// https://github.com/id-Software/Quake-III-Arena/blob/dbe4ddb10315479fc00086f08e25d968b4b43c49/code/qcommon/qcommon.h#L931
-
-// typedef enum {
-//   // bk001129 - make sure SE_NONE is zero
-// 	SE_NONE = 0,	// evTime is still valid
-// 	SE_KEY,		// evValue is a key code, evValue2 is the down flag
-// 	SE_CHAR,	// evValue is an ascii char
-// 	SE_MOUSE,	// evValue and evValue2 are reletive signed x / y moves
-// 	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
-// 	SE_CONSOLE,	// evPtr is a char*
-// 	SE_PACKET	// evPtr is a netadr_t followed by data bytes to evPtrLength
-// } sysEventType_t;
-
-// typedef struct {
-// 	int				evTime;
-// 	sysEventType_t	evType;
-// 	int				evValue, evValue2;
-// 	int				evPtrLength;	// bytes of data pointed to by evPtr, for journaling
-// 	void			*evPtr;			// this must be manually freed if not NULL
-// } sysEvent_t;
-
-// Ideally we map from WindowEvent to our own custom event to hide winit from the rest of the codebase
-// but for now we will just store WindowEvents directly. This may change when we need joystick/gamepad support for example, or network events.
-
 /// Serializable game event that wraps the relevant parts of WindowEvent
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GameEvent {
@@ -63,7 +39,7 @@ pub enum ElementStateType {
 }
 
 /// Serializable key code
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum KeyCodeType {
     Escape,
     Space,
@@ -313,24 +289,13 @@ impl EventSystem {
     }
 
     pub fn process_events(&mut self) {
-        //self.events.clear();
-
         // In replay mode, inject replay events first
         if self.replaying {
             self.inject_replay_events();
-        }
-
-        // for event in self.events.iter() {
-        //     self.process_event(event);
-        // }
-        
+        }        
     }
 
     pub fn clear_events(&mut self) {
         self.events.clear();
     }
-
-    // pub fn process_event(&self, _event: &WindowEvent) {
-
-    // }
 }

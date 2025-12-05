@@ -1,6 +1,7 @@
 use cgmath::prelude::*;
-use winit::keyboard::KeyCode;
 use wgpu::util::DeviceExt;
+
+use crate::game::event::event_system::KeyCodeType;
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::from_cols(
@@ -125,29 +126,29 @@ impl CameraController {
         }
     }
 
-    pub fn handle_key(&mut self, key: KeyCode, is_pressed: bool) -> bool {
+    pub fn handle_key(&mut self, key: KeyCodeType, is_pressed: bool) -> bool {
         match key {
-            KeyCode::Space => {
+            KeyCodeType::Space => {
                 self.is_up_pressed = is_pressed;
                 true
             }
-            KeyCode::ShiftLeft => {
+            KeyCodeType::ShiftLeft => {
                 self.is_down_pressed = is_pressed;
                 true
             }
-            KeyCode::KeyW | KeyCode::ArrowUp => {
+            KeyCodeType::KeyW | KeyCodeType::ArrowUp => {
                 self.is_forward_pressed = is_pressed;
                 true
             }
-            KeyCode::KeyA | KeyCode::ArrowLeft => {
+            KeyCodeType::KeyA | KeyCodeType::ArrowLeft => {
                 self.is_left_pressed = is_pressed;
                 true
             }
-            KeyCode::KeyS | KeyCode::ArrowDown => {
+            KeyCodeType::KeyS | KeyCodeType::ArrowDown => {
                 self.is_backward_pressed = is_pressed;
                 true
             }
-            KeyCode::KeyD | KeyCode::ArrowRight => {
+            KeyCodeType::KeyD | KeyCodeType::ArrowRight => {
                 self.is_right_pressed = is_pressed;
                 true
             }

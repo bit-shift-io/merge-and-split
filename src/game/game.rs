@@ -1,7 +1,6 @@
 use std::env;
 
 use cgmath::Rotation3;
-use winit::keyboard::KeyCode;
 
 use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::{EventSystem, GameEvent, KeyCodeType}, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
 
@@ -15,7 +14,6 @@ pub struct Game {
     camera: Camera,
     camera_controller: CameraController,
     particle_vec: ParticleVec,
-    //fixed_point_spring_vec: FixedPointSpringVec,
     particle_instance_renderer: InstanceRenderer,
     quad_mesh: Mesh,
     material: Material,
@@ -24,7 +22,6 @@ pub struct Game {
     frame_idx: u128,
     entity_system: EntitySystem,
     event_system: EventSystem,
-
     simulation: Simulation,
     total_time: f32,
     game_state: GameState,
@@ -155,7 +152,6 @@ impl Plugin for Game {
             camera,
             camera_controller,
             particle_vec,
-            //fixed_point_spring_vec,
             particle_instance_renderer,
             quad_mesh,
             material,
@@ -164,7 +160,6 @@ impl Plugin for Game {
             frame_idx: 0,
             entity_system,
             event_system,
-
             simulation,
             total_time: 0.0,
             game_state: GameState::Playing,
@@ -188,8 +183,6 @@ impl Plugin for Game {
         self.event_system.queue_event(event);
     }
 
-
-
     fn update(&mut self, app: &mut App<Game>) {
         // if self.frame_idx > 140 {
         //     thread::sleep(Duration::from_millis(200));
@@ -207,31 +200,9 @@ impl Plugin for Game {
             match event {
                 GameEvent::KeyboardInput { key_code, state } => {
                     let is_pressed = matches!(state, crate::game::event::event_system::ElementStateType::Pressed);
-                    
-                    // Convert KeyCodeType to winit KeyCode for camera and entity systems
-                    let winit_key = match key_code {
-                        KeyCodeType::Escape => KeyCode::Escape,
-                        KeyCodeType::Space => KeyCode::Space,
-                        KeyCodeType::ShiftLeft => KeyCode::ShiftLeft,
-                        KeyCodeType::ArrowLeft => KeyCode::ArrowLeft,
-                        KeyCodeType::ArrowRight => KeyCode::ArrowRight,
-                        KeyCodeType::ArrowUp => KeyCode::ArrowUp,
-                        KeyCodeType::ArrowDown => KeyCode::ArrowDown,
-                        KeyCodeType::KeyA => KeyCode::KeyA,
-                        KeyCodeType::KeyD => KeyCode::KeyD,
-                        KeyCodeType::KeyW => KeyCode::KeyW,
-                        KeyCodeType::KeyS => KeyCode::KeyS,
-                        KeyCodeType::KeyZ => KeyCode::KeyZ,
-                        KeyCodeType::KeyX => KeyCode::KeyX,
-                        KeyCodeType::F9 => KeyCode::F9,
-                        KeyCodeType::F10 => KeyCode::F10,
-                        KeyCodeType::F11 => KeyCode::F11,
-                        KeyCodeType::F12 => KeyCode::F12,
-                        KeyCodeType::Unknown => continue, // Skip unknown keys
-                    };
-                    
-                    self.camera_controller.handle_key(winit_key, is_pressed);
-                    self.entity_system.handle_key(winit_key, is_pressed);
+
+                    self.camera_controller.handle_key(*key_code, is_pressed);
+                    self.entity_system.handle_key(*key_code, is_pressed);
                 }
                 _ => {} // Handle other events if needed
             }
@@ -256,41 +227,7 @@ impl Plugin for Game {
         }
 
         self.simulation.post_solve(time_delta);
-
-        // // Update particle system
-        // // todo: Need a ParticlePipeline to apply any number of Operations.
-        // // todo: The paper talks about doing this whole merge and split twice to avoid some problems.
-        // // todo: The paper also talks about limiting the depth of recursion on merge and split to avoid the whole thing becoming too ridgid.
-        // // todo: The paper mentions time step based such that a particle will not more more than its radius in 1 step due to the simple collision detection.
-        // {
-        //     // Measure system metrics
-        //     //let mut met = Metrics::default();
-        //     //met.execute(&mut self.particle_vec);
-
-        //     let mut m = Merge::default();
-        //     m.execute_2(&mut self.particle_vec, time_delta);
-
-        //     let mut i = *VerletIntegration::default().set_time_delta(time_delta);//.set_gravity(Vec2::new(0.0, 0.0));
-        //     i.execute(&mut self.particle_vec);
-
-        //     // This should split particle.
-        //     let mut s = Split::default().set_restitution_coefficient(1.0).clone();
-        //     s.execute(&mut self.particle_vec);
-
-
-        //     // Second merge and split - this fixes some particle penetration
-        //     {
-        //         let mut m = Merge::default();
-        //         m.execute_2(&mut self.particle_vec, time_delta);
-
-        //         let mut s = Split::default().set_restitution_coefficient(1.0).clone();
-        //         s.execute(&mut self.particle_vec);
-        //     }
-
-        //     // Measure metrics and see if anything has changed
-        //     //met.execute(&mut self.particle_vec);
-        // }
-
+        
         // Update camera, then apply the camera matrix to the particle instance renderer.
         let state = match &mut app.state {
             Some(s) => s,
