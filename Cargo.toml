@@ -23,6 +23,10 @@ rand_seeder = "0.4.0"
 smallvec = "1.15.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+irc = "0.15"
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+
 
 [dependencies.image]
 version = "0.24"

@@ -3,3 +3,5 @@ pub mod entity;
 pub mod event;
 pub mod introduction;
 pub mod game;
+pub mod irc;
+pub mod leaderboard;

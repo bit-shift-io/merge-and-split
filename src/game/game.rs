@@ -2,7 +2,7 @@ use std::env;
 
 use cgmath::Rotation3;
 
-use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::{EventSystem, GameEvent, KeyCodeType}, level::level_builder::LevelBuilder}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
+use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::{EventSystem, GameEvent, KeyCodeType}, level::level_builder::LevelBuilder, irc::{IrcManager, IrcEvent}, leaderboard::Leaderboard}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameState {
@@ -25,6 +25,9 @@ pub struct Game {
     simulation: Simulation,
     total_time: f32,
     game_state: GameState,
+    irc_manager: IrcManager,
+    current_nickname: String,
+    leaderboard: Leaderboard,
 }
 
 impl Game {
@@ -148,6 +151,14 @@ impl Plugin for Game {
             event_system.start_recording();
         }
 
+
+        let nickname = format!("Player{}", chrono::Utc::now().timestamp_subsec_micros());
+        let irc_manager = IrcManager::new(
+             "irc.libera.chat".to_owned(),
+             nickname.clone(),
+             vec!["#planck-global".to_owned(), "#planck-leaderboard".to_owned()]
+        );
+
         let mut particles = Self {
             camera,
             camera_controller,
@@ -163,6 +174,9 @@ impl Plugin for Game {
             simulation,
             total_time: 0.0,
             game_state: GameState::Playing,
+            irc_manager,
+            current_nickname: nickname,
+            leaderboard: Leaderboard::new(),
         };
 
         particles.update_particle_instances(&state.queue, &state.device);
@@ -259,6 +273,20 @@ impl Plugin for Game {
                         println!("Recording auto-exported to: {}", filename);
                     }
                 }
+                
+                // Post time to leaderboard
+                let seed = chrono::Utc::now().format("%Y-%m-%d").to_string();
+                let msg = format!("BEST_TIME seed={} time={:.3} user={}", seed, self.total_time, self.current_nickname);
+                self.irc_manager.send_message("#planck-leaderboard".to_owned(), msg);
+                println!("Posted time to leaderboard: {:.3}", self.total_time);
+
+                // Add my own score to the leaderboard immediately
+                self.leaderboard.add_score(seed.clone(), self.current_nickname.clone(), self.total_time);
+
+                // Post Top 10 to global chat
+                if let Some(top10) = self.leaderboard.get_top_10(&seed) {
+                    self.irc_manager.send_message("#planck-global".to_owned(), top10);
+                }
             }
         }
 
@@ -266,8 +294,23 @@ impl Plugin for Game {
         //particle_instance_renderer.update_camera_uniform(&camera, &state.queue);
 
 
+
         // Update particles
         self.update_particle_instances(&state.queue, &state.device);
+
+        // Process IRC events
+        for event in self.irc_manager.process_events() {
+            match event {
+                IrcEvent::Connected => println!("IRC: Connected!"),
+                IrcEvent::MessageReceived { target, sender, message } => {
+                    println!("[{}] <{}> {}", target, sender, message);
+                    if target == "#planck-leaderboard" {
+                         self.leaderboard.parse_message(&message);
+                    }
+                },
+                IrcEvent::Disconnected => println!("IRC: Disconnected"),
+            }
+        }
     }
 
     fn render(&self, app: &mut App<Game>) {
@@ -276,7 +319,7 @@ impl Plugin for Game {
             None => return,
         };
 
-        let render_context = state.render(|render_pass| {
+        let _render_context = state.render(|render_pass| {
             self.particle_shader.bind(render_pass);
             self.material.bind(render_pass, 0);
 
