@@ -436,6 +436,8 @@ impl State {
         // });
         // let num_indices = INDICES.len() as u32;
 
+        surface.configure(&device, &config);
+
         Ok(Self {
             surface,
             device,
@@ -495,66 +497,66 @@ impl State {
     //     );
     // }
 
-    pub fn render(
-        &mut self,
-        callback: impl FnOnce(&mut wgpu::RenderPass),
-        post_process: impl FnOnce(&mut wgpu::CommandEncoder, &wgpu::TextureView, &wgpu::TextureFormat),
-    ) -> Result<(), wgpu::SurfaceError> {
-        self.window.request_redraw();
+    // pub fn render(
+    //     &mut self,
+    //     callback: impl FnOnce(&mut wgpu::RenderPass),
+    //     post_process: impl FnOnce(&mut wgpu::CommandEncoder, &wgpu::TextureView, &wgpu::TextureFormat),
+    // ) -> Result<(), wgpu::SurfaceError> {
+    //     self.window.request_redraw();
 
-        // We can't render unless the surface is configured
-        if !self.is_surface_configured {
-            return Ok(());
-        }
+    //     // We can't render unless the surface is configured
+    //     if !self.is_surface_configured {
+    //         return Ok(());
+    //     }
 
-        let output = self.surface.get_current_texture()?;
-        let view = output
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+    //     let output = self.surface.get_current_texture()?;
+    //     let view = output
+    //         .texture
+    //         .create_view(&wgpu::TextureViewDescriptor::default());
 
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Render Encoder"),
-            });
+    //     let mut encoder = self
+    //         .device
+    //         .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+    //             label: Some("Render Encoder"),
+    //         });
 
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                    depth_slice: None,
-                })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &self.depth_texture.view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: wgpu::StoreOp::Store,
-                    }),
-                    stencil_ops: None,
-                }),
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
+    //     {
+    //         let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+    //             label: Some("Render Pass"),
+    //             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+    //                 view: &view,
+    //                 resolve_target: None,
+    //                 ops: wgpu::Operations {
+    //                     load: wgpu::LoadOp::Clear(wgpu::Color {
+    //                         r: 0.1,
+    //                         g: 0.2,
+    //                         b: 0.3,
+    //                         a: 1.0,
+    //                     }),
+    //                     store: wgpu::StoreOp::Store,
+    //                 },
+    //                 depth_slice: None,
+    //             })],
+    //             depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+    //                 view: &self.depth_texture.view,
+    //                 depth_ops: Some(wgpu::Operations {
+    //                     load: wgpu::LoadOp::Clear(1.0),
+    //                     store: wgpu::StoreOp::Store,
+    //                 }),
+    //                 stencil_ops: None,
+    //             }),
+    //             occlusion_query_set: None,
+    //             timestamp_writes: None,
+    //         });
 
-            callback(&mut render_pass);
-        }
+    //         callback(&mut render_pass);
+    //     }
 
-        post_process(&mut encoder, &view, &self.config.format);
+    //     post_process(&mut encoder, &view, &self.config.format);
 
-        self.queue.submit(iter::once(encoder.finish()));
-        output.present();
+    //     self.queue.submit(iter::once(encoder.finish()));
+    //     output.present();
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }

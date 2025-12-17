@@ -192,6 +192,10 @@ impl<P: Plugin> ApplicationHandler<State> for App<P> {
                 }
 
                 self.render();
+                
+                if let Some(state) = &self.state {
+                    state.window.request_redraw();
+                }
             }
             _ => {}
         }

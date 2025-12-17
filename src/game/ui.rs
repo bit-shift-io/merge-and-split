@@ -25,7 +25,7 @@ impl GameUI {
     pub fn view(&self) -> Element<Message, Theme, iced::Renderer> {
         column![
             text(format!("FPS: {}", self.fps))
-                .size(40)
+                .size(20)
                 .color(Color::WHITE),
         ]
         .width(Length::Fill)

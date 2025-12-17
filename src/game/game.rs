@@ -289,26 +289,26 @@ impl Plugin for Game {
 
     fn update(&mut self, app: &mut App<Self>) {
         if let Some(state) = &app.state {
-             self.camera_controller.update_camera(&mut self.camera);
+            //  self.camera_controller.update_camera(&mut self.camera);
 
-             // Simulation Update
-             let dt = if app.dt <= 0.0 { 1.0 / 60.0 } else { app.dt };
+            //  // Simulation Update
+            let dt = if app.dt <= 0.0 { 1.0 / 60.0 } else { app.dt };
              
-             self.simulation.pre_solve(dt);
-             self.simulation.solve(dt, 8, 0); // 8 iterations
-             self.simulation.post_solve(dt);
+            //  self.simulation.pre_solve(dt);
+            //  self.simulation.solve(dt, 8, 0); // 8 iterations
+            //  self.simulation.post_solve(dt);
 
-             // Bridge to Renderer
-             let instances: Vec<Instance> = self.simulation.particles.iter()
-                .map(|p| Instance {
-                    position: cgmath::Vector3::new(p.pos.x, p.pos.y, 0.0),
-                    rotation: cgmath::Quaternion::one(),
-                    colour: p.colour,
-                    radius: p.radius,
-                })
-                .collect();
+            //  // Bridge to Renderer
+            //  let instances: Vec<Instance> = self.simulation.particles.iter()
+            //     .map(|p| Instance {
+            //         position: cgmath::Vector3::new(p.pos.x, p.pos.y, 0.0),
+            //         rotation: cgmath::Quaternion::one(),
+            //         colour: p.colour,
+            //         radius: p.radius,
+            //     })
+            //     .collect();
              
-             self.particle_instance_renderer.update_instances(&instances, &state.queue, &state.device);
+            //  self.particle_instance_renderer.update_instances(&instances, &state.queue, &state.device);
 
              // FPS Update
              let fps = (1.0 / dt).round() as i32;
@@ -451,11 +451,17 @@ impl Plugin for Game {
     }
 
     fn render(&mut self, app: &mut App<Game>) {
+        
         // Get state
         let state = match &mut app.state {
              Some(s) => s,
              None => return,
         };
+
+        // This used to call state.render to hide implementation details:
+        // let _render_context = state.render(|render_pass| {
+        // but now we implement the render steps directly here.
+        // Maybe instead of either option, we could have a Renderer wrapper struct that holds common render code?
 
         // 1. Get Texture
         let output = match state.surface.get_current_texture() {
