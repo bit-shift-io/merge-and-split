@@ -1,8 +1,18 @@
 use std::env;
 
 use cgmath::Rotation3;
+use iced_wgpu::graphics::{Shell, Viewport};
+use iced_wgpu::{Engine, Renderer};
+use iced_winit::clipboard::Clipboard;
+use iced_winit::core::mouse;
+use iced_winit::core::renderer as core_renderer;
+// use iced_winit::core::time::Instant; // Not used yet
+use iced_winit::core::{Event as IcedEvent, Font, Pixels, Size, Theme};
+use iced_winit::runtime::user_interface::{self, UserInterface};
+use iced_winit::winit;
 
-use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::{EventSystem, GameEvent, KeyCodeType}, level::level_builder::LevelBuilder, irc::{IrcManager, IrcEvent}, leaderboard::Leaderboard}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
+use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin, state::State}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::{EventSystem, GameEvent, KeyCodeType}, level::level_builder::LevelBuilder, irc::{IrcManager, IrcEvent}, leaderboard::Leaderboard}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
+use cgmath::One;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameState {
@@ -16,6 +26,7 @@ pub struct Game {
     particle_vec: ParticleVec,
     particle_instance_renderer: InstanceRenderer,
     quad_mesh: Mesh,
+    last_mouse_pos: Vec2,
     material: Material,
     particle_shader: Shader,
     line_shader: Shader,
@@ -28,6 +39,17 @@ pub struct Game {
     irc_manager: IrcManager,
     current_nickname: String,
     leaderboard: Leaderboard,
+    // UI
+    // Iced UI
+    ui: crate::game::ui::GameUI,
+    ui_cache: user_interface::Cache,
+    ui_renderer: Renderer,
+    ui_events: Vec<IcedEvent>,
+    ui_viewport: Viewport,
+    ui_cursor: mouse::Cursor,
+    ui_clipboard: Clipboard,
+    
+    modifiers: winit::event::Modifiers,
 }
 
 impl Game {
@@ -159,6 +181,29 @@ impl Plugin for Game {
              vec!["#planck-global".to_owned(), "#planck-leaderboard".to_owned()]
         );
 
+        let mut __ui = crate::game::ui::GameUI::new();
+        
+        // Iced Init
+        let physical_size = state.window.inner_size();
+        let viewport = Viewport::with_physical_size(
+            Size::new(physical_size.width, physical_size.height),
+            state.window.scale_factor() as f32,
+        );
+        let clipboard = Clipboard::connect(state.window.clone());
+
+        let renderer = {
+            let engine = Engine::new(
+                &state.adapter,
+                state.device.clone(),
+                state.queue.clone(),
+                state.config.format,
+                None,
+                Shell::headless(),
+            );
+
+            Renderer::new(engine, Font::default(), Pixels::from(16))
+        };
+        
         let mut particles = Self {
             camera,
             camera_controller,
@@ -168,6 +213,7 @@ impl Plugin for Game {
             material,
             particle_shader,
             line_shader,
+            last_mouse_pos: Vec2::new(0.0, 0.0),
             frame_idx: 0,
             entity_system,
             event_system,
@@ -177,34 +223,102 @@ impl Plugin for Game {
             irc_manager,
             current_nickname: nickname,
             leaderboard: Leaderboard::new(),
+            ui: __ui,
+            ui_cache: user_interface::Cache::new(),
+            ui_renderer: renderer,
+            ui_events: Vec::new(),
+            ui_viewport: viewport,
+            ui_cursor: mouse::Cursor::Unavailable,
+            ui_clipboard: clipboard,
+            
+            modifiers: winit::event::Modifiers::default(),
         };
 
         particles.update_particle_instances(&state.queue, &state.device);
         particles
     }
 
-    fn resize(&mut self, app: &mut App<Game>, width: u32, height: u32) {
+    fn resize(&mut self, app: &mut App<Self>, width: u32, height: u32) {
         if width > 0 && height > 0 {
-            let state = match &mut app.state {
-                Some(s) => s,
-                None => return,
-            };
-            self.camera.aspect = state.config.width as f32 / state.config.height as f32;
+            if let Some(state) = &mut app.state {
+                 state.resize(width, height);
+                 let scale_factor = state.window.scale_factor();
+                 self.ui_viewport = Viewport::with_physical_size(
+                      Size::new(width, height),
+                      scale_factor as f32,
+                 );
+            }
+            self.camera.aspect = width as f32 / height as f32;
         }
     }
 
-    fn window_event(&mut self, _app: &mut App<Game>, event: GameEvent) {
-        self.event_system.queue_event(event);
+    fn window_event(&mut self, app: &mut App<Game>, event: &winit::event::WindowEvent) {
+        // Map window event to iced event
+        let state = match &mut app.state {
+            Some(s) => s,
+            None => return,
+        };
+
+        if let Some(iced_event) = iced_winit::conversion::window_event(
+            event.clone(),
+            state.window.scale_factor() as f32,
+            Default::default(), // self.modifiers.into() replacement
+        ) {
+            self.ui_events.push(iced_event);
+        }
+        
+        // Handle Game Events (Legacy/Recording)
+        if let Some(game_event) = EventSystem::window_event_to_game_event(event) {
+            self.event_system.queue_event(game_event);
+        }
+
+        match event {
+             winit::event::WindowEvent::CursorMoved { position, .. } => {
+                self.last_mouse_pos = Vec2::new(position.x as f32, position.y as f32);
+                self.ui_cursor = mouse::Cursor::Available(iced_winit::conversion::cursor_position(
+                    *position,
+                    state.window.scale_factor() as f32,
+                ));
+            }
+            winit::event::WindowEvent::ModifiersChanged(new_modifiers) => {
+                self.modifiers = new_modifiers.state().into();
+            }
+            _ => {}
+        }
     }
 
-    fn update(&mut self, app: &mut App<Game>) {
-        // if self.frame_idx > 140 {
-        //     thread::sleep(Duration::from_millis(200));
-        // }
+    fn update(&mut self, app: &mut App<Self>) {
+        if let Some(state) = &app.state {
+             self.camera_controller.update_camera(&mut self.camera);
+
+             // Simulation Update
+             let dt = if app.dt <= 0.0 { 1.0 / 60.0 } else { app.dt };
+             
+             self.simulation.pre_solve(dt);
+             self.simulation.solve(dt, 8, 0); // 8 iterations
+             self.simulation.post_solve(dt);
+
+             // Bridge to Renderer
+             let instances: Vec<Instance> = self.simulation.particles.iter()
+                .map(|p| Instance {
+                    position: cgmath::Vector3::new(p.pos.x, p.pos.y, 0.0),
+                    rotation: cgmath::Quaternion::one(),
+                    colour: p.colour,
+                    radius: p.radius,
+                })
+                .collect();
+             
+             self.particle_instance_renderer.update_instances(&instances, &state.queue, &state.device);
+
+             // FPS Update
+             let fps = (1.0 / dt).round() as i32;
+             self.ui.update(crate::game::ui::Message::UpdateFps(fps));
+
+        }
+
         
         self.frame_idx += 1;
-        //println!("F: {}", self.frame_idx);
-
+        
         // Update event system with current frame number
         self.event_system.set_frame(self.frame_idx);
         self.event_system.process_events();
@@ -224,6 +338,29 @@ impl Plugin for Game {
         
         // Clear events after processing
         self.event_system.clear_events();
+        
+        // Update UI FPS
+        // let fps = 60; // TODO: Fix time delta access
+        // self.ui_state.queue_message(crate::game::ui::Message::UpdateFps(fps));
+        
+        // Iced Update
+        let state = match &mut app.state {
+            Some(s) => s,
+            None => return,
+        };
+        let viewport_size = state.window.inner_size();
+        // let logical_size = viewport_size.to_logical(state.window.scale_factor());
+        // /*
+        // let _ = self.ui_state.update(
+        //     state.viewport().logical_size(),
+        //     winit::dpi::PhysicalPoint::new(-1.0, -1.0), // TODO: Cursor position
+        //     &mut self.modifiers,
+        //     &mut iced::Theme::Dark,
+        //     &iced::renderer::Style::default(),
+        //     &mut self.ui_clipboard,
+        //     &mut self.ui_debug,
+        // );
+        // */
 
         // Frame 151, the particle on the left (p50) gets merged and its not near anything! It seems there is a metaparticle P81 that is apparently nearby, but there should not be.
         // if self.frame_idx >= 151 {
@@ -313,24 +450,102 @@ impl Plugin for Game {
         }
     }
 
-    fn render(&self, app: &mut App<Game>) {
+    fn render(&mut self, app: &mut App<Game>) {
+        // Get state
         let state = match &mut app.state {
-            Some(s) => s,
-            None => return,
+             Some(s) => s,
+             None => return,
         };
 
-        let _render_context = state.render(|render_pass| {
-            self.particle_shader.bind(render_pass);
-            self.material.bind(render_pass, 0);
-
-            {
-                self.particle_instance_renderer.render(render_pass);
+        // 1. Get Texture
+        let output = match state.surface.get_current_texture() {
+            Ok(output) => output,
+            Err(wgpu::SurfaceError::OutOfMemory) => {
+                panic!("Swapchain error: OutOfMemory");
             }
+            Err(_) => return,
+        };
+        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-            // Trying to drawn an axis so we know which way is up and down
-            {
-                self.quad_mesh.render(render_pass, 0..1);
-            }
+        // 2. Create Encoder
+        let mut encoder = state.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Render Encoder"),
         });
+
+        // 3. Render Game Scene
+        { // Scope for render pass
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                             r: 0.1, g: 0.2, b: 0.3, a: 1.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                    depth_slice: None,
+                })],
+        // Add depth stencil usage
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: &state.depth_texture.view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(1.0),
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
+
+            // Bind resources
+            self.particle_shader.bind(&mut render_pass);
+            self.material.bind(&mut render_pass, 0);
+            
+            self.particle_instance_renderer.render(&mut render_pass);
+            self.quad_mesh.render(&mut render_pass, 0..1);
+        }
+        
+        // 4. Submit Game Scene
+        state.queue.submit(std::iter::once(encoder.finish()));
+
+        // 5. Iced Rendering
+        let mut user_interface = UserInterface::build(
+            self.ui.view(),
+            self.ui_viewport.logical_size(),
+            std::mem::take(&mut self.ui_cache),
+            &mut self.ui_renderer,
+        );
+        
+        let (_state, _) = user_interface.update(
+            &self.ui_events,
+            self.ui_cursor,
+            &mut self.ui_renderer,
+            &mut self.ui_clipboard,
+            &mut Vec::new(),
+        );
+        
+        user_interface.draw(
+            &mut self.ui_renderer,
+            &Theme::Dark,
+            &Default::default(),
+            self.ui_cursor,
+        );
+        
+        self.ui_cache = user_interface.into_cache();
+        self.ui_events.clear();
+        
+        self.ui_renderer.present(
+            None,
+            state.config.format,
+            &view,
+            &self.ui_viewport,
+            // &[],
+        );
+
+        // 7. Present Surface
+        output.present();
     }
 }

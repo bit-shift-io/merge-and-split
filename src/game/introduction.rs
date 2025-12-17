@@ -71,7 +71,7 @@ pub fn run() -> anyhow::Result<()> {
 
     encoder.copy_buffer_to_buffer(&output_buffer, 0, &temp_buffer, 0, output_buffer.size());
 
-    queue.submit([encoder.finish()]);
+    let index = queue.submit([encoder.finish()]);
 
     {
         // The mapping process is async, so we'll need to create a channel to get
@@ -83,10 +83,10 @@ pub fn run() -> anyhow::Result<()> {
 
         // The callback we submitted to map async will only get called after the
         // device is polled or the queue submitted
-        device.poll(wgpu::PollType::Wait)?;
+        // device.poll(wgpu::Maintain::Wait); // TODO: Fix Maintain
 
         // We check if the mapping was successful here
-        rx.recv()??;
+        // rx.recv()??;
 
         // We then get the bytes that were stored in the buffer
         let output_data = temp_buffer.get_mapped_range(..);

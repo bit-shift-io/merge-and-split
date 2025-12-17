@@ -11,7 +11,7 @@ anyhow = "1.0"
 winit = { version = "0.30", features = ["android-native-activity"] }
 env_logger = "0.10"
 log = "0.4"
-wgpu = "26.0.1"
+wgpu = "27.0.1"
 pollster = "0.3"
 cgmath = "0.18"
 bytemuck = { version = "1.16", features = [ "derive" ] }
@@ -26,6 +26,9 @@ serde_json = "1.0"
 irc = "0.15"
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
+iced = { version = "0.14", default-features = false, features = ["wgpu", "debug", "tokio"] }
+iced_wgpu = "0.14"
+iced_winit = "0.14"
 
 
 [dependencies.image]

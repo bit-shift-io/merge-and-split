@@ -134,11 +134,15 @@ pub struct RenderContext<'a> {
 }
 
 pub struct State {
-    surface: wgpu::Surface<'static>,
+    pub surface: wgpu::Surface<'static>,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub config: wgpu::SurfaceConfiguration,
-    is_surface_configured: bool,
+    pub size: winit::dpi::PhysicalSize<u32>,
+    pub window: Arc<Window>,
+    pub depth_texture: texture::Texture,
+    pub is_surface_configured: bool,
+    pub adapter: wgpu::Adapter,
     //render_pipeline: wgpu::RenderPipeline,
     // vertex_buffer: wgpu::Buffer,
     // index_buffer: wgpu::Buffer,
@@ -155,8 +159,6 @@ pub struct State {
     // #[allow(dead_code)]
     // instance_buffer: wgpu::Buffer,
     // NEW!
-    depth_texture: texture::Texture,
-    pub window: Arc<Window>,
 }
 
 impl State {
@@ -196,6 +198,8 @@ impl State {
                 },
                 memory_hints: Default::default(),
                 trace: wgpu::Trace::Off, // Trace path
+                experimental_features: wgpu::ExperimentalFeatures::disabled(),
+                ..Default::default()
             })
             .await
             .unwrap();
@@ -437,9 +441,11 @@ impl State {
             device,
             queue,
             config,
-            is_surface_configured: false,
-            // render_pipeline,
-            // vertex_buffer,
+            size,
+            window,
+            depth_texture,
+            is_surface_configured: true,
+            adapter,
             // index_buffer,
             // num_indices,
             // diffuse_texture,
@@ -451,8 +457,6 @@ impl State {
             // camera_uniform,
             // instances,
             // instance_buffer,
-            depth_texture,
-            window,
         })
     }
 
@@ -491,7 +495,11 @@ impl State {
     //     );
     // }
 
-    pub fn render(&mut self, callback: impl FnOnce(&mut wgpu::RenderPass)) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(
+        &mut self,
+        callback: impl FnOnce(&mut wgpu::RenderPass),
+        post_process: impl FnOnce(&mut wgpu::CommandEncoder, &wgpu::TextureView, &wgpu::TextureFormat),
+    ) -> Result<(), wgpu::SurfaceError> {
         self.window.request_redraw();
 
         // We can't render unless the surface is configured
@@ -539,16 +547,10 @@ impl State {
                 timestamp_writes: None,
             });
 
-            // render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            // render_pass.set_pipeline(&self.render_pipeline);
-            // render_pass.set_bind_group(0, &self.diffuse_bind_group, &[]);
-            // render_pass.set_bind_group(1, &self.camera_bind_group, &[]);
-            // render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            // render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            // render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as u32);
-
             callback(&mut render_pass);
         }
+
+        post_process(&mut encoder, &view, &self.config.format);
 
         self.queue.submit(iter::once(encoder.finish()));
         output.present();

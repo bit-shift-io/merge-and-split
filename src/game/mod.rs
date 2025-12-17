@@ -5,3 +5,4 @@ pub mod introduction;
 pub mod game;
 pub mod irc;
 pub mod leaderboard;
+pub mod ui;

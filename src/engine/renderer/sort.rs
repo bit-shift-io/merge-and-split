@@ -61,15 +61,15 @@ pub fn run() -> anyhow::Result<()> {
 
     encoder.copy_buffer_to_buffer(&data_buffer, 0, &temp_buffer, 0, data_buffer.size());
 
-    queue.submit([encoder.finish()]);
-
+    let index = queue.submit([encoder.finish()]);
+    
     {
         let (tx, rx) = channel();
         temp_buffer.map_async(wgpu::MapMode::Read, .., move |result| {
             tx.send(result).unwrap()
         });
-        device.poll(wgpu::PollType::Wait)?;
-        rx.recv()??;
+        // device.poll(wgpu::Maintain::Wait); // TODO: Fix Maintain
+        // rx.recv()??;
 
         let output_data = temp_buffer.get_mapped_range(..);
         let u32_data = bytemuck::cast_slice::<_, u32>(&output_data);

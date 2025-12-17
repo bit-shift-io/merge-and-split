@@ -14,7 +14,9 @@ pub struct App<P: Plugin> {
     proxy: Option<winit::event_loop::EventLoopProxy<State>>,
     pub state: Option<State>,
     event_loop: Option<EventLoop<State>>,
-    plugin: Option<P>,
+    pub plugin: Option<P>,
+    pub last_frame_time: Option<std::time::Instant>,
+    pub dt: f32,
 }
 
 impl<P: Plugin> App<P> {
@@ -25,6 +27,8 @@ impl<P: Plugin> App<P> {
             state: None,
             event_loop: None,
             plugin: None,
+            last_frame_time: None,
+            dt: 0.0,
         }
     }
 
@@ -64,7 +68,7 @@ impl<P: Plugin> App<P> {
 
 
     pub fn render(&mut self) {
-        if let Some(plugin) = self.plugin.take() {
+        if let Some(mut plugin) = self.plugin.take() {
             plugin.render(self);
             self.plugin = Some(plugin);
         }
@@ -158,12 +162,9 @@ impl<P: Plugin> ApplicationHandler<State> for App<P> {
             return;
         }
 
-        // Convert WindowEvent to GameEvent at the boundary
-        if let Some(game_event) = EventSystem::window_event_to_game_event(&event) {
-            if let Some(mut plugin) = self.plugin.take() {
-                plugin.window_event(self, game_event);
-                self.plugin = Some(plugin);
-            }
+        if let Some(mut plugin) = self.plugin.take() {
+            plugin.window_event(self, &event);
+            self.plugin = Some(plugin);
         }
 
         match event {
@@ -179,6 +180,12 @@ impl<P: Plugin> ApplicationHandler<State> for App<P> {
                 }
             },
             WindowEvent::RedrawRequested => {
+                let now = std::time::Instant::now();
+                if let Some(last_time) = self.last_frame_time {
+                    self.dt = (now - last_time).as_secs_f32();
+                }
+                self.last_frame_time = Some(now);
+
                 if let Some(mut plugin) = self.plugin.take() {
                     plugin.update(self);
                     self.plugin = Some(plugin);
