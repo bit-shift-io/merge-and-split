@@ -1,0 +1,8 @@
+IRC needs to keep a list of all users sorted alphabetically. The first in the list will be the master user.
+The master user will respond first when a player posts their score into the chat.
+The master user will take in this users score and add it to their leaderboard.
+Once done, the master user will print their leaderboard into the chat channel.
+Once this occurs, all other players will take in the master players leaderboard and update theirs.
+
+Once this occurs, then the game should print the leaderboard results into the chat into a nicely formatted table.
+The leaderboard should only keep the top 10 best times and be sorted by best time.

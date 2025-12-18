@@ -1,0 +1,2 @@
+Once the game ends and the leaderboard is updated, we want to show a end game screen to the user that shows their time as well
+as the current leaderboard results.

@@ -1,0 +1,1 @@
+Add total_time to game UI. Ensure this time stops updating once the game has ended.

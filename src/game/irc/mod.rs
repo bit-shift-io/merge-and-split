@@ -15,18 +15,27 @@ pub enum IrcCommand {
 pub enum IrcEvent {
     Connected,
     MessageReceived { target: String, sender: String, message: String },
+    UserJoined(String),
+    UserLeft(String),
+    UserList(Vec<String>),
     Disconnected,
 }
+
+use std::collections::BTreeSet;
+use std::sync::{Arc, RwLock};
 
 pub struct IrcManager {
     command_sender: UnboundedSender<IrcCommand>,
     event_receiver: Receiver<IrcEvent>,
+    users: Arc<RwLock<BTreeSet<String>>>,
 }
 
 impl IrcManager {
     pub fn new(server: String, nickname: String, channels: Vec<String>) -> Self {
         let (command_sender, mut command_receiver) = tokio::sync::mpsc::unbounded_channel::<IrcCommand>();
         let (event_sender, event_receiver) = mpsc::channel();
+        let users = Arc::new(RwLock::new(BTreeSet::new()));
+        let users_clone = users.clone();
 
         thread::spawn(move || {
             let rt = Runtime::new().unwrap();
@@ -69,7 +78,7 @@ impl IrcManager {
                         Some(message) = stream.next() => {
                             match message {
                                 Ok(msg) => {
-                                    if let Command::PRIVMSG(target, content) = msg.command {
+                                     if let Command::PRIVMSG(target, content) = msg.command {
                                         if let Some(prefix) = msg.prefix {
                                              let sender = match prefix {
                                                  Prefix::ServerName(s) => s,
@@ -80,6 +89,41 @@ impl IrcManager {
                                                  sender: sender,
                                                  message: content,
                                              });
+                                        }
+                                    } else if let Command::JOIN(_channel, _, _) = msg.command {
+                                        if let Some(Prefix::Nickname(n, _, _)) = msg.prefix {
+                                            if let Ok(mut u) = users_clone.write() {
+                                                u.insert(n.clone());
+                                                let _ = event_sender.send(IrcEvent::UserJoined(n));
+                                            }
+                                        }
+                                    } else if let Command::PART(_channel, _) = msg.command {
+                                        if let Some(Prefix::Nickname(n, _, _)) = msg.prefix {
+                                            if let Ok(mut u) = users_clone.write() {
+                                                u.remove(&n);
+                                                let _ = event_sender.send(IrcEvent::UserLeft(n));
+                                            }
+                                        }
+                                    } else if let Command::QUIT(_) = msg.command {
+                                        if let Some(Prefix::Nickname(n, _, _)) = msg.prefix {
+                                            if let Ok(mut u) = users_clone.write() {
+                                                u.remove(&n);
+                                                let _ = event_sender.send(IrcEvent::UserLeft(n));
+                                            }
+                                        }
+                                    } else if let Command::Response(Response::RPL_NAMREPLY, params) = msg.command {
+                                        // Format: <nick> = <channel> :<nick1> <nick2> ...
+                                        if params.len() >= 4 {
+                                            let names = &params[3];
+                                            let mut user_list = Vec::new();
+                                            if let Ok(mut u) = users_clone.write() {
+                                                for name in names.split_whitespace() {
+                                                    let clean_name = name.trim_start_matches(|c| c == '@' || c == '+' || c == '%' || c == '&' || c == '~');
+                                                    u.insert(clean_name.to_lowercase()); // Store lowercase for comparison
+                                                    user_list.push(clean_name.to_lowercase());
+                                                }
+                                                let _ = event_sender.send(IrcEvent::UserList(user_list));
+                                            }
                                         }
                                     }
                                 }
@@ -114,6 +158,15 @@ impl IrcManager {
         Self {
             command_sender, 
             event_receiver,
+            users,
+        }
+    }
+
+    pub fn get_users(&self) -> Vec<String> {
+        if let Ok(u) = self.users.read() {
+            u.iter().cloned().collect()
+        } else {
+            Vec::new()
         }
     }
     

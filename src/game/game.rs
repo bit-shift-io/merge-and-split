@@ -14,11 +14,7 @@ use iced_winit::winit;
 use crate::{core::math::vec2::Vec2, engine::{app::{app::App, camera::{Camera, CameraController}, plugin::Plugin, state::State}, renderer::{instance_renderer::{Instance, InstanceRaw, InstanceRenderer, QUAD_INDICES, QUAD_VERTICES, Vertex}, model::{Material, Mesh}, shader::{Shader, ShaderBuilder}}}, game::{entity::{entities::car_entity::CarEntity, entity_system::EntitySystem}, event::event_system::{EventSystem, GameEvent, KeyCodeType}, level::level_builder::LevelBuilder, irc::{IrcManager, IrcEvent}, leaderboard::Leaderboard}, simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos}};
 use cgmath::One;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GameState {
-    Playing,
-    Finished,
-}
+use crate::game::GameState;
 
 pub struct Game {
     camera: Camera,
@@ -389,7 +385,10 @@ impl Plugin for Game {
 
 
         // Apply constraints
-        self.total_time += time_delta;
+        if self.game_state == GameState::Playing {
+            self.total_time += time_delta;
+            self.ui.update(crate::game::ui::Message::UpdateTime(self.total_time));
+        }
         self.entity_system.update(&mut self.particle_vec, &mut self.simulation, &mut self.camera, time_delta, self.total_time);
 
         // Check if game has finished (car reached finish line)
@@ -399,6 +398,7 @@ impl Plugin for Game {
             
             if game_finished {
                 self.game_state = GameState::Finished;
+                self.ui.update(crate::game::ui::Message::UpdateGameState(GameState::Finished));
                 
                 // Auto-export recording if we were recording
                 if self.event_system.is_recording() {
@@ -416,6 +416,9 @@ impl Plugin for Game {
                 let msg = format!("BEST_TIME seed={} time={:.3} user={}", seed, self.total_time, self.current_nickname);
                 self.irc_manager.send_message("#planck-leaderboard".to_owned(), msg);
                 println!("Posted time to leaderboard: {:.3}", self.total_time);
+                if let Some(top10) = self.leaderboard.get_top_10(&seed) {
+                    self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(top10));
+                }
 
                 // Add my own score to the leaderboard immediately
                 self.leaderboard.add_score(seed.clone(), self.current_nickname.clone(), self.total_time);
@@ -436,15 +439,48 @@ impl Plugin for Game {
         self.update_particle_instances(&state.queue, &state.device);
 
         // Process IRC events
+        let mut users = self.irc_manager.get_users();
+        users.sort();
+        let is_master = if let Some(first_user) = users.first() {
+            first_user.to_lowercase() == self.current_nickname.to_lowercase()
+        } else {
+            true // If we are alone, we are master
+        };
+
         for event in self.irc_manager.process_events() {
             match event {
                 IrcEvent::Connected => println!("IRC: Connected!"),
                 IrcEvent::MessageReceived { target, sender, message } => {
                     println!("[{}] <{}> {}", target, sender, message);
                     if target == "#planck-leaderboard" {
-                         self.leaderboard.parse_message(&message);
+                         if is_master {
+                             if message.starts_with("BEST_TIME") {
+                                 self.leaderboard.parse_message(&message);
+                                 let seed = chrono::Utc::now().format("%Y-%m-%d").to_string();
+                                 if let Some(sync_msg) = self.leaderboard.serialize_sync(&seed) {
+                                     self.irc_manager.send_message("#planck-leaderboard".to_owned(), sync_msg);
+                                 }
+                                 
+                                 // Post Top 10 to global chat
+                                 if let Some(top10) = self.leaderboard.get_top_10(&seed) {
+                                     self.irc_manager.send_message("#planck-global".to_owned(), top10.clone());
+                                     self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(top10));
+                                 }
+                             }
+                         } else {
+                             if message.starts_with("LEADERBOARD_SYNC") {
+                                 self.leaderboard.parse_sync_message(&message);
+                                 let seed = chrono::Utc::now().format("%Y-%m-%d").to_string();
+                                 if let Some(top10) = self.leaderboard.get_top_10(&seed) {
+                                     self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(top10));
+                                 }
+                             }
+                         }
                     }
                 },
+                IrcEvent::UserJoined(nick) => println!("IRC: {} joined", nick),
+                IrcEvent::UserLeft(nick) => println!("IRC: {} left", nick),
+                IrcEvent::UserList(list) => println!("IRC: User list: {:?}", list),
                 IrcEvent::Disconnected => println!("IRC: Disconnected"),
             }
         }

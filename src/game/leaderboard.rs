@@ -58,6 +58,52 @@ impl Leaderboard {
         }
     }
 
+    pub fn serialize_sync(&self, seed: &str) -> Option<String> {
+        if let Some(scores) = self.scores.get(seed) {
+            let mut data = String::new();
+            for (i, score) in scores.iter().enumerate() {
+                if i > 0 {
+                    data.push(',');
+                }
+                data.push_str(&format!("{}:{}", score.user, score.time));
+            }
+            Some(format!("LEADERBOARD_SYNC seed={} data={}", seed, data))
+        } else {
+            None
+        }
+    }
+
+    pub fn parse_sync_message(&mut self, message: &str) {
+        // Expected format: "LEADERBOARD_SYNC seed={} data=user1:time1,user2:time2,..."
+        if !message.starts_with("LEADERBOARD_SYNC") {
+            return;
+        }
+
+        let parts: Vec<&str> = message.split_whitespace().collect();
+        let mut seed = None;
+        let mut data = None;
+
+        for part in parts {
+            if part.starts_with("seed=") {
+                seed = Some(part.trim_start_matches("seed=").to_string());
+            } else if part.starts_with("data=") {
+                data = Some(part.trim_start_matches("data=").to_string());
+            }
+        }
+
+        if let (Some(s), Some(d)) = (seed, data) {
+            for entry in d.split(',') {
+                let subparts: Vec<&str> = entry.split(':').collect();
+                if subparts.len() == 2 {
+                    let user = subparts[0].to_string();
+                    if let Ok(time) = subparts[1].parse::<f32>() {
+                        self.add_score(s.clone(), user, time);
+                    }
+                }
+            }
+        }
+    }
+
     pub fn get_top_10(&self, seed: &str) -> Option<String> {
         if let Some(scores) = self.scores.get(seed) {
             let mut output = format!("TOP 10 for {}: ", seed);
