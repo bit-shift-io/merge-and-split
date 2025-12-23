@@ -74,9 +74,6 @@ impl GameUI {
             }
 
             column![
-                text("FINISH!")
-                    .size(50)
-                    .color(Color::from_rgb(1.0, 0.84, 0.0)), // Gold
                 text(format!("Final Time: {:.2}s", self.total_time))
                     .size(30)
                     .color(Color::WHITE),
@@ -85,7 +82,7 @@ impl GameUI {
                     .padding(10)
                     .style(|_theme: &Theme| {
                         container::Style {
-                            background: Some(iced::Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+                            background: Some(iced::Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.7))),
                             border: iced::Border {
                                 radius: 5.0.into(),
                                 width: 1.0,
