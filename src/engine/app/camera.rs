@@ -1,7 +1,7 @@
 use cgmath::prelude::*;
 use wgpu::util::DeviceExt;
 
-use crate::game::event::event_system::KeyCodeType;
+use crate::engine::app::event_system::KeyCodeType;
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::from_cols(

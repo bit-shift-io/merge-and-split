@@ -16,7 +16,6 @@ use crate::{
     },
     game::{
         entity::{entities::car_entity::CarEntity, entity_system::EntitySystem},
-        event::event_system::{EventSystem, GameEvent},
         level::level_builder::LevelBuilder,
         irc::{IrcManager, IrcEvent},
         leaderboard::Leaderboard,
@@ -24,6 +23,7 @@ use crate::{
     },
     simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos},
 };
+use crate::engine::app::event_system::{GameEvent, ElementStateType};
 use cgmath::Rotation3;
 
 pub struct Game {
@@ -37,7 +37,6 @@ pub struct Game {
     line_shader: Shader,
     frame_idx: u128,
     entity_system: EntitySystem,
-    event_system: EventSystem,
     simulation: Simulation,
     total_time: f32,
     game_state: GameState,
@@ -133,15 +132,14 @@ impl GameLoop for Game {
             }
         };
 
-        let mut event_system = EventSystem::new();
         if let Some(replay_path) = replay_file {
-            if let Err(e) = event_system.load_replay(&replay_path) {
+            if let Err(e) = ctx.event_system.load_replay(&replay_path) {
                 eprintln!("Failed to load replay file '{}': {}", replay_path, e);
             } else {
-                event_system.start_replay();
+                ctx.event_system.start_replay();
             }
         } else if !is_demo_scene {
-            event_system.start_recording();
+            ctx.event_system.start_recording();
         }
 
         let nickname = format!("Player{}", chrono::Utc::now().timestamp_subsec_micros());
@@ -162,7 +160,6 @@ impl GameLoop for Game {
             line_shader,
             frame_idx: 0,
             entity_system,
-            event_system,
             simulation,
             total_time: 0.0,
             game_state: GameState::Playing,
@@ -182,20 +179,20 @@ impl GameLoop for Game {
         self.ui.update(crate::game::ui::Message::UpdateFps(fps));
 
         self.frame_idx += 1;
-        self.event_system.set_frame(self.frame_idx);
-        self.event_system.process_events();
+        ctx.event_system.set_frame(self.frame_idx);
+        ctx.event_system.process_events();
 
-        for event in self.event_system.events.iter() {
+        for event in ctx.event_system.events.iter() {
             match event {
                 GameEvent::KeyboardInput { key_code, state } => {
-                    let is_pressed = matches!(state, crate::game::event::event_system::ElementStateType::Pressed);
+                    let is_pressed = matches!(state, ElementStateType::Pressed);
                     self.camera_controller.handle_key(*key_code, is_pressed);
                     self.entity_system.handle_key(*key_code, is_pressed);
                 }
                 _ => {}
             }
         }
-        self.event_system.clear_events();
+        ctx.event_system.clear_events();
 
         let time_delta: f32 = 0.005;
         self.simulation.pre_solve(time_delta);
@@ -221,10 +218,10 @@ impl GameLoop for Game {
                 self.game_state = GameState::Finished;
                 self.ui.update(crate::game::ui::Message::UpdateGameState(GameState::Finished));
                 
-                if self.event_system.is_recording() {
-                    self.event_system.stop_recording();
+                if ctx.event_system.is_recording() {
+                    ctx.event_system.stop_recording();
                     let filename = "recording.json";
-                    let _ = self.event_system.export_recording(&filename);
+                    let _ = ctx.event_system.export_recording(&filename);
                 }
                 
                 let seed = chrono::Utc::now().format("%Y-%m-%d").to_string();

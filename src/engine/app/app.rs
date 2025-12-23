@@ -12,7 +12,7 @@ use crate::engine::app::{
     game_loop::GameLoop,
     graphics_helper::GraphicsHelper,
     window_helper::WindowHelper,
-    input_helper::InputHelper,
+    event_system::EventSystem,
     ui_helper::UIHelper,
 };
 
@@ -92,10 +92,10 @@ impl<L: GameLoop> ApplicationHandler<Context> for App<L> {
         {
             let graphics = pollster::block_on(GraphicsHelper::new(window.clone())).unwrap();
             let window_helper = WindowHelper::new(window);
-            let input = InputHelper::new();
+            let event_system = EventSystem::new();
             let ui = UIHelper::new_with_engine(&graphics, &window_helper, &graphics.adapter);
             
-            self.ctx = Some(Context::new(graphics, window_helper, input, ui));
+            self.ctx = Some(Context::new(graphics, window_helper, event_system, ui));
             self.on_context_set();
         }
 
@@ -145,7 +145,7 @@ impl<L: GameLoop> ApplicationHandler<Context> for App<L> {
                 ctx.window.request_redraw();
             }
             _ => {
-                ctx.input.handle_event(&event, ctx.window.scale_factor());
+                ctx.event_system.handle_window_event(&event, ctx.window.scale_factor());
                 ctx.ui.handle_event(&event, ctx.window.scale_factor());
             }
         }

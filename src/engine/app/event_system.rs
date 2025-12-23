@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::{self, Write};
-use winit::event::{ElementState, MouseButton, WindowEvent};
+use std::collections::HashSet;
+use winit::event::{ElementState, MouseButton, WindowEvent, KeyEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
+use crate::core::math::vec2::Vec2;
 
 /// Serializable game event that wraps the relevant parts of WindowEvent
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -17,6 +19,10 @@ pub enum GameEvent {
     KeyboardInput {
         key_code: KeyCodeType,
         state: ElementStateType,
+    },
+    CursorMoved {
+        x: f32,
+        y: f32,
     },
 }
 
@@ -39,7 +45,7 @@ pub enum ElementStateType {
 }
 
 /// Serializable key code
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum KeyCodeType {
     Escape,
     Space,
@@ -62,6 +68,31 @@ pub enum KeyCodeType {
     Unknown,
 }
 
+impl From<KeyCode> for KeyCodeType {
+    fn from(code: KeyCode) -> Self {
+        match code {
+            KeyCode::Escape => KeyCodeType::Escape,
+            KeyCode::Space => KeyCodeType::Space,
+            KeyCode::ShiftLeft => KeyCodeType::ShiftLeft,
+            KeyCode::ArrowLeft => KeyCodeType::ArrowLeft,
+            KeyCode::ArrowRight => KeyCodeType::ArrowRight,
+            KeyCode::ArrowUp => KeyCodeType::ArrowUp,
+            KeyCode::ArrowDown => KeyCodeType::ArrowDown,
+            KeyCode::KeyA => KeyCodeType::KeyA,
+            KeyCode::KeyD => KeyCodeType::KeyD,
+            KeyCode::KeyW => KeyCodeType::KeyW,
+            KeyCode::KeyS => KeyCodeType::KeyS,
+            KeyCode::KeyZ => KeyCodeType::KeyZ,
+            KeyCode::KeyX => KeyCodeType::KeyX,
+            KeyCode::F9 => KeyCodeType::F9,
+            KeyCode::F10 => KeyCodeType::F10,
+            KeyCode::F11 => KeyCodeType::F11,
+            KeyCode::F12 => KeyCodeType::F12,
+            _ => KeyCodeType::Unknown,
+        }
+    }
+}
+
 /// Event paired with a frame number for recording/replay
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FramedEvent {
@@ -78,6 +109,10 @@ pub struct EventRecording {
 pub struct EventSystem {
     pub events: Vec<GameEvent>,
     
+    // Live state tracking (former InputHelper)
+    // keys_pressed: HashSet<KeyCodeType>,
+    // pub mouse_position: Vec2,
+
     // Recording state
     recording: bool,
     recorded_events: Vec<FramedEvent>,
@@ -174,15 +209,15 @@ impl EventSystem {
         self.replaying
     }
 
+    pub fn handle_window_event(&mut self, event: &WindowEvent, _scale_factor: f64) {
+        if let Some(game_event) = self.window_event_to_game_event(event) {
+            self.queue_event(game_event);
+        }
+    }
+
     /// Convert WindowEvent to GameEvent for serialization
-    pub fn window_event_to_game_event(event: &WindowEvent) -> Option<GameEvent> {
+    fn window_event_to_game_event(&mut self, event: &WindowEvent) -> Option<GameEvent> {
         match event {
-            WindowEvent::CloseRequested => Some(GameEvent::CloseRequested),
-            WindowEvent::Resized(size) => Some(GameEvent::Resized {
-                width: size.width,
-                height: size.height,
-            }),
-            WindowEvent::RedrawRequested => Some(GameEvent::RedrawRequested),
             WindowEvent::MouseInput { button, state, .. } => {
                 let button_type = match button {
                     MouseButton::Left => MouseButtonType::Left,
@@ -201,56 +236,52 @@ impl EventSystem {
                     state: state_type,
                 })
             }
-            WindowEvent::KeyboardInput { event, .. } => {
-                if let PhysicalKey::Code(key_code) = event.physical_key {
-                    let key_type = match key_code {
-                        KeyCode::Escape => KeyCodeType::Escape,
-                        KeyCode::Space => KeyCodeType::Space,
-                        KeyCode::ShiftLeft => KeyCodeType::ShiftLeft,
-                        KeyCode::ArrowLeft => KeyCodeType::ArrowLeft,
-                        KeyCode::ArrowRight => KeyCodeType::ArrowRight,
-                        KeyCode::ArrowUp => KeyCodeType::ArrowUp,
-                        KeyCode::ArrowDown => KeyCodeType::ArrowDown,
-                        KeyCode::KeyA => KeyCodeType::KeyA,
-                        KeyCode::KeyD => KeyCodeType::KeyD,
-                        KeyCode::KeyW => KeyCodeType::KeyW,
-                        KeyCode::KeyS => KeyCodeType::KeyS,
-                        KeyCode::KeyZ => KeyCodeType::KeyZ,
-                        KeyCode::KeyX => KeyCodeType::KeyX,
-                        KeyCode::F9 => KeyCodeType::F9,
-                        KeyCode::F10 => KeyCodeType::F10,
-                        KeyCode::F11 => KeyCodeType::F11,
-                        KeyCode::F12 => KeyCodeType::F12,
-                        _ => KeyCodeType::Unknown,
-                    };
-                    let state_type = match event.state {
-                        ElementState::Pressed => ElementStateType::Pressed,
-                        ElementState::Released => ElementStateType::Released,
-                    };
-                    Some(GameEvent::KeyboardInput {
-                        key_code: key_type,
-                        state: state_type,
-                    })
-                } else {
-                    None
-                }
+            WindowEvent::KeyboardInput { 
+                event: KeyEvent {
+                    physical_key: PhysicalKey::Code(key_code),
+                    state,
+                    ..
+                },
+                ..
+            } => {
+                let key_type = KeyCodeType::from(*key_code);
+                let state_type = match state {
+                    ElementState::Pressed => {
+                        //self.keys_pressed.insert(key_type);
+                        ElementStateType::Pressed
+                    }
+                    ElementState::Released => {
+                        //self.keys_pressed.remove(&key_type);
+                        ElementStateType::Released
+                    }
+                };
+                Some(GameEvent::KeyboardInput {
+                    key_code: key_type,
+                    state: state_type,
+                })
             }
+            // WindowEvent::CursorMoved { position, .. } => {
+            //     self.mouse_position = Vec2::new(position.x as f32, position.y as f32);
+            //     Some(GameEvent::CursorMoved {
+            //         x: self.mouse_position.x,
+            //         y: self.mouse_position.y,
+            //     })
+            // }
             _ => None,
         }
     }
 
     pub fn queue_event(&mut self, event: GameEvent) {
-        // Record the event if recording is active (only mouse and keyboard events)
+        // Record the event if recording is active (only mouse, keyboard and cursor events)
         if self.recording {
-            // Only record mouse and keyboard events, skip window events
             match &event {
-                GameEvent::MouseInput { .. } | GameEvent::KeyboardInput { .. } => {
+                GameEvent::MouseInput { .. } | GameEvent::KeyboardInput { .. } | GameEvent::CursorMoved { .. } => {
                     self.recorded_events.push(FramedEvent {
                         frame: self.current_frame,
                         event: event.clone(),
                     });
                 }
-                _ => {} // Skip window events (CloseRequested, Resized, RedrawRequested)
+                _ => {}
             }
         }
 
@@ -274,8 +305,9 @@ impl EventSystem {
             }
             
             if framed_event.frame == self.current_frame {
-                // Directly push GameEvent to the queue - no conversion needed!
-                self.events.push(framed_event.event.clone());
+                // Directly queue GameEvent - it will also update state
+                let event = framed_event.event.clone();
+                self.queue_event(event);
             }
             
             self.replay_index += 1;
