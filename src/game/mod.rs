@@ -6,3 +6,4 @@ pub mod irc;
 pub mod leaderboard;
 pub mod ui;
 pub mod game_state;
+pub mod settings;

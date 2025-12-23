@@ -20,6 +20,7 @@ use crate::{
         irc::irc_manager::{IrcManager, IrcEvent},
         leaderboard::Leaderboard,
         game_state::GameState,
+        settings::Settings,
     },
     simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos},
 };
@@ -40,7 +41,7 @@ pub struct Game {
     simulation: Simulation,
     total_time: f32,
     game_state: GameState,
-    irc_manager: IrcManager,
+    irc_manager: Option<IrcManager>,
     current_nickname: String,
     leaderboard: Leaderboard,
     ui: crate::game::ui::game_ui::GameUI,
@@ -174,12 +175,25 @@ impl GameLoop for Game {
             ctx.event_system.start_recording();
         }
 
-        let nickname = format!("Player{}", chrono::Utc::now().timestamp_subsec_micros());
-        let irc_manager = IrcManager::new(
-             "irc.libera.chat".to_owned(),
-             nickname.clone(),
-             vec!["#planck-global".to_owned(), "#planck-leaderboard".to_owned()]
-        );
+        let settings = Settings::load();
+        let (game_state, nickname) = if let Some(name) = settings.player_name {
+            (GameState::Playing, name)
+        } else {
+            (GameState::NameEntry, format!("Player{}", chrono::Utc::now().timestamp_subsec_micros()))
+        };
+
+        let irc_manager = if game_state == GameState::Playing {
+            Some(IrcManager::new(
+                 "irc.libera.chat".to_owned(),
+                 nickname.clone(),
+                 vec!["#planck-global".to_owned(), "#planck-leaderboard".to_owned()]
+            ))
+        } else {
+            None
+        };
+
+        let mut ui = crate::game::ui::game_ui::GameUI::new();
+        ui.update(crate::game::ui::game_ui::Message::UpdateGameState(game_state));
 
         let mut game = Self {
             camera,
@@ -194,11 +208,11 @@ impl GameLoop for Game {
             entity_system,
             simulation,
             total_time: 0.0,
-            game_state: GameState::Playing,
+            game_state,
             irc_manager,
             current_nickname: nickname,
             leaderboard: Leaderboard::new(),
-            ui: crate::game::ui::game_ui::GameUI::new(),
+            ui,
         };
 
         game.update_particle_instances(&ctx.graphics.queue, &ctx.graphics.device);
@@ -235,6 +249,10 @@ impl GameLoop for Game {
         }
         ctx.event_system.clear_events();
 
+        if self.game_state == GameState::NameEntry {
+            return;
+        }
+
         let time_delta: f32 = 0.005;
         self.simulation.pre_solve(time_delta);
         self.entity_system.elevator_entity_system.update_counts(&mut self.simulation);
@@ -267,7 +285,9 @@ impl GameLoop for Game {
                 
                 let seed = chrono::Utc::now().format("%Y-%m-%d").to_string();
                 let msg = format!("BEST_TIME seed={} time={:.3} user={}", seed, self.total_time, self.current_nickname);
-                self.irc_manager.send_message("#planck-leaderboard".to_owned(), msg);
+                if let Some(irc) = &self.irc_manager {
+                    irc.send_message("#planck-leaderboard".to_owned(), msg);
+                }
                 
                 self.leaderboard.add_score(seed.clone(), self.current_nickname.clone(), self.total_time);
 
@@ -275,7 +295,9 @@ impl GameLoop for Game {
                 self.ui.update(crate::game::ui::game_ui::Message::UpdateLeaderboardResults(entries));
 
                 if let Some(top10) = self.leaderboard.get_top_10(&seed) {
-                    self.irc_manager.send_message("#planck-global".to_owned(), top10);
+                    if let Some(irc) = &self.irc_manager {
+                        irc.send_message("#planck-global".to_owned(), top10);
+                    }
                 }
             }
         }
@@ -283,25 +305,27 @@ impl GameLoop for Game {
         self.camera.update_camera_uniform(&ctx.graphics.queue);
         self.update_particle_instances(&ctx.graphics.queue, &ctx.graphics.device);
 
-        for event in self.irc_manager.process_events() {
-            match event {
-                IrcEvent::MessageReceived { target, message, .. } => {
-                    if target == "#planck-leaderboard" {
-                        let seed = chrono::Utc::now().format("%Y-%m-%d").to_string();
-                        if message.starts_with("BEST_TIME") {
-                            self.leaderboard.parse_message(&message);
-                            if let Some(sync_msg) = self.leaderboard.serialize_sync(&seed) {
-                                self.irc_manager.send_message("#planck-leaderboard".to_owned(), sync_msg);
+        if let Some(irc) = &self.irc_manager {
+            for event in irc.process_events() {
+                match event {
+                    IrcEvent::MessageReceived { target, message, .. } => {
+                        if target == "#planck-leaderboard" {
+                            let seed = chrono::Utc::now().format("%Y-%m-%d").to_string();
+                            if message.starts_with("BEST_TIME") {
+                                self.leaderboard.parse_message(&message);
+                                if let Some(sync_msg) = self.leaderboard.serialize_sync(&seed) {
+                                    irc.send_message("#planck-leaderboard".to_owned(), sync_msg);
+                                }
+                            } else if message.starts_with("LEADERBOARD_SYNC") {
+                                self.leaderboard.parse_sync_message(&message);
                             }
-                        } else if message.starts_with("LEADERBOARD_SYNC") {
-                            self.leaderboard.parse_sync_message(&message);
+                            let current_run_time = if self.game_state == GameState::Finished { Some(self.total_time) } else { None };
+                            let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname, current_run_time);
+                            self.ui.update(crate::game::ui::game_ui::Message::UpdateLeaderboardResults(entries));
                         }
-                        let current_run_time = if self.game_state == GameState::Finished { Some(self.total_time) } else { None };
-                        let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname, current_run_time);
-                        self.ui.update(crate::game::ui::game_ui::Message::UpdateLeaderboardResults(entries));
-                    }
-                },
-                _ => {}
+                    },
+                    _ => {}
+                }
             }
         }
     }
@@ -350,7 +374,31 @@ impl GameLoop for Game {
         ctx.graphics.queue.submit(std::iter::once(encoder.finish()));
 
         // Use UI Helper for rendering
-        ctx.ui.draw(self.ui.view(), &ctx.graphics, &view);
+        let ui_messages = ctx.ui.draw(self.ui.view(), &ctx.graphics, &view);
+
+        for msg in ui_messages {
+            match msg {
+                crate::game::ui::game_ui::Message::SubmitName => {
+                    if !self.ui.name_input.trim().is_empty() {
+                        self.current_nickname = self.ui.name_input.trim().to_string();
+                        let settings = Settings {
+                            player_name: Some(self.current_nickname.clone()),
+                        };
+                        let _ = settings.save();
+
+                        self.irc_manager = Some(IrcManager::new(
+                             "irc.libera.chat".to_owned(),
+                             self.current_nickname.clone(),
+                             vec!["#planck-global".to_owned(), "#planck-leaderboard".to_owned()]
+                        ));
+
+                        self.game_state = GameState::Playing;
+                        self.ui.update(crate::game::ui::game_ui::Message::UpdateGameState(GameState::Playing));
+                    }
+                }
+                _ => self.ui.update(msg),
+            }
+        }
 
         output.present();
     }

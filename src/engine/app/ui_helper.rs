@@ -77,7 +77,7 @@ impl UIHelper {
         view: iced_winit::core::Element<'_, E, iced_winit::core::Theme, iced_wgpu::Renderer>,
         graphics: &GraphicsHelper,
         target_view: &wgpu::TextureView,
-    ) {
+    ) -> Vec<E> {
         let mut user_interface = UserInterface::build(
             view,
             self.viewport.logical_size(),
@@ -85,12 +85,13 @@ impl UIHelper {
             &mut self.renderer,
         );
 
+        let mut messages = Vec::new();
         let (_state, _) = user_interface.update(
             &self.events,
             self.cursor,
             &mut self.renderer,
             &mut self.clipboard,
-            &mut Vec::new(),
+            &mut messages,
         );
 
         user_interface.draw(
@@ -109,5 +110,7 @@ impl UIHelper {
             target_view,
             &self.viewport,
         );
+
+        messages
     }
 }
