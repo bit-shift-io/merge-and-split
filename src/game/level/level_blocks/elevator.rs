@@ -48,7 +48,6 @@ impl LevelBuilderOperation for ElevatorOperation {
         let first_particle_offset = platform.particles[0].pos - elevator_start;
 
         level_builder_context.entity_system.elevator_entity_system.push(ElevatorEntity {
-            body_idx: 0,
             start: elevator_start,
             end: elevator_end,
             speed: rng.random_range(1.0..=2.0),
@@ -73,7 +72,6 @@ enum ElevatorState {
 }
 
 pub struct ElevatorEntity {
-    body_idx: usize,
     start: Vec2,
     end: Vec2,
     speed: f32,

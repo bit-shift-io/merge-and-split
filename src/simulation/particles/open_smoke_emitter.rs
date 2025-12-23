@@ -63,17 +63,15 @@ impl OpenSmokeEmitter {
 }
 
 
-const h: f32 = 2.0;
-const h2: f32 = 4.0;
-const h6: f32 = 64.0;
-const h9: f32 = 512.0;
+const H2: f32 = 4.0;
+const H9: f32 = 512.0;
 
 
 pub fn poly6(r2: f32) -> f32 {
-    if r2 >= h2 {
+    if r2 >= H2 {
         return 0.0;
     }
-    let term2 = h2 - r2;
-    return (315.0 / (64. * PI * h9)) * (term2 * term2 * term2);
+    let term2 = H2 - r2;
+    return (315.0 / (64. * PI * H9)) * (term2 * term2 * term2);
 //    return (H-r) / (H*H);
 }

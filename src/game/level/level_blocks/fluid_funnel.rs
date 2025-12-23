@@ -28,7 +28,7 @@ impl LevelBuilderOperation for FluidFunnel {
     }
 
     fn execute(&self, level_builder_context: &mut LevelBuilderContext) {
-        let rng = &mut level_builder_context.rng;
+        let _rng = &mut level_builder_context.rng;
 
         // let width = 0.0;
         // let height = rng.random_range(-2.0..=-0.5);

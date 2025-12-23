@@ -25,7 +25,7 @@ impl LevelBuilderOperation for HillOperation {
     fn execute(&self, level_builder_context: &mut LevelBuilderContext) {
         let rng = &mut level_builder_context.rng;
 
-        let mut total_width = rng.random_range(5.0..=15.0);
+        let total_width = rng.random_range(5.0..=15.0);
         let num_segments = rng.random_range(2..=4);
         let segment_width = total_width / num_segments as f32;
         let direction = level_builder_context.x_direction;

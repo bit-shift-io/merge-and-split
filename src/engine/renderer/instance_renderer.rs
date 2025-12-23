@@ -56,12 +56,6 @@ pub const QUAD_VERTICES: &[Vertex] = &[
 // WGPU, CCW is front face by default.
 pub const QUAD_INDICES: &[u16] = &[3, 1, 0, 3, 2, 1];
 
-const NUM_INSTANCES_PER_ROW: u32 = 5;
-const INSTANCE_DISPLACEMENT: cgmath::Vector3<f32> = cgmath::Vector3::new(
-    NUM_INSTANCES_PER_ROW as f32 * 0.5,
-    0.0,
-    NUM_INSTANCES_PER_ROW as f32 * 0.5,
-);
 
 #[derive(Debug, Copy, Clone)]
 pub struct Instance {

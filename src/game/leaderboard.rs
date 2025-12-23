@@ -185,7 +185,6 @@ impl Leaderboard {
                     // If no current run time provided, maybe just show current user's best?
                     // Previous code showed current user's best in top 10 or separately.
                     // Let's stick to the current user's best if not in top 10, but not highlighted.
-                    let mut found_user = false;
                     for (i, score) in scores.iter().enumerate() {
                         if score.user == current_user {
                             if i >= 10 { // Only add if not already in top 10
@@ -196,7 +195,6 @@ impl Leaderboard {
                                     is_current_run: false,
                                 });
                             }
-                            found_user = true;
                             break;
                         }
                     }

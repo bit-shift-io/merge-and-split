@@ -61,10 +61,10 @@ pub fn run() -> anyhow::Result<()> {
 
     encoder.copy_buffer_to_buffer(&data_buffer, 0, &temp_buffer, 0, data_buffer.size());
 
-    let index = queue.submit([encoder.finish()]);
+    let _index = queue.submit([encoder.finish()]);
     
     {
-        let (tx, rx) = channel();
+        let (tx, _rx) = channel();
         temp_buffer.map_async(wgpu::MapMode::Read, .., move |result| {
             tx.send(result).unwrap()
         });

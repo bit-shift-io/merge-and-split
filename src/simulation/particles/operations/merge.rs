@@ -8,32 +8,6 @@ pub const LARGE_MASS: f32 = 1.0; //100000000.0; // This might cause problems if 
 pub struct Merge {
 }
 
-fn do_collide(p1: &Particle, p2: &Particle) -> bool {
-    // Two static particles cannot merge.
-    if p1.is_static && p2.is_static {
-        return false;
-    }
-    
-    // Collision Rule 1: |x2 − x1| < r1 + r2 (page 5).
-    // See if two particles will collide. Continue if they do not collide.
-    let dist_sqrd = (p1.pos - p2.pos).magnitude2();
-    let r1_plus_r2 = p1.radius + p2.radius;
-    let r12_sqrd = r1_plus_r2 * r1_plus_r2;
-    if dist_sqrd >= r12_sqrd {
-        return false;
-    }
-
-    // Collision Rule 2: n · (v2 − v1) < 0 (page 5).
-    let n = p2.pos - p1.pos;
-    let rel_v = p2.vel - p1.vel;
-    let d = n.dot(rel_v);
-    if d >= 0.0 {
-        return false;
-    }
-
-    return true;
-}
-
 
 // Trying with a more robust collision detection that considers motion over the timestep.
 fn do_collide_2(particle1: &Particle, particle2: &Particle, dt: f32) -> bool {

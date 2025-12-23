@@ -9,7 +9,6 @@ pub struct FluidEmitter {
     timer: f32,
     total_timer: f32,
     fluid_index: usize, // TotalFluidConstraint *m_fs;
-    grains: ParticleVec,
     rng: Pcg64,
     // glm::dvec2 m_posn;
     // double m_particles_per_sec;
@@ -27,7 +26,6 @@ impl FluidEmitter {
             timer: 0.0,
             total_timer: 0.0,
             fluid_index,
-            grains: ParticleVec::new(),
             rng,
         }
     }

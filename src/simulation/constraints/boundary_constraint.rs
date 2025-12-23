@@ -25,10 +25,9 @@ impl BoundaryConstraint {
         // Add a little random jitter for fluids and gases so particles do not become trapped on boundaries
         let extra = if p.phase == Phase::Fluid || p.phase == Phase::Gas { 0.0 /* todo: procedural random frand() * .003 */ } else { 0.0 };
         let d = p.radius + extra;
-        let mut n = Vec2::new(0.0, 0.0);
 
         // Move the particle back into a valid spot (if necessary)
-        if self.greater {
+        let n = if self.greater {
             if self.x_boundary {
 
                 // Quit if no longer valid
@@ -39,7 +38,7 @@ impl BoundaryConstraint {
                 if self.stable {
                     p.pos.x = self.value + d;
                 }
-                n = Vec2::new(1.0, 0.0);
+                Vec2::new(1.0, 0.0)
             } else {
 
                 // Quit if no longer valid
@@ -50,7 +49,7 @@ impl BoundaryConstraint {
                 if self.stable {
                     p.pos.y = self.value + d;
                 }
-                n = Vec2::new(0.0, 1.0);
+                Vec2::new(0.0, 1.0)
             }
         } else {
             if self.x_boundary {
@@ -63,7 +62,7 @@ impl BoundaryConstraint {
                 if self.stable {
                     p.pos.x = self.value - d;
                 }
-                n = Vec2::new(-1.0, 0.0);
+                Vec2::new(-1.0, 0.0)
             } else {
 
                 // Quit if no longer valid
@@ -74,9 +73,9 @@ impl BoundaryConstraint {
                 if self.stable {
                     p.pos.y = self.value - d;
                 }
-                n = Vec2::new(0.0,-1.0);
+                Vec2::new(0.0,-1.0)
             }
-        }
+        };
 
         if self.stable {
             return;

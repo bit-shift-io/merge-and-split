@@ -1,10 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::{self, Write};
-use std::collections::HashSet;
 use winit::event::{ElementState, MouseButton, WindowEvent, KeyEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
-use crate::core::math::vec2::Vec2;
 
 /// Serializable game event that wraps the relevant parts of WindowEvent
 #[derive(Debug, Clone, Serialize, Deserialize)]

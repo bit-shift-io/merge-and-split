@@ -41,11 +41,10 @@ impl ShapeBuilderOperation for Circle {
         let mut theta = c_angle * 2.0;
         
         let divisions = (2.0 * std::f32::consts::PI) / theta;
-        let mut count = divisions;
 
-        match self.space_distribution {
+        let count = match self.space_distribution {
             SpaceDistribution::AdjustRadius => {
-                count = divisions.round();
+                let count = divisions.round();
                 if count > 0.0 {
                     theta = (2.0 * std::f32::consts::PI) / count;
                     
@@ -59,15 +58,17 @@ impl ShapeBuilderOperation for Circle {
 
                     shape_builder.particle_template.radius = radius;
                 }
+                count
             },
             SpaceDistribution::SpaceBetweenParticles => {
-                count = divisions.floor();
+                let count = divisions.floor();
                 if count > 0.0 {
                     // Increase theta to spread particles evenly
                     theta = (2.0 * std::f32::consts::PI) / count;
                 }
+                count
             }
-        }
+        };
 
         let integer_divisions = count as usize;
         let mut points = Vec::with_capacity(integer_divisions);

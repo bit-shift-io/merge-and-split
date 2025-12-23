@@ -71,12 +71,12 @@ pub fn run() -> anyhow::Result<()> {
 
     encoder.copy_buffer_to_buffer(&output_buffer, 0, &temp_buffer, 0, output_buffer.size());
 
-    let index = queue.submit([encoder.finish()]);
+    let _index = queue.submit([encoder.finish()]);
 
     {
         // The mapping process is async, so we'll need to create a channel to get
         // the success flag for our mapping
-        let (tx, rx) = channel();
+        let (tx, _rx) = channel();
 
         // We send the success or failure of our mapping via a callback
         temp_buffer.map_async(wgpu::MapMode::Read, .., move |result| tx.send(result).unwrap());
@@ -89,7 +89,7 @@ pub fn run() -> anyhow::Result<()> {
         // rx.recv()??;
 
         // We then get the bytes that were stored in the buffer
-        let output_data = temp_buffer.get_mapped_range(..);
+        let _output_data = temp_buffer.get_mapped_range(..);
 
         // Now we have the data on the CPU we can do what ever we want to with it
         //assert_eq!(&input_data, bytemuck::cast_slice(&output_data)); FM: todo fixme
