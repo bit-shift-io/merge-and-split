@@ -6,6 +6,14 @@ pub struct Score {
     pub time: f32,
 }
 
+#[derive(Debug, Clone)]
+pub struct LeaderboardEntry {
+    pub rank: usize,
+    pub name: String,
+    pub time: f32,
+    pub is_current_user: bool,
+}
+
 pub struct Leaderboard {
     // Map from seed -> sorted list of scores
     scores: HashMap<String, Vec<Score>>,
@@ -118,5 +126,51 @@ impl Leaderboard {
         } else {
             None
         }
+    }
+
+    pub fn get_leaderboard_entries(&self, seed: &str, current_user: &str) -> Vec<LeaderboardEntry> {
+        let mut entries = Vec::new();
+        if let Some(scores) = self.scores.get(seed) {
+            let mut current_user_found = false;
+            let mut current_user_rank = 0;
+            let mut current_user_score = None;
+
+            // Get top 10
+            let count = std::cmp::min(scores.len(), 10);
+            for i in 0..count {
+                let is_current = scores[i].user == current_user;
+                if is_current {
+                    current_user_found = true;
+                    current_user_rank = i + 1;
+                }
+                entries.push(LeaderboardEntry {
+                    rank: i + 1,
+                    name: scores[i].user.clone(),
+                    time: scores[i].time,
+                    is_current_user: is_current,
+                });
+            }
+
+            // If current user not in top 10, find them
+            if !current_user_found {
+                for (i, score) in scores.iter().enumerate() {
+                    if score.user == current_user {
+                        current_user_rank = i + 1;
+                        current_user_score = Some(score);
+                        break;
+                    }
+                }
+
+                if let Some(score) = current_user_score {
+                    entries.push(LeaderboardEntry {
+                        rank: current_user_rank,
+                        name: score.user.clone(),
+                        time: score.time,
+                        is_current_user: true,
+                    });
+                }
+            }
+        }
+        entries
     }
 }

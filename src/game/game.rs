@@ -269,10 +269,11 @@ impl GameLoop for Game {
                 let msg = format!("BEST_TIME seed={} time={:.3} user={}", seed, self.total_time, self.current_nickname);
                 self.irc_manager.send_message("#planck-leaderboard".to_owned(), msg);
                 
-                if let Some(top10) = self.leaderboard.get_top_10(&seed) {
-                    self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(top10));
-                }
                 self.leaderboard.add_score(seed.clone(), self.current_nickname.clone(), self.total_time);
+
+                let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname);
+                self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(entries));
+
                 if let Some(top10) = self.leaderboard.get_top_10(&seed) {
                     self.irc_manager.send_message("#planck-global".to_owned(), top10);
                 }
@@ -295,9 +296,8 @@ impl GameLoop for Game {
                         } else if message.starts_with("LEADERBOARD_SYNC") {
                             self.leaderboard.parse_sync_message(&message);
                         }
-                        if let Some(top10) = self.leaderboard.get_top_10(&seed) {
-                            self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(top10));
-                        }
+                        let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname);
+                        self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(entries));
                     }
                 },
                 _ => {}
