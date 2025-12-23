@@ -1,6 +1,6 @@
 use iced::widget::{column, text, container};
 use iced::{Color, Element, Length, Theme, Alignment};
-use super::{Message, GameUI};
+use super::game_ui::{Message, GameUI};
 
 pub fn hud_view(ui: &GameUI) -> Element<'_, Message, Theme, iced::Renderer> {
     container(

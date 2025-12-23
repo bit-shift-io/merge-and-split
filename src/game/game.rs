@@ -17,9 +17,9 @@ use crate::{
     game::{
         entity::{entities::car_entity::CarEntity, entity_system::EntitySystem},
         level::level_builder::LevelBuilder,
-        irc::{IrcManager, IrcEvent},
+        irc::irc_manager::{IrcManager, IrcEvent},
         leaderboard::Leaderboard,
-        GameState,
+        game_state::GameState,
     },
     simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos},
 };
@@ -43,7 +43,7 @@ pub struct Game {
     irc_manager: IrcManager,
     current_nickname: String,
     leaderboard: Leaderboard,
-    ui: crate::game::ui::GameUI,
+    ui: crate::game::ui::game_ui::GameUI,
 }
 
 impl Game {
@@ -88,8 +88,8 @@ impl Game {
         self.entity_system.car_entity_system.push(car);
         
         // Update UI
-        self.ui.update(crate::game::ui::Message::UpdateGameState(GameState::Playing));
-        self.ui.update(crate::game::ui::Message::UpdateTime(0.0));
+        self.ui.update(crate::game::ui::game_ui::Message::UpdateGameState(GameState::Playing));
+        self.ui.update(crate::game::ui::game_ui::Message::UpdateTime(0.0));
         
         // Reset recording if necessary
         let args: Vec<String> = env::args().collect();
@@ -198,7 +198,7 @@ impl GameLoop for Game {
             irc_manager,
             current_nickname: nickname,
             leaderboard: Leaderboard::new(),
-            ui: crate::game::ui::GameUI::new(),
+            ui: crate::game::ui::game_ui::GameUI::new(),
         };
 
         game.update_particle_instances(&ctx.graphics.queue, &ctx.graphics.device);
@@ -208,7 +208,7 @@ impl GameLoop for Game {
     fn update(&mut self, ctx: &mut Context) {
         let dt = if ctx.dt <= 0.0 { 1.0 / 60.0 } else { ctx.dt };
         let fps = (1.0 / dt).round() as i32;
-        self.ui.update(crate::game::ui::Message::UpdateFps(fps));
+        self.ui.update(crate::game::ui::game_ui::Message::UpdateFps(fps));
 
         self.frame_idx += 1;
         ctx.event_system.set_frame(self.frame_idx);
@@ -249,7 +249,7 @@ impl GameLoop for Game {
 
         if self.game_state == GameState::Playing {
             self.total_time += time_delta;
-            self.ui.update(crate::game::ui::Message::UpdateTime(self.total_time));
+            self.ui.update(crate::game::ui::game_ui::Message::UpdateTime(self.total_time));
         }
         self.entity_system.update(&mut self.particle_vec, &mut self.simulation, &mut self.camera, time_delta, self.total_time);
 
@@ -257,7 +257,7 @@ impl GameLoop for Game {
             let game_finished = self.entity_system.car_entity_system.0.iter().any(|car| car.game_ended);
             if game_finished {
                 self.game_state = GameState::Finished;
-                self.ui.update(crate::game::ui::Message::UpdateGameState(GameState::Finished));
+                self.ui.update(crate::game::ui::game_ui::Message::UpdateGameState(GameState::Finished));
                 
                 if ctx.event_system.is_recording() {
                     ctx.event_system.stop_recording();
@@ -272,7 +272,7 @@ impl GameLoop for Game {
                 self.leaderboard.add_score(seed.clone(), self.current_nickname.clone(), self.total_time);
 
                 let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname, Some(self.total_time));
-                self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(entries));
+                self.ui.update(crate::game::ui::game_ui::Message::UpdateLeaderboardResults(entries));
 
                 if let Some(top10) = self.leaderboard.get_top_10(&seed) {
                     self.irc_manager.send_message("#planck-global".to_owned(), top10);
@@ -298,7 +298,7 @@ impl GameLoop for Game {
                         }
                         let current_run_time = if self.game_state == GameState::Finished { Some(self.total_time) } else { None };
                         let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname, current_run_time);
-                        self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(entries));
+                        self.ui.update(crate::game::ui::game_ui::Message::UpdateLeaderboardResults(entries));
                     }
                 },
                 _ => {}

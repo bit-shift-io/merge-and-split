@@ -1,6 +1,6 @@
 use iced::widget::{column, text, row, container};
 use iced::{Color, Element, Length, Theme, Alignment};
-use super::{Message, GameUI};
+use super::game_ui::{Message, GameUI};
 
 pub fn leaderboard_view(ui: &GameUI) -> Element<'_, Message, Theme, iced::Renderer> {
     let header_text_col = Color::from_rgb(0.6, 0.6, 1.0);

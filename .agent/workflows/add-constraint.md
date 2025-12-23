@@ -59,3 +59,4 @@ See existing constraints:
 - Avoid `Box<dyn Trait>` for memory coherence
 - Custom vector wrappers provide better performance than generic collections
 - Constraints are solved iteratively in the PBD solver
+- **IMPORTANT**: `mod.rs` files should only contain `pub mod` declarations. New constraints and их associated types should be in their own files.

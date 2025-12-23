@@ -24,5 +24,6 @@ This workflow defines the lifecycle for managing and implementing tasks located 
    - Upon completion, create a walkthrough file summarizing the changes.
    - Path: `.agent/tasks/[task-name].walkthrough.md`.
 
-5. **Cycle**:
-   - Return to step 1 to process the next incomplete task.
+6. **Code Style Requirement**:
+   - `mod.rs` files must ONLY contain `pub mod` lines.
+   - All other code (structs, enums, impl blocks, logic) MUST be moved to separate module files.

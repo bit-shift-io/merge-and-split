@@ -5,8 +5,6 @@ pub mod operations;
 pub mod shape_builder;
 pub mod particle_manipulator;
 
-//pub mod planck_time_trials_test;
-
 pub mod simulation;
 pub mod body;
 pub mod sdf_data;
