@@ -271,7 +271,7 @@ impl GameLoop for Game {
                 
                 self.leaderboard.add_score(seed.clone(), self.current_nickname.clone(), self.total_time);
 
-                let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname);
+                let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname, Some(self.total_time));
                 self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(entries));
 
                 if let Some(top10) = self.leaderboard.get_top_10(&seed) {
@@ -296,7 +296,8 @@ impl GameLoop for Game {
                         } else if message.starts_with("LEADERBOARD_SYNC") {
                             self.leaderboard.parse_sync_message(&message);
                         }
-                        let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname);
+                        let current_run_time = if self.game_state == GameState::Finished { Some(self.total_time) } else { None };
+                        let entries = self.leaderboard.get_leaderboard_entries(&seed, &self.current_nickname, current_run_time);
                         self.ui.update(crate::game::ui::Message::UpdateLeaderboardResults(entries));
                     }
                 },

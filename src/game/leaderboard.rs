@@ -11,7 +11,7 @@ pub struct LeaderboardEntry {
     pub rank: usize,
     pub name: String,
     pub time: f32,
-    pub is_current_user: bool,
+    pub is_current_run: bool,
 }
 
 pub struct Leaderboard {
@@ -128,46 +128,78 @@ impl Leaderboard {
         }
     }
 
-    pub fn get_leaderboard_entries(&self, seed: &str, current_user: &str) -> Vec<LeaderboardEntry> {
+    pub fn get_leaderboard_entries(&self, seed: &str, current_user: &str, current_run_time: Option<f32>) -> Vec<LeaderboardEntry> {
         let mut entries = Vec::new();
         if let Some(scores) = self.scores.get(seed) {
-            let mut current_user_found = false;
-            let mut current_user_rank = 0;
-            let mut current_user_score = None;
+            let mut current_run_found = false;
 
             // Get top 10
             let count = std::cmp::min(scores.len(), 10);
             for i in 0..count {
-                let is_current = scores[i].user == current_user;
-                if is_current {
-                    current_user_found = true;
-                    current_user_rank = i + 1;
+                let is_current_run = scores[i].user == current_user && Some(scores[i].time) == current_run_time;
+                if is_current_run {
+                    current_run_found = true;
                 }
+                
+
+
                 entries.push(LeaderboardEntry {
                     rank: i + 1,
                     name: scores[i].user.clone(),
                     time: scores[i].time,
-                    is_current_user: is_current,
+                    is_current_run,
                 });
             }
 
-            // If current user not in top 10, find them
-            if !current_user_found {
-                for (i, score) in scores.iter().enumerate() {
-                    if score.user == current_user {
-                        current_user_rank = i + 1;
-                        current_user_score = Some(score);
-                        break;
+            // If current run not in top 10, find it (or the current user's best if we want to show their rank)
+            // But the request is to highlight only the current turn's score.
+            // If the current run didn't make it to top 10, we still might want to show it at the bottom.
+            if !current_run_found {
+                if let Some(run_time) = current_run_time {
+                    // Find actual rank for the current run
+                    let mut found_run = false;
+                    for (i, score) in scores.iter().enumerate() {
+                        if score.user == current_user && (score.time - run_time).abs() < 0.0001 {
+                            entries.push(LeaderboardEntry {
+                                rank: i + 1,
+                                name: score.user.clone(),
+                                time: score.time,
+                                is_current_run: true,
+                            });
+                            found_run = true;
+                            break;
+                        }
                     }
-                }
-
-                if let Some(score) = current_user_score {
-                    entries.push(LeaderboardEntry {
-                        rank: current_user_rank,
-                        name: score.user.clone(),
-                        time: score.time,
-                        is_current_user: true,
-                    });
+                    
+                    // If the run is so bad it's not even in the top 50 (truncated)
+                    // but we still want to show it? The truncate happened in add_score.
+                    if !found_run {
+                         entries.push(LeaderboardEntry {
+                            rank: 999, // Unknown high rank
+                            name: current_user.to_string(),
+                            time: run_time,
+                            is_current_run: true,
+                        });
+                    }
+                } else {
+                    // If no current run time provided, maybe just show current user's best?
+                    // Previous code showed current user's best in top 10 or separately.
+                    // Let's stick to the current user's best if not in top 10, but not highlighted.
+                    let mut found_user = false;
+                    for (i, score) in scores.iter().enumerate() {
+                        if score.user == current_user {
+                            if i >= 10 { // Only add if not already in top 10
+                                entries.push(LeaderboardEntry {
+                                    rank: i + 1,
+                                    name: score.user.clone(),
+                                    time: score.time,
+                                    is_current_run: false,
+                                });
+                            }
+                            found_user = true;
+                            break;
+                        }
+                    }
                 }
             }
         }

@@ -40,11 +40,12 @@ impl GameUI {
 
     pub fn view(&self) -> Element<'_, Message, Theme, iced::Renderer> {
         let content = if self.game_state == GameState::Finished {
+            let header_text_col = Color::from_rgb(0.6, 0.6, 1.0);
             let mut leaderboard_col = column![
                 row![
-                    text("Pos").width(Length::Fixed(50.0)),
-                    text("Player").width(Length::Fill),
-                    text("Time").width(Length::Fixed(100.0)),
+                    text("Pos").width(Length::Fixed(50.0)).color(header_text_col),
+                    text("Player").width(Length::Fill).color(header_text_col),
+                    text("Time").width(Length::Fixed(100.0)).color(header_text_col),
                 ]
                 .spacing(10)
                 .padding(5)
@@ -55,8 +56,8 @@ impl GameUI {
                 leaderboard_col = leaderboard_col.push(text("Loading leaderboard...").color(Color::from_rgb(0.7, 0.7, 0.7)));
             } else {
                 for entry in &self.leaderboard_results {
-                    let color = if entry.is_current_user {
-                        Color::from_rgb(0.0, 1.0, 0.0) // Green for current user
+                    let color = if entry.is_current_run {
+                        Color::from_rgb(0.0, 1.0, 0.0) // Green for current run
                     } else {
                         Color::WHITE
                     };
@@ -73,44 +74,60 @@ impl GameUI {
                 }
             }
 
-            column![
-                text(format!("Final Time: {:.2}s", self.total_time))
-                    .size(30)
-                    .color(Color::WHITE),
-                container(leaderboard_col)
-                    .width(Length::Fixed(400.0))
-                    .padding(10)
-                    .style(|_theme: &Theme| {
-                        container::Style {
-                            background: Some(iced::Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.7))),
-                            border: iced::Border {
-                                radius: 5.0.into(),
-                                width: 1.0,
-                                color: Color::from_rgb(0.3, 0.3, 0.3),
-                            },
-                            ..Default::default()
-                        }
-                    }),
-                text("Press 'r' to retry")
-                    .size(20)
-                    .color(Color::from_rgb(0.5, 0.5, 1.0)),
-            ]
-            .spacing(20)
-            .align_x(Alignment::Center)
-        } else {
-            column![
-                text(format!("FPS: {}", self.fps))
-                    .size(20)
-                    .color(Color::WHITE),
-                text(format!("Time: {:.2}s", self.total_time))
-                    .size(20)
-                    .color(Color::WHITE),
-            ]
-        };
-
-        content
+            container(
+                column![
+                    text(format!("Final Time: {:.2}s", self.total_time))
+                        .size(40)
+                        .color(Color::WHITE),
+                    container(leaderboard_col)
+                        .width(Length::Fixed(400.0))
+                        .padding(20)
+                        .style(|_theme: &Theme| {
+                            container::Style {
+                                background: Some(iced::Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.5))),
+                                border: iced::Border {
+                                    radius: 10.0.into(),
+                                    width: 1.0,
+                                    color: Color::from_rgb(0.4, 0.4, 0.4),
+                                },
+                                ..Default::default()
+                            }
+                        }),
+                    text("Press 'r' to retry")
+                        .size(22)
+                        .color(Color::from_rgb(0.6, 0.6, 1.0)),
+                ]
+                .spacing(30)
+                .align_x(Alignment::Center)
+            )
             .width(Length::Fill)
             .height(Length::Fill)
-            .into()
+            .center_x(Length::Fill)
+            .center_y(Length::Fill)
+            .style(|_theme: &Theme| {
+                container::Style {
+                    background: Some(iced::Background::Color(Color::from_rgba(0.0, 0.0, 0.0, 0.8))),
+                    ..Default::default()
+                }
+            })
+        } else {
+            container(
+                column![
+                    text(format!("FPS: {}", self.fps))
+                        .size(20)
+                        .color(Color::WHITE),
+                    text(format!("Time: {:.2}s", self.total_time))
+                        .size(20)
+                        .color(Color::WHITE),
+                ]
+                .padding(10)
+            )
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .align_x(Alignment::Start)
+            .align_y(Alignment::Start)
+        };
+
+        content.into()
     }
 }
