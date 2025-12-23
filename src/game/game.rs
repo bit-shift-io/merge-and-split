@@ -23,7 +23,7 @@ use crate::{
     },
     simulation::particles::{particle_vec::ParticleVec, simulation::Simulation, simulation_demos::SimulationDemos},
 };
-use crate::engine::app::event_system::{GameEvent, ElementStateType};
+use crate::engine::app::event_system::{GameEvent, ElementStateType, KeyCodeType};
 use cgmath::Rotation3;
 
 pub struct Game {
@@ -69,6 +69,38 @@ impl Game {
             instances.push(Instance { position, rotation, colour, radius });
         }
         self.particle_instance_renderer.update_instances(&instances, queue, device);
+    }
+    pub fn reset(&mut self, ctx: &mut Context) {
+        self.total_time = 0.0;
+        self.game_state = GameState::Playing;
+        self.frame_idx = 0;
+        
+        // Re-initialize systems
+        self.entity_system = EntitySystem::new();
+        self.particle_vec = ParticleVec::new();
+        
+        let rng = crate::core::math::random::Random::seed_from_beginning_of_day();
+        self.simulation = Simulation::new(rng);
+        
+        // Re-generate level
+        LevelBuilder::default().generate_level_based_on_date(&mut self.entity_system, &mut self.particle_vec, &mut self.simulation);
+        let car = CarEntity::new(&mut self.particle_vec, &mut self.simulation, Vec2::new(0.0, 1.0));
+        self.entity_system.car_entity_system.push(car);
+        
+        // Update UI
+        self.ui.update(crate::game::ui::Message::UpdateGameState(GameState::Playing));
+        self.ui.update(crate::game::ui::Message::UpdateTime(0.0));
+        
+        // Reset recording if necessary
+        let args: Vec<String> = env::args().collect();
+        let scene = if args.len() >= 2 { args[1].clone() } else { String::from("") };
+        let is_demo_scene = matches!(scene.as_str(), "friction" | "granular" | "sdf" | "boxes" | "wall" | "pendulum" | "rope" | "fluid" | "fluid_solid" | "gas" | "water_balloon" | "newtons_cradle" | "smoke_open" | "smoke_closed" | "rope_gas" | "volcano" | "wrecking_ball");
+        
+        if !is_demo_scene {
+            ctx.event_system.start_recording();
+        }
+        
+        self.update_particle_instances(&ctx.graphics.queue, &ctx.graphics.device);
     }
 }
 
@@ -182,15 +214,24 @@ impl GameLoop for Game {
         ctx.event_system.set_frame(self.frame_idx);
         ctx.event_system.process_events();
 
+        let mut should_reset = false;
         for event in ctx.event_system.events.iter() {
             match event {
                 GameEvent::KeyboardInput { key_code, state } => {
                     let is_pressed = matches!(state, ElementStateType::Pressed);
                     self.camera_controller.handle_key(*key_code, is_pressed);
                     self.entity_system.handle_key(*key_code, is_pressed);
+                    
+                    if *key_code == KeyCodeType::KeyR && is_pressed && self.game_state == GameState::Finished {
+                        should_reset = true;
+                    }
                 }
                 _ => {}
             }
+        }
+        
+        if should_reset {
+            self.reset(ctx);
         }
         ctx.event_system.clear_events();
 

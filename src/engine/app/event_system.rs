@@ -64,6 +64,7 @@ pub enum KeyCodeType {
     F10,
     F11,
     F12,
+    KeyR,
     // Add more as needed
     Unknown,
 }
@@ -88,6 +89,7 @@ impl From<KeyCode> for KeyCodeType {
             KeyCode::F10 => KeyCodeType::F10,
             KeyCode::F11 => KeyCodeType::F11,
             KeyCode::F12 => KeyCodeType::F12,
+            KeyCode::KeyR => KeyCodeType::KeyR,
             _ => KeyCodeType::Unknown,
         }
     }

@@ -49,6 +49,9 @@ impl GameUI {
                 text(self.leaderboard_results.as_deref().unwrap_or("Loading leaderboard..."))
                     .size(20)
                     .color(Color::WHITE),
+                text("Press 'r' to retry")
+                    .size(20)
+                    .color(Color::from_rgb(0.5, 0.5, 1.0)),
             ]
             .spacing(20)
             //.align_items(iced::Alignment::Center)
